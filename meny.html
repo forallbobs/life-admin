@@ -45,6 +45,15 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
 .ex .pct{display:block;font-size:13px;color:var(--muted)}
 .ex tr.mid td{color:var(--muted)}
 .edit{display:none;margin-top:10px;gap:10px;flex-wrap:wrap}
+.offer{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
+.offer label{font-size:15px;color:var(--muted);display:block;margin-bottom:4px}
+.orow{display:flex;gap:8px;align-items:center}
+.orow input{flex:0 1 180px;min-width:0;font-size:20px;font-weight:700}
+.orow span{color:var(--muted);font-size:15px}
+#offerRes{margin-top:8px;font-size:16px}
+.verdict{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:600;font-size:15px;margin-bottom:4px}
+.v1{background:#e9f5ea;color:#2e7d32}.v2{background:var(--accent-bg);color:var(--accent)}.v3{background:var(--orange-bg);color:var(--orange)}.v4{background:#fdecec;color:#c62828}
+@media (prefers-color-scheme:dark){.v1{background:#1b3021;color:#81c995}.v4{background:#3b1d1d;color:#f28b82}}
 .edit.on{display:flex}
 .edit label{font-size:14px;color:var(--muted);display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
 .edit input{min-height:40px}
@@ -85,6 +94,11 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
     <table class="ex" id="ex"></table>
     <div class="hint">Odhad podle typické přirážky ke středovému kurzu – skutečné kurzy směnáren se liší. Když ti nabídnou výrazně méně než „výhodná směnárna“, je to nevýhodné.
       <button class="small" id="btnEdit" style="margin-left:4px">⚙️ Upravit přirážky</button></div>
+    <div class="offer">
+      <label for="offer" id="offerLbl">Kurz, který nabízí směnárna</label>
+      <div class="orow"><input id="offer" inputmode="decimal" placeholder="např. 90,60"><span id="offerUnit"></span></div>
+      <div id="offerRes"></div>
+    </div>
     <div class="edit" id="edit">
       <label>Výhodná směnárna (%)<input id="pGood" inputmode="decimal"></label>
       <label>Banka (%)<input id="pBank" inputmode="decimal"></label>
@@ -107,7 +121,7 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
 </div>
 
 <script>
-const APP_ID='meny',APP_VERSION='2026.11.07.2';
+const APP_ID='meny',APP_VERSION='2026.11.07.3';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const parseNum=v=>{const s=String(v??'').replace(/\s/g,'').replace(/ /g,'').replace(',','.');return s===''?NaN:Number(s);};
@@ -133,8 +147,9 @@ const BASE_FAV=['EUR','CZK','USD','GBP','CHF','PLN','HUF'];
 const KEY_R='meny.rates.v2',KEY_S='meny.settings.v1';
 let R=null;  // {fetched, ecbDate, cdnDate, rates:{CZK:24.3,…}, src:{CZK:'ecb',ALL:'cdn',…}}
 try{R=JSON.parse(store.get(KEY_R)||'null');if(!R||!R.rates)R=null;}catch(e){R=null;}
-let S={from:'EUR',to:'CZK',amount:'100',recent:[],spreads:{good:1.5,bank:4,tour:10}};
-try{const s=JSON.parse(store.get(KEY_S)||'null');if(s){S={...S,...s,spreads:{...S.spreads,...(s.spreads||{})}};if(s.cur&&!s.from)S.from=s.cur;if(!Array.isArray(S.recent))S.recent=[];}}catch(e){}
+let S={sv:2,from:'EUR',to:'CZK',amount:'100',offer:'',recent:[],spreads:{good:0.5,bank:4,tour:10}};
+try{const s=JSON.parse(store.get(KEY_S)||'null');if(s){S={...S,...s,spreads:{...S.spreads,...(s.spreads||{})}};if(s.cur&&!s.from)S.from=s.cur;if(!Array.isArray(S.recent))S.recent=[];
+  if(!(s.sv>=2)){if(S.spreads.good===1.5)S.spreads.good=0.5;S.sv=2;}}}catch(e){}   // původní výchozí 1,5 % → 0,5 %
 const saveS=()=>store.set(KEY_S,JSON.stringify(S));
 const has=c=>!!(R&&R.rates[c]>0);
 const rate=(a,b)=>has(a)&&has(b)?R.rates[b]/R.rates[a]:null;   // kolik B za 1 A
@@ -206,6 +221,16 @@ function render(){
   $('ex').innerHTML=`<tr><th></th><th>Prodáš ${esc(qTxt)}<br>dostaneš asi</th><th>Koupíš ${esc(qTxt)}<br>zaplatíš asi</th></tr>
     <tr class="mid"><td>Středový kurz</td><td>${money(q*r,B)}</td><td>${money(q*r,B)}</td></tr>`+
     rows.map(([l,p])=>`<tr><td>${l}<span class="pct">přirážka ~${nf(p,1)} %</span></td><td><b>${money(q*r*(1-p/100),B)}</b></td><td><b>${money(q*r*(1+p/100),B)}</b></td></tr>`).join('');
+  // kontrola nabídky směnárny: kurz z lístku vs. středový kurz
+  $('offerUnit').textContent=`${sym(B)} za ${u} ${A}`;
+  const off=parseNum($('offer').value);
+  if(off>0){
+    const mid=r*u,diff=(off/mid-1)*100,ad=Math.abs(diff);
+    const v=ad<=1?['v1','👍 Výborný kurz']:ad<=3?['v2','👌 Slušný kurz']:ad<=6?['v3','🤔 Spíš nevýhodný']:['v4','👎 Nevýhodný – zkus jinde'];
+    const sell=off<=mid,got=q*off/u,midv=q*r;
+    $('offerRes').innerHTML=`<span class="verdict ${v[0]}">${v[1]}</span><div>${nf(ad,ad<1?2:1)} % ${sell?'pod':'nad'} středovým kurzem (${nf(mid,decOf(mid))}).</div>
+      <div>${sell?`Prodáš ${esc(qTxt)} → dostaneš <b>${money(got,B)}</b>`:`Koupíš ${esc(qTxt)} → zaplatíš <b>${money(got,B)}</b>`}, to je o ${money(Math.abs(midv-got),B,Math.abs(midv-got)>=10?0:2)} ${sell?'méně':'víc'} než za středový kurz.</div>`;
+  }else $('offerRes').innerHTML='<div class="hint" style="margin-top:0">Opiš kurz z kurzovního lístku a uvidíš, jestli je výhodný.</div>';
   // seznam kurzů vůči cílové měně
   $('ratesTitle').textContent=`📈 Kurzy v ${B}`;
   const codes=(showAll?[...favs(),...allCodes().filter(c=>!favs().includes(c))]:favs()).filter(c=>c!==B);
@@ -219,17 +244,18 @@ function useCur(c){S.recent=[c,...S.recent.filter(x=>x!==c)].slice(0,4);}
 // ===== Ovládání =====
 $('amtA').addEventListener('input',()=>{lastEdited='A';S.amount=$('amtA').value;saveS();render();});
 $('amtB').addEventListener('input',()=>{lastEdited='B';render();});
-$('curA').addEventListener('change',()=>{S.from=$('curA').value;useCur(S.from);saveS();render();});
-$('curB').addEventListener('change',()=>{S.to=$('curB').value;useCur(S.to);saveS();render();});
+$('curA').addEventListener('change',()=>{S.from=$('curA').value;$('offer').value='';S.offer='';useCur(S.from);saveS();render();});
+$('curB').addEventListener('change',()=>{S.to=$('curB').value;$('offer').value='';S.offer='';useCur(S.to);saveS();render();});
 // Zavřený výběr ukazuje jen vlajku a kód, po rozbalení celé názvy měn
 const labels=(sel,full)=>{for(const o of sel.options)o.text=full?o.dataset.full:o.dataset.short;};
 ['curA','curB'].forEach(id=>{const el=$(id);
   ['pointerdown','focus','keydown'].forEach(ev=>el.addEventListener(ev,()=>labels(el,true)));
   ['blur','change'].forEach(ev=>el.addEventListener(ev,()=>labels(el,false)));});
-$('btnSwap').onclick=()=>{[S.from,S.to]=[S.to,S.from];const a=$('amtA').value;$('amtA').value=$('amtB').value;$('amtB').value=a;lastEdited='A';S.amount=$('amtA').value;saveS();render();};
+$('btnSwap').onclick=()=>{$('offer').value='';S.offer='';[S.from,S.to]=[S.to,S.from];const a=$('amtA').value;$('amtA').value=$('amtB').value;$('amtB').value=a;lastEdited='A';S.amount=$('amtA').value;saveS();render();};
 $('rates').addEventListener('click',e=>{const b=e.target.closest('[data-cur]');if(!b)return;S.from=b.dataset.cur;useCur(S.from);saveS();render();window.scrollTo({top:0,behavior:'smooth'});});
 $('btnAll').onclick=()=>{showAll=!showAll;render();};
 document.addEventListener('click',e=>{if(e.target.closest('#btnRef'))fetchRates(true);});
+$('offer').addEventListener('input',()=>{S.offer=$('offer').value;saveS();render();});
 $('btnEdit').onclick=()=>$('edit').classList.toggle('on');
 [['pGood','good'],['pBank','bank'],['pTour','tour']].forEach(([id,k])=>{
   $(id).value=String(S.spreads[k]).replace('.',',');
@@ -254,7 +280,7 @@ function publish(){
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)fetchRates(false);});
 window.addEventListener('online',()=>fetchRates(false));
 
-$('amtA').value=S.amount||'100';
+$('amtA').value=S.amount||'100';$('offer').value=S.offer||'';
 render();
 fetchRates(false);
 </script>
