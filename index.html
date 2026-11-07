@@ -82,6 +82,9 @@ h2.sec{font-size:20px;margin:22px 0 8px}
 .confirmbox .bk{margin-top:10px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:90%}
 .toast.show{opacity:1}
+.vers{margin-top:28px;font-size:13px;color:var(--muted)}
+.vers summary{cursor:pointer;padding:6px 0}
+.vers b{font-weight:600;color:var(--text)}
 @media(min-width:900px){.toast{bottom:24px}}
 </style>
 </head>
@@ -100,9 +103,12 @@ h2.sec{font-size:20px;margin:22px 0 8px}
 // =====================================================================
 //  REGISTR APLIKACÍ – novou aplikaci přidáš sem (viz MODULY.md)
 // =====================================================================
+const VERSION='2026.11.07';   // verze hlavní aplikace – při každé úpravě změnit
 const APPS=[
-  {id:'doklady',   name:'Doklady', full:'Hlídač dokladů',      icon:'🗂️', path:'apps/doklady/index.html',    prefix:'doklady.',    backupKey:'doklady.lastBackup'},
-  {id:'predplatne',name:'Platby',  full:'Předplatné a platby', icon:'💳', path:'apps/predplatne/index.html', prefix:'predplatne.', backupKey:'predplatne.lastBackup'},
+  {id:'doklady',   name:'Doklady',   full:'Hlídač dokladů',      icon:'🗂️', path:'doklady.html',    prefix:'doklady.',    backupKey:'doklady.lastBackup'},
+  {id:'predplatne',name:'Platby',    full:'Předplatné a platby', icon:'💳', path:'predplatne.html', prefix:'predplatne.', backupKey:'predplatne.lastBackup'},
+  {id:'bilkoviny', name:'Bílkoviny', full:'Cena bílkovin',       icon:'🥩', path:'bilkoviny.html',  prefix:'bilkoviny.'},
+  {id:'meny',      name:'Měny',      full:'Měny a směnárna',     icon:'💱', path:'meny.html',       prefix:'meny.'},
 ];
 
 // ===== Pomocné funkce =====
@@ -184,14 +190,17 @@ function renderHome(){
   h+=`</div><h2 class="sec">Aplikace</h2><div class="cards">`;
   h+=APPS.map(a=>{const s=summaryOf(a.id);
     const hl=s&&Array.isArray(s.headline)&&s.headline.length?`<div class="hl">${s.headline.slice(0,3).map(x=>`<div><span>${esc(x.label)}</span><b>${esc(x.value)}</b></div>`).join('')}</div>`
-      :`<div class="muted" style="font-size:15px">${s?'Zatím prázdné – přidej první položku.':'Načítám…'}</div>`;
-    return `<button class="acard" data-open="${esc(a.id)}"><div class="ah"><span class="ai" aria-hidden="true">${a.icon}</span>${esc(a.full)}<span class="go">Otevřít →</span></div>${hl}</button>`;}).join('');
+      :'';
+    const desc=s&&s.desc?`<div class="muted" style="font-size:15px">${esc(s.desc)}</div>`:(!hl?`<div class="muted" style="font-size:15px">${s?'Zatím prázdné – přidej první položku.':'Načítám…'}</div>`:'');
+    return `<button class="acard" data-open="${esc(a.id)}"><div class="ah"><span class="ai" aria-hidden="true">${a.icon}</span>${esc(a.full)}<span class="go">Otevřít →</span></div>${hl}${desc}</button>`;}).join('');
   h+=`</div><h2 class="sec">💾 Záloha všech aplikací</h2><div class="panel" style="padding:12px 14px">
     <div style="font-size:15px">Jeden soubor se všemi daty – doklady i platby. Hodí se před výměnou telefonu nebo jako pojistka.</div>
     <div class="bk"><button class="primary" id="btnExportAll">⬇️ Uložit zálohu všeho</button><button id="btnImportAll">⬆️ Načíst zálohu všeho</button>
     <button id="btnInstall" ${installEvt?'':'hidden'}>📲 Nainstalovat aplikaci</button></div>
     <div id="confirmBox"></div>
-    <div class="foot" id="bkFoot"></div></div>`;
+    <div class="foot" id="bkFoot"></div></div>
+    <details class="vers"><summary>ℹ️ Verze aplikací</summary><div>Life Admin <b>${VERSION}</b>${APPS.map(a=>{const s=summaryOf(a.id);return ` · ${esc(a.name)} <b>${s&&s.ver?esc(s.ver):'?'}</b>`;}).join('')}</div>
+      <div style="margin-top:4px">Po nahrání nové verze na GitHub se tu čísla změní při příštím otevření aplikace s internetem.</div></details>`;
   $('homeIn').innerHTML=h;
   if(pendingImport)showImportConfirm();
   const bk=store.get('lifeadmin.lastBackup'),f=$('bkFoot');

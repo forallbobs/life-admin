@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Měny a směnárna</title>
+<style>
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#0369a1;--accent-bg:#e3f1fa;
+--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#7cc4f0;--accent-bg:#132a3a;
+--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
+.wrap{max-width:900px;margin:0 auto;padding:16px 16px 60px}
+h1{font-size:26px;margin:4px 0 2px}
+h2{font-size:20px;margin:22px 0 8px}
+.sub{color:var(--muted);margin:0 0 12px}
+body.embedded .top{display:none}
+body.embedded .wrap{padding-top:12px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
+button:hover{border-color:var(--muted)}
+button.small{padding:4px 10px;min-height:36px;font-size:15px}
+input,select{padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:48px}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.conv{display:grid;gap:8px;grid-template-columns:minmax(0,1fr)}
+.crow{display:flex;gap:8px}
+.crow input{flex:1 1 auto;width:100%;min-width:0;font-size:24px;font-weight:700}
+.crow select,.crow .unit{flex:0 0 120px;font-size:18px}
+.crow .unit{display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-weight:600}
+.swapline{text-align:center;color:var(--muted);font-size:20px;line-height:1}
+.rate{font-size:16px}
+.rate b{font-size:18px}
+.src{font-size:14px;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.src.warn{color:var(--orange)}
+.ex{width:100%;border-collapse:collapse;font-size:16px}
+.ex th{font-size:14px;color:var(--muted);font-weight:600;text-align:right;padding:6px 4px;vertical-align:bottom}
+.ex th:first-child,.ex td:first-child{text-align:left}
+.ex td{padding:10px 4px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+.ex td:first-child{white-space:normal}
+.ex td b{font-size:17px}
+.ex .pct{display:block;font-size:13px;color:var(--muted)}
+.ex tr.mid td{color:var(--muted)}
+.edit{display:none;margin-top:10px;gap:10px;flex-wrap:wrap}
+.edit.on{display:flex}
+.edit label{font-size:14px;color:var(--muted);display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
+.edit input{min-height:40px}
+.hint{font-size:14px;color:var(--muted);margin-top:8px}
+.rates{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.rbtn{text-align:left;display:flex;flex-direction:column;gap:0;padding:8px 12px}
+.rbtn.on{border-color:var(--accent);background:var(--accent-bg)}
+.rbtn .c{font-weight:600}
+.rbtn .v{font-size:15px;color:var(--muted)}
+.tips{margin:0;padding-left:20px;font-size:15px}
+.tips li{margin-bottom:6px}
+.ver{font-size:13px;color:var(--muted);margin-top:24px;opacity:.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>💱 Měny a směnárna</h1>
+    <p class="sub">Aktuální kurz a kolik čekat ve směnárně.</p>
+  </header>
+
+  <div class="panel conv">
+    <div class="crow">
+      <input id="amtF" inputmode="decimal" aria-label="Částka v cizí měně" placeholder="100">
+      <select id="cur" aria-label="Měna"></select>
+    </div>
+    <div class="swapline" aria-hidden="true">⇅</div>
+    <div class="crow">
+      <input id="amtC" inputmode="decimal" aria-label="Částka v korunách">
+      <div class="unit">🇨🇿 CZK</div>
+    </div>
+    <div class="rate" id="rate"></div>
+    <div class="src" id="src"></div>
+  </div>
+
+  <h2>🏦 Ve směnárně (odhad)</h2>
+  <div class="panel">
+    <table class="ex" id="ex"></table>
+    <div class="hint">Odhad podle typické přirážky ke středovému kurzu – skutečné kurzy směnáren se liší. Když ti nabídnou výrazně méně než „výhodná směnárna“, je to nevýhodné.
+      <button class="small" id="btnEdit" style="margin-left:4px">⚙️ Upravit přirážky</button></div>
+    <div class="edit" id="edit">
+      <label>Výhodná směnárna (%)<input id="pGood" inputmode="decimal"></label>
+      <label>Banka (%)<input id="pBank" inputmode="decimal"></label>
+      <label>Letiště / turistická (%)<input id="pTour" inputmode="decimal"></label>
+    </div>
+  </div>
+
+  <h2>📈 Kurzy</h2>
+  <div class="rates" id="rates"></div>
+  <div style="margin-top:8px"><button class="small" id="btnAll">Zobrazit všechny měny</button></div>
+
+  <h2>💡 Tipy</h2>
+  <ul class="tips">
+    <li><b>Porovnávej, kolik dostaneš celkem</b>, ne jen kurz. „0 % poplatek“ často znamená horší kurz.</li>
+    <li>Na kurzovním lístku: <b>nákup</b> = za kolik směnárna od tebe valuty koupí (ty je prodáváš), <b>prodej</b> = za kolik ti je prodá.</li>
+    <li>U směny do 1 000 € můžeš <b>do 3 hodin odstoupit</b> ve stejné provozovně (u směnárenského automatu do 3 pracovních dnů). Schovej si doklad.</li>
+    <li>Při placení kartou v cizině volí platbu <b>v místní měně</b>, ne v korunách – přepočet obchodníka bývá horší.</li>
+  </ul>
+  <div class="ver" id="ver"></div>
+</div>
+
+<script>
+const APP_ID='meny',APP_VERSION='2026.11.07';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const parseNum=v=>{const s=String(v??'').replace(/\s/g,'').replace(',','.');return s===''?NaN:Number(s);};
+const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const parseD=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const fmt=d=>`${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`;
+const nf=(v,dec)=>new Intl.NumberFormat('cs-CZ',{minimumFractionDigits:dec,maximumFractionDigits:dec}).format(v);
+const czk=(v,dec=0)=>nf(v,dec)+' Kč';
+const mem={};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
+
+// Měny, které ECB vyhlašuje (názvy a vlajky)
+const NAMES={EUR:['Euro','🇪🇺'],USD:['Americký dolar','🇺🇸'],GBP:['Britská libra','🇬🇧'],CHF:['Švýcarský frank','🇨🇭'],PLN:['Polský zlotý','🇵🇱'],
+ HUF:['Maďarský forint','🇭🇺'],DKK:['Dánská koruna','🇩🇰'],SEK:['Švédská koruna','🇸🇪'],NOK:['Norská koruna','🇳🇴'],ISK:['Islandská koruna','🇮🇸'],
+ RON:['Rumunský lei','🇷🇴'],BGN:['Bulharský lev','🇧🇬'],TRY:['Turecká lira','🇹🇷'],JPY:['Japonský jen','🇯🇵'],CNY:['Čínský jüan','🇨🇳'],
+ HKD:['Hongkongský dolar','🇭🇰'],KRW:['Jihokorejský won','🇰🇷'],THB:['Thajský baht','🇹🇭'],SGD:['Singapurský dolar','🇸🇬'],MYR:['Malajsijský ringgit','🇲🇾'],
+ IDR:['Indonéská rupie','🇮🇩'],PHP:['Filipínské peso','🇵🇭'],INR:['Indická rupie','🇮🇳'],ILS:['Izraelský šekel','🇮🇱'],AUD:['Australský dolar','🇦🇺'],
+ NZD:['Novozélandský dolar','🇳🇿'],CAD:['Kanadský dolar','🇨🇦'],MXN:['Mexické peso','🇲🇽'],BRL:['Brazilský real','🇧🇷'],ZAR:['Jihoafrický rand','🇿🇦']};
+const FAV=['EUR','USD','GBP','CHF','PLN','HUF'];
+
+// ===== Data =====
+const KEY_R='meny.rates.v1',KEY_S='meny.settings.v1';
+let R=null;   // {date, fetched, rates:{EUR:0.041,…}} = kolik cizí měny za 1 Kč (ECB přes Frankfurter API)
+try{R=JSON.parse(store.get(KEY_R)||'null');if(!R||!R.rates)R=null;}catch(e){R=null;}
+let S={cur:'EUR',amount:'100',spreads:{good:1.5,bank:4,tour:10}};
+try{const s=JSON.parse(store.get(KEY_S)||'null');if(s){S={...S,...s,spreads:{...S.spreads,...(s.spreads||{})}};}}catch(e){}
+const saveS=()=>store.set(KEY_S,JSON.stringify(S));
+const czkPer=c=>R&&R.rates[c]>0?1/R.rates[c]:null;       // kolik Kč za 1 jednotku měny
+const unitOf=c=>{const v=czkPer(c);return v==null||v>=1?1:v>=0.01?100:1000;};   // HUF, JPY… po 100 kusech
+const decOf=v=>v>=100?2:v>=1?3:4;
+
+// ===== Stažení kurzů =====
+let busy=false,lastTry=0,err=false;
+async function fetchRates(force){
+  const t=isoD(new Date());
+  if(busy||(!force&&R&&R.fetched===t)||(!force&&Date.now()-lastTry<30*60e3))return false;
+  if(typeof fetch!=='function'||navigator.onLine===false){err=true;render();return false;}
+  busy=true;lastTry=Date.now();renderSrc();
+  try{
+    const ctrl=new AbortController(),tm=setTimeout(()=>ctrl.abort(),8000);
+    const r=await fetch('https://api.frankfurter.dev/v1/latest?base=CZK',{signal:ctrl.signal,cache:'no-store'});
+    clearTimeout(tm);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    if(j.base!=='CZK'||!j.rates||!j.rates.EUR)throw new Error('bad');
+    R={date:j.date,fetched:t,rates:j.rates};store.set(KEY_R,JSON.stringify(R));err=false;
+    return true;
+  }catch(e){err=true;return false;}
+  finally{busy=false;render();}
+}
+
+// ===== Vykreslení =====
+let lastEdited='F',showAll=false;
+function fillSelect(){
+  const avail=R?Object.keys(R.rates):FAV;
+  const list=[...FAV.filter(c=>!R||R.rates[c]),...avail.filter(c=>!FAV.includes(c)).sort()];
+  if(!list.includes(S.cur))S.cur=list[0]||'EUR';
+  $('cur').innerHTML=list.map(c=>`<option value="${c}"${c===S.cur?' selected':''}>${(NAMES[c]||['',''])[1]} ${c}</option>`).join('');
+}
+function renderSrc(){
+  const el=$('src');
+  if(busy){el.className='src';el.innerHTML='⏳ Stahuji aktuální kurzy…';return;}
+  if(!R){el.className='src warn';el.innerHTML='Kurzy zatím nejsou stažené – připoj se k internetu. <button class="small" id="btnRef">↻ Zkusit znovu</button>';return;}
+  const stale=R.fetched!==isoD(new Date());
+  el.className='src'+(err&&stale?' warn':'');
+  el.innerHTML=`Středový kurz ECB ze dne ${fmt(parseD(R.date))}${err&&stale?' · nepodařilo se stáhnout novější, jsi offline?':''} <button class="small" id="btnRef" title="Aktualizovat kurzy">↻ Aktualizovat</button>`;
+}
+function render(){
+  fillSelect();renderSrc();
+  const c=S.cur,v=czkPer(c),u=unitOf(c);
+  if(v==null){$('rate').innerHTML='';$('ex').innerHTML='';$('amtC').value='';$('rates').innerHTML='';publish();return;}
+  // převodník
+  const F=parseNum($('amtF').value),C=parseNum($('amtC').value);
+  if(lastEdited==='F'&&document.activeElement!==$('amtC'))$('amtC').value=F>=0?nf(F*v,2):'';
+  if(lastEdited==='C'&&document.activeElement!==$('amtF'))$('amtF').value=C>=0?nf(C/v,2):'';
+  $('rate').innerHTML=`<b>${u} ${c} = ${czk(v*u,decOf(v*u))}</b> · 1 Kč = ${nf(1/v,decOf(1/v))} ${c}`;
+  // směnárna
+  const amt=lastEdited==='F'?F:(C>=0?C/v:NaN),a=amt>0?amt:100,aTxt=nf(a,a%1?2:0)+' '+c;
+  const rows=[['🏪 Výhodná směnárna',S.spreads.good],['🏦 Banka',S.spreads.bank],['✈️ Letiště / turistická',S.spreads.tour]];
+  $('ex').innerHTML=`<tr><th></th><th>Prodáš ${esc(aTxt)}<br>dostaneš asi</th><th>Koupíš ${esc(aTxt)}<br>zaplatíš asi</th></tr>
+    <tr class="mid"><td>Středový kurz</td><td>${czk(a*v)}</td><td>${czk(a*v)}</td></tr>`+
+    rows.map(([l,p])=>`<tr><td>${l}<span class="pct">přirážka ~${nf(p,1)} %</span></td><td><b>${czk(a*v*(1-p/100))}</b></td><td><b>${czk(a*v*(1+p/100))}</b></td></tr>`).join('');
+  // seznam kurzů
+  const codes=showAll?[...FAV,...Object.keys(R.rates).filter(x=>!FAV.includes(x)).sort()]:FAV;
+  $('rates').innerHTML=codes.filter(x=>czkPer(x)!=null).map(x=>{const vv=czkPer(x),uu=unitOf(x);
+    return `<button class="rbtn${x===c?' on':''}" data-cur="${x}" title="${esc((NAMES[x]||[x])[0])}"><span class="c">${(NAMES[x]||['',''])[1]} ${uu>1?uu+' ':''}${x}</span><span class="v">${czk(vv*uu,decOf(vv*uu))}</span></button>`;}).join('');
+  $('btnAll').textContent=showAll?'Zobrazit méně':'Zobrazit všechny měny';
+  publish();
+}
+
+// ===== Ovládání =====
+$('amtF').addEventListener('input',()=>{lastEdited='F';S.amount=$('amtF').value;saveS();render();});
+$('amtC').addEventListener('input',()=>{lastEdited='C';render();});
+$('cur').addEventListener('change',()=>{S.cur=$('cur').value;saveS();render();});
+$('rates').addEventListener('click',e=>{const b=e.target.closest('[data-cur]');if(!b)return;S.cur=b.dataset.cur;saveS();render();window.scrollTo({top:0,behavior:'smooth'});});
+$('btnAll').onclick=()=>{showAll=!showAll;render();};
+document.addEventListener('click',e=>{if(e.target.closest('#btnRef'))fetchRates(true);});
+$('btnEdit').onclick=()=>$('edit').classList.toggle('on');
+[['pGood','good'],['pBank','bank'],['pTour','tour']].forEach(([id,k])=>{
+  $(id).value=String(S.spreads[k]).replace('.',',');
+  $(id).addEventListener('input',()=>{const n=parseNum($(id).value);if(n>=0&&n<100){S.spreads[k]=n;saveS();render();}});
+});
+
+// ===== Life Admin: vložený režim, verze, souhrn pro přehled =====
+const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+if(EMBED)document.body.classList.add('embedded');
+$('ver').textContent='Měny a směnárna · verze '+APP_VERSION+' · kurzy: Evropská centrální banka (frankfurter.dev)';
+function publish(){
+  try{
+    const hl=[];
+    for(const c of [...new Set([S.cur,'EUR','USD'])].slice(0,3)){const v=czkPer(c);if(v!=null){const u=unitOf(c);hl.push({label:`${u} ${c}`,value:czk(v*u,v*u>=100?1:2)});}}
+    store.set('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:0,
+      desc:R?`Středový kurz ECB ze dne ${fmt(parseD(R.date))}`:'Kurzy zatím nejsou stažené.',headline:hl,alerts:[]}));
+    if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
+  }catch(e){}
+}
+// Nový den / návrat do aplikace → zkusit nové kurzy
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)fetchRates(false);});
+window.addEventListener('online',()=>fetchRates(false));
+
+$('amtF').value=S.amount||'100';
+render();
+fetchRates(false);
+</script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cena bílkovin</title>
+<style>
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#c2410c;--accent-bg:#fdeee6;
+--green:#2e7d32;--green-bg:#e9f5ea;--orange:#b45309}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#fb923c;--accent-bg:#3a2414;
+--green:#81c995;--green-bg:#1b3021;--orange:#fbbf6a}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 60px}
+h1{font-size:26px;margin:4px 0 2px}
+.sub{color:var(--muted);margin:0 0 12px}
+body.embedded .top{display:none}
+body.embedded .wrap{padding-top:12px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
+button:hover{border-color:var(--muted)}
+input{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:44px}
+input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+label{display:block;font-size:15px;color:var(--muted)}
+label input{margin-top:4px;color:var(--text)}
+.best{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.best .b1{font-size:19px;font-weight:700}
+.best .b2{color:var(--muted);font-size:15px}
+.list{display:grid;gap:10px}
+@media(min-width:800px){.list{grid-template-columns:1fr 1fr}}
+@media(min-width:1150px){.list{grid-template-columns:1fr 1fr 1fr}}
+.prod{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.prod.win{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
+.ph{display:flex;gap:8px;align-items:center}
+.ph input{font-weight:600}
+.rm{border:0;background:none;min-height:40px;padding:4px 10px;color:var(--muted);font-size:18px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;border-radius:0;min-height:40px;padding:6px 8px;font-size:15px;background:none;color:var(--muted)}
+.seg button.on{background:var(--accent-bg);color:var(--accent);font-weight:600}
+.res{border-top:1px solid var(--line);padding-top:8px;font-size:15px;color:var(--muted);min-height:48px}
+.res .big{font-size:22px;font-weight:700;color:var(--text)}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:14px;font-weight:600;margin:2px 0}
+.badge.win{background:var(--green-bg);color:var(--green)}
+.badge.lose{background:var(--accent-bg);color:var(--accent)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.tip{font-size:15px;color:var(--muted)}
+.ver{font-size:13px;color:var(--muted);margin-top:24px;opacity:.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>🥩 Cena bílkovin</h1>
+    <p class="sub">Kde koupíš gram bílkoviny nejlevněji?</p>
+  </header>
+  <div id="best"></div>
+  <div class="list" id="list"></div>
+  <div class="bar">
+    <button id="btnAdd">+ Další produkt</button>
+    <button id="btnClear">Vymazat vše</button>
+  </div>
+  <p class="tip">💡 Bílkoviny najdeš na obalu v tabulce výživových hodnot – obvykle „na 100 g“. Pak přepni na <b>Na 100 g</b> a vyplň i hmotnost balení.</p>
+  <div class="ver" id="ver"></div>
+</div>
+
+<script>
+const APP_ID='bilkoviny',APP_VERSION='2026.11.07';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const parseNum=v=>{const s=String(v??'').replace(/\s/g,'').replace(',','.');return s===''?NaN:Number(s);};
+const kc=(v,dec=2)=>new Intl.NumberFormat('cs-CZ',{style:'currency',currency:'CZK',minimumFractionDigits:dec,maximumFractionDigits:dec}).format(v);
+const num=(v,dec=1)=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:dec}).format(v);
+
+const blank=()=>({name:'',price:'',weight:'',protein:'',mode:'pack'});
+let prods=[blank(),blank()];
+
+// Výpočet jednoho produktu: celkové bílkoviny v balení a cena za 1 g
+function calc(p){
+  const price=parseNum(p.price),weight=parseNum(p.weight),protein=parseNum(p.protein);
+  if(!(price>0)||!(protein>0))return null;
+  let total;
+  if(p.mode==='per100'){if(!(weight>0))return{need:'weight'};total=protein*weight/100;}
+  else total=protein;
+  if(!(total>0))return null;
+  const per100=p.mode==='per100'?protein:(weight>0?protein/weight*100:null);
+  return{total,per100,cpg:price/total};
+}
+
+function renderList(){
+  $('list').innerHTML=prods.map((p,i)=>`
+    <div class="prod" data-i="${i}">
+      <div class="ph"><input data-f="name" value="${esc(p.name)}" placeholder="Produkt ${i+1} (např. tvaroh)" aria-label="Název produktu ${i+1}">
+        ${prods.length>2?`<button class="rm" data-rm="${i}" aria-label="Odebrat produkt ${i+1}" title="Odebrat">✕</button>`:''}</div>
+      <div class="grid">
+        <label>Cena (Kč)<input data-f="price" inputmode="decimal" value="${esc(p.price)}" placeholder="např. 49,90"></label>
+        <label>Hmotnost balení (g)<input data-f="weight" inputmode="decimal" value="${esc(p.weight)}" placeholder="${p.mode==='per100'?'povinné':'nepovinné'}"></label>
+      </div>
+      <div class="seg" role="group" aria-label="Jak je uvedeno množství bílkovin">
+        <button data-mode="pack" class="${p.mode==='pack'?'on':''}">Bílkoviny v balení</button>
+        <button data-mode="per100" class="${p.mode==='per100'?'on':''}">Na 100 g</button>
+      </div>
+      <label>${p.mode==='per100'?'Bílkovin na 100 g (g)':'Bílkovin v celém balení (g)'}<input data-f="protein" inputmode="decimal" value="${esc(p.protein)}" placeholder="např. ${p.mode==='per100'?'12':'42'}"></label>
+      <div class="res" id="res${i}"></div>
+    </div>`).join('');
+  renderResults();
+}
+
+function renderResults(){
+  const R=prods.map(calc);
+  const valid=R.map((r,i)=>({r,i})).filter(x=>x.r&&x.r.cpg);
+  const best=valid.length>=2?valid.reduce((a,b)=>b.r.cpg<a.r.cpg?b:a):null;
+  prods.forEach((p,i)=>{
+    const r=R[i],el=$('res'+i),card=el&&el.closest('.prod');if(!el)return;
+    card.classList.toggle('win',!!best&&best.i===i);
+    if(!r){el.innerHTML='Vyplň cenu a bílkoviny.';return;}
+    if(r.need==='weight'){el.innerHTML='Doplň hmotnost balení – bez ní nejde spočítat, kolik bílkovin balení obsahuje.';return;}
+    let badge='';
+    if(best){
+      if(best.i===i){const second=valid.filter(x=>x.i!==i).reduce((a,b)=>b.r.cpg<a.r.cpg?b:a);badge=`<span class="badge win">🏆 Nejlevnější${valid.length===2?` – o ${num((1-r.cpg/second.r.cpg)*100,0)} % levnější`:''}</span>`;}
+      else badge=`<span class="badge lose">o ${num((r.cpg/best.r.cpg-1)*100,0)} % dražší</span>`;
+    }
+    el.innerHTML=`${badge}<div><span class="big">${kc(r.cpg)}</span> za 1 g bílkoviny</div>
+      <div>${kc(r.cpg*20)} za 20 g (porce) · ${num(r.total)} g bílkovin v balení${r.per100!=null?` · ${num(r.per100)} g / 100 g`:''}</div>`;
+  });
+  if(best){
+    const nm=i=>prods[i].name.trim()||`Produkt ${i+1}`;
+    const worst=valid.reduce((a,b)=>b.r.cpg>a.r.cpg?b:a);
+    $('best').innerHTML=`<div class="best"><div class="b1">🏆 ${esc(nm(best.i))} – ${kc(best.r.cpg)} za 1 g bílkoviny</div>
+      <div class="b2">Oproti ${esc(nm(worst.i))} ušetříš ${kc((worst.r.cpg-best.r.cpg)*100,0)} na každých 100 g bílkovin.</div></div>`;
+  }else $('best').innerHTML='';
+}
+
+$('list').addEventListener('input',e=>{
+  const f=e.target.dataset.f,card=e.target.closest('.prod');if(!f||!card)return;
+  prods[Number(card.dataset.i)][f]=e.target.value;
+  renderResults();
+});
+$('list').addEventListener('click',e=>{
+  const m=e.target.closest('[data-mode]');
+  if(m){const i=Number(m.closest('.prod').dataset.i);if(prods[i].mode!==m.dataset.mode){prods[i].mode=m.dataset.mode;renderList();
+    const inp=document.querySelector(`.prod[data-i="${i}"] [data-f="${m.dataset.mode==='per100'&&!prods[i].weight?'weight':'protein'}"]`);if(inp)inp.focus();}return;}
+  const rm=e.target.closest('[data-rm]');
+  if(rm){prods.splice(Number(rm.dataset.rm),1);renderList();}
+});
+$('btnAdd').onclick=()=>{prods.push(blank());renderList();const c=document.querySelector(`.prod[data-i="${prods.length-1}"] [data-f="name"]`);if(c){c.focus();c.scrollIntoView({block:'center',behavior:'smooth'});}};
+$('btnClear').onclick=()=>{prods=[blank(),blank()];renderList();};
+
+// ===== Life Admin: vložený režim, verze, souhrn pro přehled =====
+const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+if(EMBED)document.body.classList.add('embedded');
+$('ver').textContent='Cena bílkovin · verze '+APP_VERSION;
+try{
+  localStorage.setItem('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:0,
+    desc:'Porovnej, kde je gram bílkoviny nejlevnější.',headline:[],alerts:[]}));
+  if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
+}catch(e){}
+
+renderList();
+</script>
+</body>
+</html>
