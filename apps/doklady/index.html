@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hlídač dokladů</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#f5f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)">
+<style>
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#2563eb;
+--red:#c62828;--red-bg:#fdecec;--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32;--green-bg:#e9f5ea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#2563eb;
+--red:#f28b82;--red-bg:#3b1d1d;--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995;--green-bg:#1b3021}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
+h1{font-size:26px;margin:8px 0 2px}
+.sub{color:var(--muted);margin:0 0 12px}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.small{padding:6px 10px;min-height:38px;font-size:15px}
+button.confirm{background:var(--red);border-color:var(--red);color:#fff}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.summary{font-size:18px;margin:4px 0 8px}
+.search{margin:4px 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.chip{border-radius:999px;padding:6px 14px;min-height:38px;font-size:15px}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.chips select{width:auto;min-height:38px;padding:6px 10px;border-radius:999px}
+.item{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.item.red{border-left-color:var(--red)}.item.orange{border-left-color:var(--orange)}
+.icon{font-size:30px;line-height:1.2}
+.main{flex:1;min-width:0}
+.name{font-weight:600;font-size:18px;word-wrap:break-word}
+.meta{color:var(--muted);font-size:15px}
+.num{cursor:pointer;text-decoration:underline dotted}
+.note{font-size:15px;margin-top:4px;font-style:italic;color:var(--muted)}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:15px;font-weight:600;margin:4px 0}
+.badge.red{background:var(--red-bg);color:var(--red)}.badge.orange{background:var(--orange-bg);color:var(--orange)}.badge.green{background:var(--green-bg);color:var(--green)}
+.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.empty{text-align:center;padding:40px 16px;background:var(--card);border:1px dashed var(--line);border-radius:12px}
+.empty .big{font-size:44px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:10}
+.overlay.open{display:flex}
+.modal{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:20px;max-height:92vh;overflow:auto}
+@media(min-width:600px){.overlay{align-items:center}.modal{border-radius:16px}}
+.modal h2{margin:0 0 4px;font-size:22px}
+.mfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:16px}
+.mfoot>div{display:flex;flex-wrap:wrap;gap:8px}
+label{display:block;font-size:15px;color:var(--muted);margin:12px 0 4px}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:44px}
+textarea{min-height:70px;resize:vertical}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.err{color:var(--red);font-size:14px;margin-top:4px}
+.hint{font-size:14px;color:var(--muted);margin-top:4px}
+.hint.warn{color:var(--orange)}
+.foot{color:var(--muted);font-size:14px;margin-top:24px}
+.foot.warn{color:var(--orange)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:90%}
+.toast.show{opacity:1}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:4px 0 12px}
+.top h1{margin:4px 0 2px}
+.top .sub{margin:0}
+.tactions{display:flex;gap:8px;align-items:center;flex-shrink:0;margin-top:4px}
+.menuwrap{position:relative}
+#btnMenu{font-size:22px;min-width:50px;padding:4px 12px;line-height:1}
+.menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:6px;z-index:15;min-width:270px;display:flex;flex-direction:column}
+.menu[hidden]{display:none}
+.menu button{border:0;text-align:left;background:none;border-radius:8px;white-space:nowrap}
+.menu button:hover{background:var(--bg)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
+.fab{display:none}
+/* Vloženo do Life Admin: vlastní nadpis schovat, název je v navigaci */
+body.embedded .top h1,body.embedded .top .sub{display:none}
+body.embedded .wrap{padding-top:8px}
+@media(max-width:599px){
+  .wrap{padding-top:8px;padding-bottom:110px}
+  .top{margin-bottom:8px}
+  .top h1{font-size:22px}
+  .top .sub,#btnAdd{display:none}
+  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
+  .toast{bottom:96px}
+}
+@media(min-width:1000px){#list{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:stretch}#list .item{margin-bottom:0}#list .main{display:flex;flex-direction:column;align-items:flex-start}#list .actions{margin-top:auto;padding-top:8px}#list .empty{grid-column:1/-1}}
+#printArea{display:none}
+@media print{
+  .wrap,.overlay,.toast{display:none!important}
+  #printArea{display:block}
+  body{background:#fff;color:#000;font-size:12px}
+  #printArea table{width:100%;border-collapse:collapse}
+  #printArea th,#printArea td{border:1px solid #999;padding:4px 6px;text-align:left;vertical-align:top}
+  #printArea th{background:#eee}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Hlídač dokladů</h1>
+      <p class="sub">Ať tě prošlý doklad už nikdy nepřekvapí.</p>
+    </div>
+    <div class="tactions">
+      <button class="primary" id="btnAdd">+ Přidat doklad</button>
+      <div class="menuwrap">
+        <button id="btnMenu" aria-haspopup="true" aria-expanded="false" aria-label="Menu" title="Menu">☰</button>
+        <div class="menu" id="menu" role="menu" hidden>
+          <button role="menuitem" id="btnCalAll">📅 Vše do kalendáře (.ics)</button>
+          <button role="menuitem" id="btnPrint">🖨️ Tisk / PDF</button>
+          <hr>
+          <button role="menuitem" id="btnExport">⬇️ Uložit zálohu</button>
+          <button role="menuitem" id="btnImport">⬆️ Načíst zálohu</button>
+          <button role="menuitem" id="btnInstall" hidden>📲 Nainstalovat aplikaci</button>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="fileImport" accept=".json,application/json" hidden>
+  </header>
+  <button class="fab" id="btnFab" aria-label="Přidat doklad" title="Přidat doklad"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 4v20M4 14h20" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></button>
+
+  <div class="summary" id="summary"></div>
+  <input class="search" id="search" type="search" placeholder="🔍 Hledat (pas, Octavia, máma…)" aria-label="Hledat">
+  <div class="chips" id="chips"></div>
+  <div id="list"></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+    <h2 id="formTitle">Nový doklad</h2>
+    <label for="fType">Typ</label>
+    <select id="fType"></select>
+    <label for="fName">Název</label>
+    <input id="fName" placeholder="Můj pas, Škoda Octavia STK…">
+    <label for="fOwner">Komu patří (nepovinné)</label>
+    <input id="fOwner" list="owners" placeholder="Já, Máma, Honza…">
+    <datalist id="owners"></datalist>
+    <label for="fDate">Platnost do</label>
+    <input id="fDate" type="date">
+    <div class="err" id="errDate"></div>
+    <div class="hint" id="renewHint"></div>
+    <label for="fRecur">Opakuje se</label>
+    <select id="fRecur"></select>
+    <div class="row" id="recurCustom" style="display:none;margin-top:8px">
+      <input id="fRecurN" type="number" min="1" max="600" step="1" aria-label="Počet">
+      <select id="fRecurU" aria-label="Jednotka"><option value="d">dní</option><option value="w">týdnů</option><option value="m">měsíců</option><option value="y">let</option></select>
+    </div>
+    <div class="err" id="errRecur"></div>
+    <label for="fWarnN">Upozornit předem</label>
+    <div class="row">
+      <input id="fWarnN" type="number" min="0" max="999" step="1">
+      <select id="fWarnU"><option value="1">dní</option><option value="7">týdnů</option><option value="30">měsíců</option></select>
+    </div>
+    <label for="fNum">Číslo dokladu (nepovinné)</label>
+    <input id="fNum" autocomplete="off" placeholder="123456789">
+    <div class="hint warn">Citlivý údaj: uloží se i do zálohy a objeví se v tisku. Zálohu nikomu neposílej a nedávej ji nikam veřejně.</div>
+    <label for="fNote">Poznámka (nepovinné)</label>
+    <textarea id="fNote" placeholder="Leží v šuplíku v pracovně, k obnově potřeba fotka…"></textarea>
+    <div class="mfoot">
+      <div id="editExtras">
+        <button id="btnDel">🗑️ Smazat</button>
+        <button id="btnIcs">📅 Soubor .ics</button>
+      </div>
+      <div>
+        <button id="btnCancel">Zrušit</button>
+        <button class="primary" id="btnSave">Uložit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="printArea"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TYPES=[
+ ['passport','Cestovní pas','🛂',180,120],['idcard','Občanský průkaz','🪪',90,120],['licence','Řidičský průkaz','🚗',90,120],
+ ['stk','Technická kontrola (STK)','🔧',30,24],['emissions','Emisní kontrola','💨',30,24],['vignette','Dálniční známka','🛣️',14,12],
+ ['insurance','Pojištění','🛡️',30,12],['warranty','Záruka na výrobek','🧾',30,0],['pet','Očkování zvířete','🐾',30,12],['other','Ostatní','📄',30,0]
+].map(([key,label,icon,warn,recur])=>({key,label,icon,warn,recur}));
+const typeOf=k=>TYPES.find(t=>t.key===k)||TYPES[TYPES.length-1];
+const RECUR=[0,1,2,3,4,6,9,12,18,24,36,48,60,72,120,180];
+function every(n,a,b,c){return n===1?`Každý ${a}`:`${n>=2&&n<=4?'Každé':'Každých'} ${n} ${plural(n,a,b,c)}`;}
+function recurLabel(m){
+  if(!m)return 'Neopakuje se';
+  if(m===6)return 'Každého půl roku';
+  return m%12===0?every(m/12,'rok','roky','let'):every(m,'měsíc','měsíce','měsíců');
+}
+function recurLabelD(d){return d%7===0?every(d/7,'týden','týdny','týdnů'):every(d,'den','dny','dní');}
+const hasRecur=it=>!!(it.recurMonths||it.recurDays);
+const recurText=it=>it.recurDays?recurLabelD(it.recurDays):recurLabel(it.recurMonths);
+
+const KEY='doklady.items.v1',KEY_BK='doklady.lastBackup';
+const mem={};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
+let items=[];try{items=JSON.parse(store.get(KEY)||'[]')}catch(e){items=[]}
+items=items.map(i=>({docNumber:'',recurMonths:0,recurDays:0,...i}));
+const save=()=>store.set(KEY,JSON.stringify(items));
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const parseD=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const today=()=>{const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())};
+const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const fmt=d=>`${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`;
+const daysLeft=s=>Math.round((parseD(s)-today())/864e5);
+const plural=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
+function addMonths(d,m){const r=new Date(d.getFullYear(),d.getMonth()+m,1);const last=new Date(r.getFullYear(),r.getMonth()+1,0).getDate();r.setDate(Math.min(d.getDate(),last));return r;}
+const mask=n=>n.length<=3?'•••':'•••'+n.slice(-3);
+
+function daysText(d){
+  if(d<0){const n=-d;return `prošlo před ${n} ${n===1?'dnem':'dny'}`}
+  if(d===0)return 'končí dnes';
+  if(d===1)return 'končí zítra';
+  let t=`${d>=2&&d<=4?'zbývají':'zbývá'} ${d} ${plural(d,'den','dny','dní')}`;
+  if(d>=730)t+=` (≈ ${(d/365).toFixed(1).replace('.',',')} roku)`;
+  else if(d>60)t+=` (≈ ${Math.round(d/30.44)} měs.)`;
+  return t;
+}
+function status(it){
+  const d=daysLeft(it.expiryDate);
+  if(d<0)return{key:'expired',cls:'red',label:'Prošlé'};
+  // Červená 14 dní předem; u kratšího upozornění až v jeho druhé polovině (nejdřív oranžová)
+  if(d<=(it.warningDays>=14?14:Math.floor(it.warningDays/2)))return{key:'urgent',cls:'red',label:'Urgentní'};
+  if(d<=it.warningDays)return{key:'soon',cls:'orange',label:'Brzy'};
+  return{key:'ok',cls:'green',label:'V pořádku'};
+}
+
+let fStatus='all',fOwner='',q='';const revealed=new Set();
+$('search').addEventListener('input',e=>{q=norm(e.target.value.trim());render();});
+
+function render(){
+  const rows=items.map(it=>({it,d:daysLeft(it.expiryDate),s:status(it)})).sort((a,b)=>a.d-b.d);
+  const c={expired:0,urgent:0,soon:0,ok:0};rows.forEach(r=>c[r.s.key]++);
+  const parts=[];
+  if(c.expired)parts.push(`${c.expired} ${plural(c.expired,'prošlý','prošlé','prošlých')}`);
+  if(c.urgent)parts.push(`${c.urgent} ${plural(c.urgent,'urgentní','urgentní','urgentních')}`);
+  if(c.soon)parts.push(`${c.soon} brzy`);
+  parts.push(`${c.ok} v pořádku`);
+  $('summary').textContent=items.length?parts.join(' · '):'';
+  $('search').style.display=items.length?'':'none';
+
+  const owners=[...new Set(items.map(i=>(i.owner||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'cs'));
+  if(owners.length<2)fOwner='';
+  $('owners').innerHTML=owners.map(o=>`<option value="${esc(o)}">`).join('');
+  const chip=(k,l)=>`<button class="chip${fStatus===k?' on':''}" data-f="${k}">${l}</button>`;
+  $('chips').innerHTML=items.length?chip('all',`Vše (${items.length})`)+chip('urgent',`🔴 Urgentní (${c.expired+c.urgent})`)+chip('soon',`🟠 Brzy (${c.soon})`)+chip('ok',`🟢 OK (${c.ok})`)+
+    (owners.length>1?`<select id="ownerSel" aria-label="Filtrovat podle osoby"><option value="">Všichni</option>${owners.map(o=>`<option${o===fOwner?' selected':''}>${esc(o)}</option>`).join('')}</select>`:''):'';
+
+  const vis=rows.filter(r=>{
+    if(fStatus==='urgent'&&!(r.s.key==='expired'||r.s.key==='urgent'))return false;
+    if(fStatus==='soon'&&r.s.key!=='soon')return false;
+    if(fStatus==='ok'&&r.s.key!=='ok')return false;
+    if(fOwner&&(r.it.owner||'').trim()!==fOwner)return false;
+    if(q&&!norm([r.it.name,r.it.owner,r.it.note,r.it.docNumber,typeOf(r.it.type).label].join(' ')).includes(q))return false;
+    return true;
+  });
+
+  if(!items.length){
+    $('list').innerHTML=`<div class="empty"><div class="big">🗂️</div><h2>Začni prvním dokladem</h2><p class="sub">Zadej, kdy ti co vyprší, a já ohlídám, abys to stihl obnovit.</p><button class="primary" onclick="openForm()">+ Přidat první doklad</button></div>`;
+  }else if(!vis.length){
+    $('list').innerHTML=`<div class="empty"><p class="sub">Hledání ani filtru nic neodpovídá.</p></div>`;
+  }else{
+    $('list').innerHTML=vis.map(({it,d,s})=>{
+      const T=typeOf(it.type);
+      const id=esc(it.id);
+      const num=it.docNumber?` · <span class="num" data-act="reveal" data-id="${id}"title="Klikni pro zobrazení">č. ${esc(revealed.has(it.id)?it.docNumber:mask(it.docNumber))}</span>`:'';
+      const rec=hasRecur(it)?` · 🔁 ${recurText(it).toLowerCase()}`:'';
+      return `<div class="item ${s.cls}">
+        <div class="icon" aria-hidden="true">${T.icon}</div>
+        <div class="main">
+          <div class="name">${esc(it.name)}</div>
+          <div class="meta">${esc(T.label)}${it.owner?' · '+esc(it.owner):''} · platí do ${fmt(parseD(it.expiryDate))}${rec}${num}</div>
+          <span class="badge ${s.cls}">${s.label} – ${daysText(d)}</span>
+          ${it.note?`<div class="note">${esc(it.note)}</div>`:''}
+          <div class="actions">
+            <button class="small" data-act="gcal" data-id="${id}">📆 Do kalendáře</button>
+            <button class="small" data-act="renew" data-id="${id}">✅ Obnoveno</button>
+            <button class="small" data-act="edit" data-id="${id}">✏️ Upravit</button>
+          </div>
+        </div></div>`;
+    }).join('');
+  }
+
+  const bk=store.get(KEY_BK);const f=$('foot');
+  if(!items.length){f.textContent='';f.className='foot';}
+  else if(!bk){f.textContent='Zatím nemáš žádnou zálohu. Data jsou jen v tomto prohlížeči – doporučuju „Uložit zálohu“.';f.className='foot warn';}
+  else{const age=Math.round((today()-parseD(bk))/864e5);f.textContent=`Poslední záloha: ${fmt(parseD(bk))}`+(age>30?' – je starší než měsíc, zvaž novou.':'');f.className='foot'+(age>30?' warn':'');}
+  publishSummary(rows,c);
+}
+// ===== Souhrn pro Life Admin (hlavní aplikace ho čte a ukazuje na společném přehledu) =====
+const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+if(EMBED)document.body.classList.add('embedded');
+function publishSummary(rows,c){
+  try{
+    const hot=c.expired+c.urgent+c.soon;
+    const sum={v:1,updated:new Date().toISOString(),count:items.length,
+      headline:[{label:'Dokladů',value:String(items.length)},{label:'V pořádku',value:String(c.ok)},{label:'Hlídat',value:String(hot)}],
+      alerts:rows.filter(r=>r.s.key!=='ok').map(({it,d,s})=>({level:s.cls==='red'?'red':'orange',
+        title:it.name+(it.owner?` (${it.owner})`:''),sub:`${typeOf(it.type).label} · ${s.label.toLowerCase()} – ${daysText(d)}`,date:it.expiryDate}))};
+    store.set('lifeadmin.summary.doklady',JSON.stringify(sum));
+    if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:'doklady'},location.origin==='null'?'*':location.origin);
+  }catch(e){}
+}
+
+$('chips').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(b){fStatus=b.dataset.f;render();}});
+$('chips').addEventListener('change',e=>{if(e.target.id==='ownerSel'){fOwner=e.target.value;render();}});
+
+$('list').addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const it=items.find(i=>i.id===b.dataset.id);if(!it)return;
+  const a=b.dataset.act;
+  if(a==='reveal'){revealed.has(it.id)?revealed.delete(it.id):revealed.add(it.id);render();}
+  if(a==='edit')openForm(it);
+  if(a==='gcal')openGcal(it);
+  if(a==='renew')openForm(it,true);
+});
+
+$('fType').innerHTML=TYPES.map(t=>`<option value="${t.key}">${t.icon} ${t.label}</option>`).join('');
+$('fRecur').innerHTML=RECUR.map(m=>`<option value="${m}">${recurLabel(m)}</option>`).join('')+'<option value="custom">Vlastní…</option>';
+let editingId=null,warnTouched=false,recurTouched=false,delTimer=null;
+function setWarn(days){
+  let u=1;if(days>0&&days%30===0)u=30;else if(days>0&&days%7===0)u=7;
+  $('fWarnU').value=u;$('fWarnN').value=days/u;
+}
+function showCustom(on){$('recurCustom').style.display=on?'flex':'none';}
+function setRecur(m,d){
+  $('errRecur').textContent='';
+  if(!d&&RECUR.includes(m)){$('fRecur').value=m;showCustom(false);return;}
+  $('fRecur').value='custom';showCustom(true);
+  if(d){if(d%7===0){$('fRecurN').value=d/7;$('fRecurU').value='w';}else{$('fRecurN').value=d;$('fRecurU').value='d';}}
+  else if(m%12===0){$('fRecurN').value=m/12;$('fRecurU').value='y';}
+  else{$('fRecurN').value=m;$('fRecurU').value='m';}
+}
+function getRecur(){
+  if($('fRecur').value!=='custom')return{recurMonths:Number($('fRecur').value)||0,recurDays:0};
+  const n=Number($('fRecurN').value)||0,u=$('fRecurU').value;
+  if(!Number.isInteger(n)||n<0)return null;
+  return{recurMonths:u==='m'?n:u==='y'?n*12:0,recurDays:u==='d'?n:u==='w'?n*7:0};
+}
+function resetDel(){clearTimeout(delTimer);$('btnDel').classList.remove('confirm');$('btnDel').textContent='🗑️ Smazat';}
+function openForm(it,renew){
+  editingId=it?it.id:null;warnTouched=!!it;recurTouched=!!it;
+  $('formTitle').textContent=renew?'Nové datum platnosti':it?'Upravit doklad':'Nový doklad';
+  const T=typeOf(it?it.type:'passport');
+  $('fType').value=T.key;
+  $('fName').value=it?it.name:'';
+  $('fOwner').value=it?it.owner||'':'';
+  $('fNum').value=it?it.docNumber||'':'';
+  setRecur(it?it.recurMonths||0:T.recur,it?it.recurDays||0:0);
+  setWarn(it?it.warningDays:T.warn);
+  $('fNote').value=it?it.note||'':'';
+  $('errDate').textContent='';$('renewHint').textContent='';
+  if(renew){
+    if(hasRecur(it)){
+      let next;
+      if(it.recurDays){next=parseD(it.expiryDate);next.setDate(next.getDate()+it.recurDays);}
+      else next=addMonths(parseD(it.expiryDate),it.recurMonths);
+      $('fDate').value=isoD(next);
+      $('renewHint').textContent=`Navrženo: ${recurText(it).toLowerCase()} od předchozího data. Pokud máš nový doklad s jiným datem, uprav ho.`;
+    }else{$('fDate').value='';$('renewHint').textContent='Zadej datum platnosti z nového dokladu.';}
+  }else $('fDate').value=it?it.expiryDate:'';
+  $('editExtras').style.display=it&&!renew?'flex':'none';
+  resetDel();
+  $('overlay').classList.add('open');
+  formSnap=snapForm();closeArmed=false;
+  setTimeout(()=>(renew?$('fDate'):$('fName')).focus(),50);
+}
+const FORM_IDS=['fType','fName','fOwner','fDate','fRecur','fRecurN','fRecurU','fWarnN','fWarnU','fNum','fNote'];
+let formSnap='',closeArmed=false,closeArmT;
+const snapForm=()=>FORM_IDS.map(i=>$(i).value).join('\u0001');
+function closeForm(){$('overlay').classList.remove('open');resetDel();closeArmed=false;clearTimeout(closeArmT);}
+function requestClose(){
+  if(!$('overlay').classList.contains('open'))return;
+  if(snapForm()===formSnap||closeArmed){closeForm();return;}
+  closeArmed=true;clearTimeout(closeArmT);closeArmT=setTimeout(()=>closeArmed=false,4000);
+  toast('Máš neuložené změny. Zavři znovu pro zahození, nebo dej Uložit.');
+}
+$('fType').addEventListener('change',()=>{const T=typeOf($('fType').value);if(!warnTouched)setWarn(T.warn);if(!recurTouched)setRecur(T.recur,0);});
+$('fWarnN').addEventListener('input',()=>warnTouched=true);
+$('fWarnU').addEventListener('change',()=>warnTouched=true);
+$('fRecur').addEventListener('change',()=>{
+  recurTouched=true;$('errRecur').textContent='';
+  const c=$('fRecur').value==='custom';showCustom(c);
+  if(c){if(!$('fRecurN').value){$('fRecurN').value=1;$('fRecurU').value='y';}$('fRecurN').focus();}
+});
+$('fRecurN').addEventListener('input',()=>{recurTouched=true;$('errRecur').textContent='';});
+$('fRecurU').addEventListener('change',()=>recurTouched=true);
+$('fDate').addEventListener('input',()=>$('errDate').textContent='');
+$('btnCancel').onclick=closeForm;
+$('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')requestClose();});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden){setMenu(false);return;}requestClose();});
+$('btnAdd').onclick=()=>openForm();
+// Menu (☰) a plovoucí tlačítko + na mobilu
+function setMenu(open){$('menu').hidden=!open;$('btnMenu').setAttribute('aria-expanded',String(open));}
+$('btnMenu').addEventListener('click',e=>{e.stopPropagation();setMenu($('menu').hidden);});
+document.addEventListener('click',e=>{if(!$('menu').hidden&&!e.target.closest('.menuwrap'))setMenu(false);});
+$('menu').addEventListener('click',e=>{if(e.target.closest('button'))setMenu(false);});
+$('btnFab').onclick=()=>openForm();
+
+$('btnDel').onclick=()=>{
+  const b=$('btnDel');
+  if(b.classList.contains('confirm')){items=items.filter(i=>i.id!==editingId);save();closeForm();render();toast('Smazáno');}
+  else{b.classList.add('confirm');b.textContent='Opravdu smazat?';clearTimeout(delTimer);delTimer=setTimeout(resetDel,4000);}
+};
+$('btnIcs').onclick=()=>{
+  const it=items.find(i=>i.id===editingId);if(!it)return;
+  download(`${slug(it.name)}.ics`,buildIcs([it]),'text/calendar');toast('Kalendářový soubor stažen.');
+};
+
+$('btnSave').onclick=()=>{
+  const date=$('fDate').value;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){$('errDate').textContent='Zadej datum, do kdy doklad platí.';$('fDate').focus();return;}
+  const type=$('fType').value;
+  const rec=getRecur();
+  if(!rec){$('errRecur').textContent='Zadej celé číslo – místo 1,75 měsíce třeba 8 týdnů.';$('fRecurN').focus();return;}
+  const n=Math.max(0,Math.round(Number($('fWarnN').value)||0));
+  const data={type,name:$('fName').value.trim()||typeOf(type).label,owner:$('fOwner').value.trim(),
+    expiryDate:date,warningDays:n*Number($('fWarnU').value),...rec,
+    docNumber:$('fNum').value.trim(),note:$('fNote').value.trim()};
+  if(editingId){const i=items.findIndex(x=>x.id===editingId);items[i]={...items[i],...data};}
+  else items.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),...data,createdAt:isoD(today())});
+  save();closeForm();render();toast('Uloženo');
+};
+
+function icsEsc(s){return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');}
+const ymd=d=>isoD(d).replace(/-/g,'');
+function fold(l){const out=[];while(l.length>36){out.push(l.slice(0,36));l=' '+l.slice(36);}out.push(l);return out.join('\r\n');}
+function vevent(uid,date,summary,desc){
+  const stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  return['BEGIN:VEVENT','UID:'+uid,'DTSTAMP:'+stamp,'DTSTART:'+ymd(date)+'T090000','DURATION:PT30M',
+    'SUMMARY:'+icsEsc(summary),'DESCRIPTION:'+icsEsc(desc),
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(summary),'TRIGGER:PT0M','END:VALARM','END:VEVENT'];
+}
+function eventInfo(it){
+  const T=typeOf(it.type),exp=parseD(it.expiryDate),t=today();
+  let w=new Date(exp);w.setDate(w.getDate()-it.warningDays);if(w<t)w=t;
+  const who=it.owner?` (${it.owner})`:'';
+  const desc=[`${T.label}: ${it.name}${who}`,`Platnost končí: ${fmt(exp)}`,it.note?`Poznámka: ${it.note}`:''].filter(Boolean).join('\n');
+  return{exp,w,t,who,desc};
+}
+function itemEvents(it){
+  const{exp,w,t,who,desc}=eventInfo(it);
+  const uid=it.id+'-'+ymd(exp);
+  const out=vevent(uid+'-warn@hlidac-dokladu',w,`Obnovit: ${it.name}${who} – platí do ${fmt(exp)}`,desc);
+  if(exp>=t&&ymd(exp)!==ymd(w))out.push(...vevent(uid+'-exp@hlidac-dokladu',exp,`Dnes končí platnost: ${it.name}${who}`,desc));
+  return out;
+}
+function buildIcs(list){
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Hlidac dokladu//CS','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+  list.forEach(it=>L.push(...itemEvents(it)));L.push('END:VCALENDAR');
+  return L.map(fold).join('\r\n')+'\r\n';
+}
+function openGcal(it){
+  const{exp,w,who,desc}=eventInfo(it);
+  const end=new Date(w);end.setDate(end.getDate()+1);
+  const p=new URLSearchParams({action:'TEMPLATE',text:`Obnovit: ${it.name}${who} – platí do ${fmt(exp)}`,dates:ymd(w)+'/'+ymd(end),details:desc});
+  window.open('https://calendar.google.com/calendar/render?'+p.toString(),'_blank');
+}
+const slug=s=>(s||'doklad').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'doklad';
+function download(name,content,mime){
+  const url=URL.createObjectURL(new Blob([content],{type:mime+';charset=utf-8'}));
+  const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+$('btnCalAll').onclick=()=>{
+  if(!items.length){toast('Nejdřív přidej nějaký doklad.');return;}
+  download('vsechny-doklady.ics',buildIcs(items),'text/calendar');toast('Soubor stažen – nahraj ho na calendar.google.com přes Nastavení → Import a export.');
+};
+
+$('btnPrint').onclick=()=>{
+  if(!items.length){toast('Zatím není co tisknout.');return;}
+  const rows=[...items].sort((a,b)=>daysLeft(a.expiryDate)-daysLeft(b.expiryDate));
+  const hasNum=rows.some(i=>i.docNumber);
+  $('printArea').innerHTML=`<h2>Přehled dokladů</h2><p>Vytištěno ${fmt(today())} · ${items.length} ${plural(items.length,'položka','položky','položek')}</p>
+  <table><thead><tr><th>Typ</th><th>Název</th><th>Osoba</th>${hasNum?'<th>Číslo</th>':''}<th>Platí do</th><th>Stav</th><th>Opakování</th><th>Poznámka</th></tr></thead><tbody>
+  ${rows.map(i=>{const s=status(i);return `<tr><td>${esc(typeOf(i.type).label)}</td><td>${esc(i.name)}</td><td>${esc(i.owner)}</td>${hasNum?`<td>${esc(i.docNumber)}</td>`:''}<td>${fmt(parseD(i.expiryDate))}</td><td>${s.label} – ${daysText(daysLeft(i.expiryDate))}</td><td>${hasRecur(i)?recurText(i):''}</td><td>${esc(i.note)}</td></tr>`}).join('')}
+  </tbody></table>`;
+  window.print();
+};
+
+$('btnExport').onclick=()=>{
+  if(!items.length){toast('Zatím není co zálohovat.');return;}
+  const d=isoD(today());
+  download(`doklady-zaloha-${d}.json`,JSON.stringify({app:'hlidac-dokladu',version:2,exportedAt:new Date().toISOString(),items},null,2),'application/json');
+  store.set(KEY_BK,d);render();toast('Záloha uložena');
+};
+$('btnImport').onclick=()=>$('fileImport').click();
+$('fileImport').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);const arr=Array.isArray(data)?data:data.items;
+      if(!Array.isArray(arr))throw 0;
+      const valid=arr.filter(x=>x&&/^\d{4}-\d{2}-\d{2}$/.test(x.expiryDate)).map(x=>({
+        id:String(x.id||Date.now().toString(36)+Math.random().toString(36).slice(2,7)),type:typeOf(x.type).key,
+        name:String(x.name||typeOf(x.type).label),owner:String(x.owner||''),expiryDate:x.expiryDate,
+        warningDays:x.warningDays>=0?Math.round(Number(x.warningDays)):typeOf(x.type).warn,
+        recurMonths:Math.max(0,Math.round(Number(x.recurMonths)||0)),
+        recurDays:Math.max(0,Math.round(Number(x.recurDays)||0)),docNumber:String(x.docNumber||''),
+        note:String(x.note||''),createdAt:x.createdAt||isoD(today())}));
+      const map=new Map(items.map(i=>[i.id,i]));valid.forEach(v=>map.set(v.id,v));
+      items=[...map.values()];save();render();
+      toast(`Načteno ${valid.length} ${plural(valid.length,'položka','položky','položek')}`);
+    }catch(err){toast('Tenhle soubor nevypadá jako záloha z této aplikace.');}
+    e.target.value='';
+  };
+  r.readAsText(f);
+});
+
+let toastT;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);}
+
+// Přepočítat dny, když se vrátíš k otevřené stránce (např. druhý den ráno)
+let lastDay=isoD(today());
+function refreshIfNewDay(){const d=isoD(today());if(d!==lastDay){lastDay=d;render();}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshIfNewDay();});
+window.addEventListener('focus',refreshIfNewDay);
+setInterval(refreshIfNewDay,60000);
+
+// --- PWA: offline režim, instalace, ochrana dat ---
+if(!EMBED&&'serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+let installEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();if(EMBED)return;installEvt=e;$('btnInstall').hidden=false;});
+$('btnInstall').onclick=async()=>{
+  if(!installEvt)return;
+  installEvt.prompt();await installEvt.userChoice.catch(()=>{});
+  installEvt=null;$('btnInstall').hidden=true;
+};
+window.addEventListener('appinstalled',()=>{$('btnInstall').hidden=true;toast('Aplikace nainstalována 🎉');});
+// Požádat prohlížeč, aby data nemazal při nedostatku místa (bez dotazu na uživatele)
+if(navigator.storage&&navigator.storage.persist){navigator.storage.persisted().then(p=>{if(!p)navigator.storage.persist();}).catch(()=>{});}
+
+render();
+</script>
+</body>
+</html>
