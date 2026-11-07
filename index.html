@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Life Admin</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#f5f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)">
+<style>
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#4f46e5;
+--red:#c62828;--red-bg:#fdecec;--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32;--blue:#1d4ed8;--navbg:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#818cf8;
+--red:#f28b82;--red-bg:#3b1d1d;--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995;--blue:#93b4f8;--navbg:#1c1c1a}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5;
+  display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* Navigace: na mobilu dole, na počítači nahoře */
+.nav{display:flex;align-items:stretch;background:var(--navbg);border-top:1px solid var(--line);order:2;padding-bottom:env(safe-area-inset-bottom)}
+.brand{display:none}
+.tabs{display:flex;flex:1}
+.tab{flex:1;border:0;border-radius:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  padding:6px 4px;min-height:62px;font-size:13px;color:var(--muted);position:relative}
+.tab .ti{font-size:22px;line-height:1.1}
+.tab.on{color:var(--text);font-weight:600}
+.tab.on::before{content:"";position:absolute;top:0;left:22%;right:22%;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}
+.tab .dot{position:absolute;top:6px;left:calc(50% + 10px);min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center}
+@media(min-width:900px){
+  .nav{order:0;border-top:0;border-bottom:1px solid var(--line);padding:0 24px;align-items:center;gap:24px}
+  .brand{display:block;font-weight:700;font-size:19px;white-space:nowrap}
+  .tabs{flex:0 1 auto;gap:4px}
+  .tab{flex-direction:row;gap:8px;min-height:56px;font-size:16px;padding:6px 16px}
+  .tab .ti{font-size:20px}
+  .tab.on::before{top:auto;bottom:0;left:12px;right:12px;border-radius:3px 3px 0 0}
+  .tab .dot{position:static;margin-left:2px}
+}
+
+main{flex:1;position:relative;min-height:0}
+.view{position:absolute;inset:0}
+.view[hidden]{display:none}
+#home{overflow:auto;-webkit-overflow-scrolling:touch}
+iframe.view{border:0;width:100%;height:100%;background:var(--bg)}
+
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 40px}
+h1{font-size:26px;margin:4px 0 0}
+.sub{color:var(--muted);margin:0 0 8px}
+h2.sec{font-size:20px;margin:22px 0 8px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 14px}
+.prow{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.prow:last-child{border-bottom:0}
+.prow .ic{font-size:22px;width:30px;text-align:center}
+.prow .tx{flex:1;min-width:0}
+.prow .t1{font-weight:600}
+.prow .t2{color:var(--muted);font-size:15px}
+.prow.red .t1{color:var(--red)}
+.prow .lv{width:10px;height:10px;border-radius:50%;flex:0 0 10px}
+.lv.red{background:var(--red)}.lv.orange{background:var(--orange)}.lv.info{background:var(--blue)}
+.muted{color:var(--muted)}
+.more{display:block;width:100%;border:0;background:none;color:var(--accent);font-weight:600;min-height:40px}
+.cards{display:grid;gap:10px}
+@media(min-width:700px){.cards{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}}
+.acard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:8px;text-align:left;width:100%}
+.acard:hover{border-color:var(--muted)}
+.acard .ah{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px}
+.acard .ah .ai{font-size:28px}
+.acard .ah .go{margin-left:auto;color:var(--accent);font-size:15px;font-weight:600}
+.hl{display:flex;flex-wrap:wrap;gap:6px 18px}
+.hl div{display:flex;flex-direction:column}
+.hl span{font-size:13px;color:var(--muted)}
+.hl b{font-size:20px}
+.bk{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.foot{color:var(--muted);font-size:14px;margin-top:8px}
+.foot.warn{color:var(--orange)}
+.confirmbox{background:var(--orange-bg);border:1px solid var(--orange);border-radius:12px;padding:12px 14px;margin-top:10px}
+.confirmbox .bk{margin-top:10px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:90%}
+.toast.show{opacity:1}
+@media(min-width:900px){.toast{bottom:24px}}
+</style>
+</head>
+<body>
+<nav class="nav" aria-label="Aplikace">
+  <div class="brand">🧭 Life Admin</div>
+  <div class="tabs" id="tabs"></div>
+</nav>
+<main id="main">
+  <section class="view" id="home"><div class="wrap" id="homeIn"></div></section>
+</main>
+<input type="file" id="fileImport" accept=".json,application/json" hidden>
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================================
+//  REGISTR APLIKACÍ – novou aplikaci přidáš sem (viz MODULY.md)
+// =====================================================================
+const APPS=[
+  {id:'doklady',   name:'Doklady', full:'Hlídač dokladů',      icon:'🗂️', path:'apps/doklady/index.html',    prefix:'doklady.',    backupKey:'doklady.lastBackup'},
+  {id:'predplatne',name:'Platby',  full:'Předplatné a platby', icon:'💳', path:'apps/predplatne/index.html', prefix:'predplatne.', backupKey:'predplatne.lastBackup'},
+];
+
+// ===== Pomocné funkce =====
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const plural=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
+const parseD=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const isISO=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s);
+const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const today=()=>{const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())};
+const fmt=d=>`${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`;
+const dayNum=d=>Math.round(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);
+const diffDays=(a,b)=>dayNum(b)-dayNum(a);
+function rel(n){
+  if(n<0)return `před ${-n} ${plural(-n,'dnem','dny','dny')}`;
+  if(n===0)return 'dnes';if(n===1)return 'zítra';
+  return `za ${n} ${plural(n,'den','dny','dní')}`;
+}
+const mem={};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
+const appOf=id=>APPS.find(a=>a.id===id);
+function summaryOf(id){try{const s=JSON.parse(store.get('lifeadmin.summary.'+id)||'null');return s&&s.v===1?s:null;}catch(e){return null;}}
+function storageKeys(){const out=[];try{for(let i=0;i<localStorage.length;i++)out.push(localStorage.key(i));}catch(e){out.push(...Object.keys(mem));}return out;}
+
+// ===== Navigace a vložené aplikace =====
+let view='home';
+const frames={};
+function buildTabs(){
+  $('tabs').innerHTML=[{id:'home',name:'Přehled',icon:'🏠'},...APPS].map(a=>
+    `<button class="tab" data-view="${a.id}" aria-label="${esc(a.full||a.name)}"><span class="ti" aria-hidden="true">${a.icon}</span><span>${esc(a.name)}</span><span class="dot" id="dot-${a.id}" hidden></span></button>`).join('');
+}
+function ensureFrame(a){
+  if(frames[a.id])return frames[a.id];
+  const f=document.createElement('iframe');
+  f.className='view';f.title=a.full;f.src=a.path;f.hidden=true;
+  $('main').appendChild(f);frames[a.id]=f;return f;
+}
+function show(id){
+  if(id!=='home'&&!appOf(id))id='home';
+  view=id;
+  $('home').hidden=id!=='home';
+  for(const a of APPS){const f=frames[a.id];if(f)f.hidden=a.id!==id;}
+  if(id!=='home'){const f=ensureFrame(appOf(id));f.hidden=false;}
+  document.querySelectorAll('.tab').forEach(b=>{const on=b.dataset.view===id;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false');});
+  document.title=id==='home'?'Life Admin':`${appOf(id).full} · Life Admin`;
+  if(id==='home')renderHome();
+}
+function go(id){if(location.hash.slice(1)!==id)location.hash=id==='home'?'':id;else show(id);}
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)||'home'));
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)go(b.dataset.view);});
+
+// ===== Přehled (společná domovská stránka) =====
+let alertsAll=false;const ALERT_LIMIT=8;
+const LV={red:0,orange:1,info:2};
+function renderHome(){
+  const t=today();
+  const days=['neděle','pondělí','úterý','středa','čtvrtek','pátek','sobota'];
+  const months=['ledna','února','března','dubna','května','června','července','srpna','září','října','listopadu','prosince'];
+  // sesbírat upozornění ze všech aplikací
+  let al=[];
+  for(const a of APPS){const s=summaryOf(a.id);if(!s||!Array.isArray(s.alerts))continue;
+    for(const x of s.alerts)al.push({...x,app:a});}
+  al=al.filter(x=>x&&x.title).sort((a,b)=>(LV[a.level]??3)-(LV[b.level]??3)||String(a.date).localeCompare(String(b.date)));
+  const reds=al.filter(x=>x.level==='red').length;
+  // tečky s počtem červených v navigaci
+  for(const a of APPS){const s=summaryOf(a.id),n=s&&Array.isArray(s.alerts)?s.alerts.filter(x=>x.level==='red').length:0;const d=$('dot-'+a.id);if(d){d.hidden=!n;d.textContent=n;}}
+  let h=`<h1>Life Admin</h1><p class="sub">Dnes je ${days[t.getDay()]} ${t.getDate()}. ${months[t.getMonth()]} ${t.getFullYear()}</p>`;
+  h+=`<h2 class="sec">🔔 Co hoří${reds?` <span class="muted" style="font-size:16px;font-weight:400">· ${reds} ${plural(reds,'naléhavá věc','naléhavé věci','naléhavých věcí')}</span>`:''}</h2><div class="panel">`;
+  if(!al.length)h+=`<div class="prow" style="cursor:default"><div class="tx muted">Nic nehoří. 👍</div></div>`;
+  else{
+    const shown=alertsAll?al:al.slice(0,ALERT_LIMIT);
+    h+=shown.map(x=>{const dd=isISO(x.date)?diffDays(t,parseD(x.date)):null;
+      return `<div class="prow${x.level==='red'?' red':''}" data-open="${esc(x.app.id)}" role="button" tabindex="0">
+        <span class="lv ${esc(x.level)}" aria-hidden="true"></span>
+        <div class="ic" aria-hidden="true">${x.app.icon}</div>
+        <div class="tx"><div class="t1">${esc(x.title)}</div><div class="t2">${dd!=null?`${fmt(parseD(x.date))} (${rel(dd)}) · `:''}${esc(x.sub||'')}</div></div></div>`;}).join('');
+    if(al.length>ALERT_LIMIT)h+=`<button class="more" data-allalerts>${alertsAll?'Zobrazit méně':`Zobrazit všech ${al.length}`}</button>`;
+  }
+  h+=`</div><h2 class="sec">Aplikace</h2><div class="cards">`;
+  h+=APPS.map(a=>{const s=summaryOf(a.id);
+    const hl=s&&Array.isArray(s.headline)&&s.headline.length?`<div class="hl">${s.headline.slice(0,3).map(x=>`<div><span>${esc(x.label)}</span><b>${esc(x.value)}</b></div>`).join('')}</div>`
+      :`<div class="muted" style="font-size:15px">${s?'Zatím prázdné – přidej první položku.':'Načítám…'}</div>`;
+    return `<button class="acard" data-open="${esc(a.id)}"><div class="ah"><span class="ai" aria-hidden="true">${a.icon}</span>${esc(a.full)}<span class="go">Otevřít →</span></div>${hl}</button>`;}).join('');
+  h+=`</div><h2 class="sec">💾 Záloha všech aplikací</h2><div class="panel" style="padding:12px 14px">
+    <div style="font-size:15px">Jeden soubor se všemi daty – doklady i platby. Hodí se před výměnou telefonu nebo jako pojistka.</div>
+    <div class="bk"><button class="primary" id="btnExportAll">⬇️ Uložit zálohu všeho</button><button id="btnImportAll">⬆️ Načíst zálohu všeho</button>
+    <button id="btnInstall" ${installEvt?'':'hidden'}>📲 Nainstalovat aplikaci</button></div>
+    <div id="confirmBox"></div>
+    <div class="foot" id="bkFoot"></div></div>`;
+  $('homeIn').innerHTML=h;
+  if(pendingImport)showImportConfirm();
+  const bk=store.get('lifeadmin.lastBackup'),f=$('bkFoot');
+  const hasData=APPS.some(a=>(summaryOf(a.id)||{}).count>0);
+  if(!bk){f.textContent=hasData?'Zatím jsi společnou zálohu nedělal. Data jsou jen v tomto zařízení.':'';f.className='foot'+(hasData?' warn':'');}
+  else{const age=diffDays(parseD(bk),t);f.textContent=`Poslední společná záloha: ${fmt(parseD(bk))}`+(age>30?' – je starší než měsíc, zvaž novou.':'');f.className='foot'+(age>30?' warn':'');}
+}
+$('home').addEventListener('click',e=>{
+  if(e.target.closest('[data-allalerts]')){alertsAll=!alertsAll;renderHome();return;}
+  const o=e.target.closest('[data-open]');if(o){go(o.dataset.open);return;}
+  if(e.target.closest('#btnExportAll'))exportAll();
+  if(e.target.closest('#btnImportAll'))$('fileImport').click();
+  if(e.target.closest('#btnInstall'))doInstall();
+  if(e.target.closest('#btnDoImport'))doImport();
+  if(e.target.closest('#btnCancelImport')){pendingImport=null;renderHome();}
+});
+$('home').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-open]')){e.preventDefault();go(e.target.dataset.open);}});
+
+// Aplikace hlásí změnu souhrnu (vložené přes postMessage, ostatní záložky přes storage event)
+window.addEventListener('message',e=>{if(e.origin!==location.origin&&!(location.origin==='null'&&e.origin==='null'))return;
+  if(e.data&&e.data.type==='lifeadmin:summary'&&view==='home')renderHome();else if(e.data&&e.data.type==='lifeadmin:summary')updateDots();});
+window.addEventListener('storage',e=>{if(e.key&&e.key.startsWith('lifeadmin.summary.')){view==='home'?renderHome():updateDots();}});
+function updateDots(){for(const a of APPS){const s=summaryOf(a.id),n=s&&Array.isArray(s.alerts)?s.alerts.filter(x=>x.level==='red').length:0;const d=$('dot-'+a.id);if(d){d.hidden=!n;d.textContent=n;}}}
+
+// ===== Společná záloha =====
+function download(name,content,mime){
+  const url=URL.createObjectURL(new Blob([content],{type:mime+';charset=utf-8'}));
+  const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+const ownKey=k=>APPS.some(a=>k.startsWith(a.prefix));
+function exportAll(){
+  const d=isoD(today()),data={};
+  for(const a of APPS)if(a.backupKey)store.set(a.backupKey,d);   // ať aplikace nehlásí „nemáš zálohu“
+  for(const k of storageKeys())if(k&&ownKey(k))data[k]=store.get(k);
+  if(!Object.keys(data).length){toast('Zatím není co zálohovat.');return;}
+  download(`life-admin-zaloha-${d}.json`,JSON.stringify({app:'life-admin',version:1,exportedAt:new Date().toISOString(),apps:APPS.map(a=>a.id),data},null,2),'application/json');
+  store.set('lifeadmin.lastBackup',d);
+  refreshFrames();renderHome();
+  toast('Záloha uložena – obsahuje osobní i finanční údaje, nikomu ji neposílej.');
+}
+let pendingImport=null;
+$('fileImport').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    e.target.value='';
+    let j;try{j=JSON.parse(r.result);}catch(err){toast('Tenhle soubor nevypadá jako záloha.');return;}
+    if(j&&j.app==='life-admin'&&j.data&&typeof j.data==='object'){
+      const keys=Object.keys(j.data).filter(k=>ownKey(k)&&typeof j.data[k]==='string');
+      if(!keys.length){toast('V záloze nejsou data žádné ze známých aplikací.');return;}
+      pendingImport={keys,data:j.data,date:j.exportedAt};renderHome();return;
+    }
+    const single=j&&(j.app==='hlidac-dokladu'?'Doklady':j.app==='predplatne'?'Platby':null);
+    if(single){toast(`Tohle je záloha jen jedné aplikace – otevři záložku ${single} a načti ji tam přes ☰ → Načíst zálohu.`);return;}
+    toast('Tenhle soubor nevypadá jako záloha z Life Admin.');
+  };
+  r.readAsText(f);
+});
+function showImportConfirm(){
+  const p=pendingImport,parts=[];
+  for(const a of APPS){const ks=p.keys.filter(k=>k.startsWith(a.prefix));if(!ks.length)continue;
+    let n='';try{const arr=JSON.parse(p.data[a.prefix+'items.v1']||'null');if(Array.isArray(arr))n=` (${arr.length} ${plural(arr.length,'položka','položky','položek')})`;}catch(e){}
+    parts.push(esc(a.full)+n);}
+  const when=p.date&&!isNaN(new Date(p.date))?fmt(new Date(p.date)):'neznámého data';
+  $('confirmBox').innerHTML=`<div class="confirmbox"><b>Načíst zálohu z ${when}?</b><div style="font-size:15px;margin-top:4px">Obsahuje: ${parts.join(', ')}.<br>Současná data těchto aplikací se <b>nahradí</b> daty ze zálohy.</div>
+    <div class="bk"><button class="primary" id="btnDoImport">Ano, načíst</button><button id="btnCancelImport">Zrušit</button></div></div>`;
+}
+function doImport(){
+  const p=pendingImport;if(!p)return;
+  for(const a of APPS){if(!p.keys.some(k=>k.startsWith(a.prefix)))continue;
+    for(const k of storageKeys())if(k&&k.startsWith(a.prefix)&&!(k in p.data))try{localStorage.removeItem(k)}catch(e){}}
+  for(const k of p.keys)store.set(k,p.data[k]);
+  pendingImport=null;
+  refreshFrames(true);renderHome();toast('Záloha načtena ✓');
+}
+// Překreslit / znovu načíst vložené aplikace (po záloze nebo obnově)
+function refreshFrames(reload){
+  for(const a of APPS){const f=frames[a.id];if(!f)continue;
+    try{if(reload)f.contentWindow.location.reload();else if(typeof f.contentWindow.render==='function')f.contentWindow.render();}catch(e){}}
+}
+
+let toastT;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3800);}
+
+// ===== PWA =====
+let installEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(view==='home')renderHome();});
+async function doInstall(){if(!installEvt)return;installEvt.prompt();await installEvt.userChoice.catch(()=>{});installEvt=null;renderHome();}
+window.addEventListener('appinstalled',()=>{installEvt=null;toast('Life Admin nainstalován 🎉');if(view==='home')renderHome();});
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+if(navigator.storage&&navigator.storage.persist){navigator.storage.persisted().then(p=>{if(!p)navigator.storage.persist();}).catch(()=>{});}
+
+// Nový den → přepočítat přehled
+let lastDay=isoD(today());
+function refreshIfNewDay(){const d=isoD(today());if(d!==lastDay){lastDay=d;refreshFrames();if(view==='home')renderHome();}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshIfNewDay();});
+setInterval(refreshIfNewDay,60000);
+
+// ===== Start =====
+buildTabs();
+APPS.forEach(ensureFrame);          // načíst všechny aplikace hned – spočítají a pošlou svůj souhrn
+show(location.hash.slice(1)||'home');
+</script>
+</body>
+</html>
