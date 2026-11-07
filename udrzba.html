@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Údržba domácnosti</title>
+<style>
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#0d9488;--accent-bg:#e1f5f2;
+--red:#c62828;--red-bg:#fdecec;--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32;--green-bg:#e9f5ea;--gray-bg:#ececea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#0d9488;--accent-bg:#123430;
+--red:#f28b82;--red-bg:#3b1d1d;--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995;--green-bg:#1b3021;--gray-bg:#2e2e2b}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
+h1{font-size:26px;margin:4px 0 2px}
+h2.sec{font-size:20px;margin:22px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2.sec .r{margin-left:auto}
+.sub{color:var(--muted);margin:0}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.small{padding:6px 10px;min-height:38px;font-size:15px}
+button.confirm{background:var(--red);border-color:var(--red);color:#fff}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:4px 0 12px}
+.tactions{display:flex;gap:8px;align-items:center;flex-shrink:0;margin-top:4px}
+.menuwrap{position:relative}
+#btnMenu{font-size:22px;min-width:50px;padding:4px 12px;line-height:1}
+.menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:6px;z-index:15;min-width:250px;display:flex;flex-direction:column}
+.menu[hidden]{display:none}
+.menu button{border:0;text-align:left;background:none;border-radius:8px;white-space:nowrap}
+.menu button:hover{background:var(--bg)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
+.menuver{font-size:12px;color:var(--muted);padding:6px 12px 2px;opacity:.8}
+.cars{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border-radius:999px;padding:6px 14px;min-height:38px;font-size:15px}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+body.embedded .top h1,body.embedded .top .sub{display:none}
+body.embedded .wrap{padding-top:8px}
+body.embedded .top{align-items:center;margin:0 0 10px}
+body.embedded .tactions{margin-top:0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:800px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat .lbl{color:var(--muted);font-size:14px}
+.stat .big{font-size:22px;font-weight:700;line-height:1.25}
+.stat .small{font-size:13px;color:var(--muted)}
+.tirebox{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:10px 14px;margin-top:10px}
+.tirebox.red{border-left-color:var(--red)}.tirebox.orange{border-left-color:var(--orange)}
+.tirebox .tx{flex:1;min-width:200px}
+.tasks{display:grid;gap:10px}
+@media(min-width:900px){.tasks{grid-template-columns:1fr 1fr}}
+.task{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.task:hover{box-shadow:0 2px 12px rgba(0,0,0,.14)}
+.task.red{border-left-color:var(--red)}.task.orange{border-left-color:var(--orange)}.task.unknown{border-left-color:var(--line)}
+.task .th{display:flex;align-items:flex-start;gap:8px}
+.task .tn{font-weight:600;font-size:18px;flex:1}
+.task .tm{color:var(--muted);font-size:15px}
+.task .st{font-size:15px}
+.task .st.red{color:var(--red)}.task .st.orange{color:var(--orange)}
+.track{height:8px;background:var(--gray-bg);border-radius:999px;overflow:hidden;margin:4px 0}
+.fill{height:100%;background:var(--green);border-radius:999px}
+.fill.orange{background:var(--orange)}.fill.red{background:var(--red)}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 14px}
+.prow{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.prow:last-child{border-bottom:0}
+.prow .tx{flex:1;min-width:0}
+.prow .t1{font-weight:600;font-size:16px}
+.prow .t2{color:var(--muted)}
+.prow .r{text-align:right;white-space:nowrap}
+.prow.click{cursor:pointer}
+.red-t{color:var(--red)}.orange-t{color:var(--orange)}.green-t{color:var(--green)}
+.empty{text-align:center;padding:36px 16px;background:var(--card);border:1px dashed var(--line);border-radius:12px}
+.empty .big{font-size:44px}
+.tip{font-size:14px;color:var(--muted);margin-top:8px}
+.more{display:block;width:100%;border:0;background:none;color:var(--accent);font-weight:600;min-height:40px}
+.fab{display:none}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.overlay.open{display:flex}
+.modal{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:20px;max-height:92vh;overflow:auto}
+@media(min-width:600px){.overlay{align-items:center}.modal{border-radius:16px}}
+.modal h2{margin:0 0 4px;font-size:22px}
+.mfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:16px}
+.mfoot>div{display:flex;flex-wrap:wrap;gap:8px}
+label{display:block;font-size:15px;color:var(--muted);margin:12px 0 4px}
+label.check{display:flex;align-items:center;gap:10px;color:var(--text);font-size:16px;cursor:pointer}
+label.check input{width:22px;height:22px;min-height:0;margin:0}
+.modal input,.modal select,.modal textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:44px}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+.err{color:var(--red);font-size:14px;margin-top:4px}
+.hint{font-size:14px;color:var(--muted);margin-top:4px}
+.qchips{display:flex;gap:6px;flex-wrap:wrap}
+.qchips button{border-radius:999px;padding:6px 12px;min-height:36px;font-size:14px}
+.sheet button{display:block;width:100%;text-align:left;margin-top:8px;font-size:18px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90%}
+.toast.show{opacity:1}
+@media(max-width:599px){
+  .wrap{padding-top:8px;padding-bottom:110px}
+  .top h1{font-size:22px}
+  .top .sub,#btnAdd{display:none}
+  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
+  .toast{bottom:96px}
+}
+.ver{font-size:13px;color:var(--muted);margin-top:24px;opacity:.8}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.task .ic{font-size:26px;line-height:1.1}
+.task .th{align-items:center}
+.buy{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px}
+.buy b{display:block;margin-bottom:4px}
+.buy ul{margin:0;padding-left:20px;font-size:15px}
+.banner{background:var(--accent-bg);border:1px solid var(--accent);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner .tx{flex:1;min-width:200px;font-size:15px}
+.toast.act{pointer-events:auto}
+.toast button{margin-left:10px;min-height:32px;padding:2px 10px;background:none;color:inherit;border-color:currentColor}
+.imp label.check{margin:8px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div id="topLeft">
+      <h1>🔧 Údržba domácnosti</h1>
+      <p class="sub">Filtry, odvápnění, revize – co je potřeba a kdy.</p>
+    </div>
+    <div class="tactions">
+      <button class="primary" id="btnAdd">+ Přidat úkol</button>
+      <div class="menuwrap">
+        <button id="btnMenu" aria-haspopup="true" aria-expanded="false" aria-label="Menu" title="Menu">☰</button>
+        <div class="menu" id="menu" role="menu" hidden>
+          <button role="menuitem" data-do="import">🗂️ Převzít úkoly z Hlídače dokladů</button>
+          <div class="menuver" id="menuVer"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div id="view"></div>
+  <div class="ver" id="ver"></div>
+</div>
+<button class="fab" id="btnFab" aria-label="Přidat úkol" title="Přidat úkol"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 4v20M4 14h20" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></button>
+
+<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <h2 id="mTitle"></h2><div id="mBody"></div>
+  <div class="mfoot"><div id="mLeft"></div><div><button id="mCancel">Zrušit</button><button class="primary" id="mSave">Uložit</button></div></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const APP_ID='udrzba',APP_VERSION='2026.11.07';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const plural=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
+const parseD=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const isISO=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s);
+const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const today=()=>{const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())};
+const fmt=d=>`${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`;
+const dayNum=d=>Math.round(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);
+const diffDays=(a,b)=>dayNum(b)-dayNum(a);
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function addMonths(d,m){const r=new Date(d.getFullYear(),d.getMonth()+m,1);const last=new Date(r.getFullYear(),r.getMonth()+1,0).getDate();r.setDate(Math.min(d.getDate(),last));return r;}
+const parseNum=v=>{const s=String(v??'').replace(/[\s ]/g,'').replace(',','.');return s===''?NaN:Number(s);};
+function rel(n){if(n<0)return `${-n} ${plural(-n,'den','dny','dní')} po termínu`;if(n===0)return 'dnes';if(n===1)return 'zítra';return `za ${n} ${plural(n,'den','dny','dní')}`;}
+function every(n,a,b,c){return n===1?`každý ${a}`:`${n>=2&&n<=4?'každé':'každých'} ${n} ${plural(n,a,b,c)}`;}
+const cycleText=c=>c.days?(c.days%7===0?every(c.days/7,'týden','týdny','týdnů'):every(c.days,'den','dny','dní')):(c.months%12===0?every(c.months/12,'rok','roky','let'):every(c.months,'měsíc','měsíce','měsíců'));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const mem={};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
+
+// ===== Data =====
+const KEY='udrzba.items.v1',KEY_IMP='udrzba.importSeen';
+const PRESETS=[
+  ['💧','Filtr ve filtrační konvici',{days:45},'filtr do konvice'],['☕','Filtr v kávovaru',{months:3},'vodní filtr do kávovaru'],
+  ['☕','Odvápnění kávovaru',{months:1},'odvápňovač'],['🍳','Filtr v digestoři',{months:3},'filtr do digestoře'],
+  ['🧺','Čištění pračky (prázdné praní na 90 °C)',{months:1},''],['🍽️','Vyčištění filtru myčky',{months:1},''],
+  ['🧽','Vyčištění lednice',{months:3},''],['🧊','Odmrazení mrazáku',{months:6},''],
+  ['🔥','Revize plynového kotle',{months:12},''],['🚨','Test detektoru kouře',{months:1},''],
+  ['🔋','Baterie v detektoru kouře',{months:12},'baterie 9V'],['🧯','Kontrola hasicího přístroje',{months:24},''],
+  ['🪥','Výměna hlavice zubního kartáčku',{months:3},'hlavice ke kartáčku'],['🛏️','Otočení matrace',{months:3},''],
+  ['🌬️','Filtr čističky vzduchu',{months:6},'filtr do čističky']
+];
+let items=[];
+function normItem(x){
+  if(!x||!x.name)return null;
+  let months=Math.max(0,Math.round(Number(x.cycle&&x.cycle.months)||0)),days=Math.max(0,Math.round(Number(x.cycle&&x.cycle.days)||0));
+  if(days)months=0;else if(!months)months=1;
+  return{id:String(x.id||uid()),name:String(x.name),icon:String(x.icon||'🔧'),cycle:{months,days},lastDone:isISO(x.lastDone)?x.lastDone:null,
+    warnDays:Number(x.warnDays)>=0?Math.round(Number(x.warnDays)):null,buy:String(x.buy||''),note:String(x.note||''),
+    history:Array.isArray(x.history)?x.history.filter(isISO).slice(-50):[],createdAt:isISO(x.createdAt)?x.createdAt:isoD(today())};
+}
+try{items=(JSON.parse(store.get(KEY)||'[]')||[]).map(normItem).filter(Boolean);}catch(e){items=[];}
+const save=()=>store.set(KEY,JSON.stringify(items));
+
+// ===== Výpočty =====
+const nextDue=it=>it.lastDone?(it.cycle.days?addDays(parseD(it.lastDone),it.cycle.days):addMonths(parseD(it.lastDone),it.cycle.months)):null;
+const intervalDays=it=>it.cycle.days||it.cycle.months*30.44;
+const warnOf=it=>it.warnDays!=null?it.warnDays:(intervalDays(it)<=62?3:7);
+function status(it){
+  const due=nextDue(it);
+  if(!due)return{level:'unknown',due:null,days:null};
+  const d=diffDays(today(),due);
+  return{level:d<=0?'red':d<=warnOf(it)?'orange':'ok',due,days:d,pct:Math.min(1,Math.max(0,1-d/intervalDays(it)))};
+}
+
+// ===== Vykreslení =====
+let filter='all';
+function hlidacCandidates(){
+  try{const seen=JSON.parse(store.get(KEY_IMP)||'[]');
+    return(JSON.parse(store.get('doklady.items.v1')||'[]')||[]).filter(d=>d&&d.type==='other'&&(d.recurMonths||d.recurDays)&&isISO(d.expiryDate)&&!seen.includes(d.id)
+      &&(d.recurDays?d.recurDays<=730:d.recurMonths<=24));  /* jen častá údržba (filtry…), ne doklady typu VZP na 10 let */}catch(e){return[];}
+}
+function render(){
+  $('menuVer').textContent='Údržba domácnosti · verze '+APP_VERSION;
+  const rows=items.map(it=>({it,s:status(it)})),order={red:0,unknown:1,orange:2,ok:3};
+  rows.sort((a,b)=>order[a.s.level]-order[b.s.level]||((a.s.due||8e15)-(b.s.due||8e15))||a.it.name.localeCompare(b.it.name,'cs'));
+  const hot=rows.filter(r=>r.s.level==='red'||r.s.level==='orange');
+  let h='';
+  const cand=hlidacCandidates();
+  if(cand.length)h+=`<div class="banner"><div class="tx">🗂️ V Hlídači dokladů máš ${cand.length} ${plural(cand.length,'opakovanou věc','opakované věci','opakovaných věcí')} (${cand.slice(0,3).map(d=>esc(d.name)).join(', ')}${cand.length>3?'…':''}), které patří spíš sem.</div><button class="small" data-do="import">Převzít</button><button class="small" data-do="dismiss" title="Už nenabízet">✕</button></div>`;
+  if(!items.length){
+    h+=`<div class="empty"><div class="big">🏠</div><h2>Co je potřeba doma pravidelně dělat?</h2><p class="sub">Vyber z běžných úkolů, nebo přidej vlastní. Po splnění klepneš na „Hotovo“ a já ohlídám další termín.</p><br>
+      <div class="qchips" style="justify-content:center">${PRESETS.map((p,i)=>`<button data-preset="${i}">${p[0]} ${esc(p[1])}</button>`).join('')}</div></div>`;
+  }else{
+    const buy=rows.filter(r=>r.it.buy&&r.s.due&&r.s.days<=30);
+    if(buy.length)h+=`<div class="buy"><b>🛒 Co koupit (do 30 dní)</b><ul>${buy.map(r=>`<li>${esc(r.it.buy)} <span class="sub" style="font-size:14px">– ${esc(r.it.name)}, ${rel(r.s.days)}</span></li>`).join('')}</ul></div>`;
+    const chip=(k,l,n)=>`<button class="chip${filter===k?' on':''}" data-f="${k}">${l} (${n})</button>`;
+    h+=`<div class="chips">${chip('all','Vše',rows.length)}${chip('hot','🔴 Udělat brzy',hot.length)}</div>`;
+    const vis=filter==='hot'?hot:rows;
+    h+=vis.length?`<div class="tasks">${vis.map(({it,s})=>`<div class="task ${s.level}" data-edit="${esc(it.id)}">
+        <div class="th"><span class="ic" aria-hidden="true">${esc(it.icon)}</span><div class="tn">${esc(it.name)}</div><span aria-hidden="true">✏️</span></div>
+        <div class="tm">${cycleText(it.cycle)}${it.lastDone?` · naposledy ${fmt(parseD(it.lastDone))}`:''}</div>
+        ${s.due?`<div class="track"><div class="fill ${s.level==='red'?'red':s.level==='orange'?'orange':''}" style="width:${(s.pct*100).toFixed(0)}%"></div></div>
+          <div class="st ${s.level}">Další: <b>${fmt(s.due)}</b> (${rel(s.days)})</div>`:`<div class="st">Ještě nezadáno, kdy naposledy – klepni na Hotovo, až to uděláš.</div>`}
+        ${it.buy?`<div class="tm">🛒 ${esc(it.buy)}</div>`:''}${it.note?`<div class="tm" style="font-style:italic">${esc(it.note)}</div>`:''}
+        <div class="actions"><button class="small" data-done="${esc(it.id)}">✅ Hotovo</button></div></div>`).join('')}</div>`
+      :`<div class="empty"><p class="sub">Nic nehoří. 👍</p></div>`;
+  }
+  $('view').innerHTML=h;
+  publish(rows);
+}
+
+// ===== Formuláře =====
+let mSave=null,mDelete=null,delT=null;
+function openModal(title,body,onSave,onDelete){
+  $('mTitle').textContent=title;$('mBody').innerHTML=body;mSave=onSave;mDelete=onDelete||null;
+  $('mLeft').innerHTML=onDelete?'<button id="mDel">🗑️ Smazat</button>':'';
+  $('mSave').style.display=onSave?'':'none';
+  $('overlay').classList.add('open');
+}
+function closeModal(){$('overlay').classList.remove('open');clearTimeout(delT);}
+$('mCancel').onclick=closeModal;
+$('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal();
+  if(e.target.id==='mDel'){const b=e.target;if(b.classList.contains('confirm')){mDelete();closeModal();save();render();toast('Smazáno');}
+    else{b.classList.add('confirm');b.textContent='Opravdu smazat?';delT=setTimeout(()=>{b.classList.remove('confirm');b.textContent='🗑️ Smazat';},4000);}}});
+$('mSave').onclick=()=>{if(mSave&&mSave()!==false){closeModal();save();render();}};
+const err=(id,msg)=>{const e=$(id);if(e)e.textContent=msg;return false;};
+
+function itemForm(it,preset){
+  const isNew=!it,p=preset?{icon:preset[0],name:preset[1],cycle:{months:preset[2].months||0,days:preset[2].days||0},buy:preset[3]}:null;
+  const v=it||p||{icon:'🔧',name:'',cycle:{months:3,days:0},buy:''};
+  const c=v.cycle,n=c.days?(c.days%7===0?c.days/7:c.days):(c.months%12===0?c.months/12:c.months),u=c.days?(c.days%7===0?'w':'d'):(c.months%12===0?'y':'m');
+  openModal(isNew?'Nový úkol':'Upravit úkol',
+    (isNew&&!p?`<label>Rychlý výběr</label><div class="qchips">${PRESETS.map((x,i)=>`<button type="button" data-pre="${i}">${x[0]} ${esc(x[1])}</button>`).join('')}</div>`:'')+
+    `<div class="row"><div style="flex:0 0 80px"><label for="iIcon">Ikona</label><input id="iIcon" value="${esc(v.icon)}" maxlength="4"></div>
+      <div><label for="iName">Co je potřeba udělat</label><input id="iName" value="${esc(v.name)}" placeholder="např. Výměna filtru"></div></div><div class="err" id="eName"></div>
+     <label>Jak často</label><div class="row"><input id="iN" inputmode="numeric" value="${n}"><select id="iU">${[['d','dní'],['w','týdnů'],['m','měsíců'],['y','let']].map(([k,l])=>`<option value="${k}"${k===u?' selected':''}>${l}</option>`).join('')}</select></div><div class="err" id="eInt"></div>
+     <label for="iLast">Naposledy hotovo</label><input id="iLast" type="date" value="${esc(it?it.lastDone||'':isoD(today()))}">
+     <div class="hint">Nevíš přesně? Dej přibližně – nebo nech prázdné a klepni na „Hotovo“, až to uděláš.</div>
+     <label for="iWarn">Upozornit … dní předem</label><input id="iWarn" inputmode="numeric" value="${it&&it.warnDays!=null?it.warnDays:''}" placeholder="automaticky (3–7)">
+     <label for="iBuy">Co je potřeba koupit (nepovinné)</label><input id="iBuy" value="${esc(v.buy||'')}" placeholder="např. filtr Brita Maxtra">
+     <label for="iNote">Poznámka</label><textarea id="iNote" rows="2">${esc(it?it.note:'')}</textarea>`,
+    ()=>{
+      const name=$('iName').value.trim();if(!name)return err('eName','Napiš, co je potřeba udělat.');
+      const N=Math.round(parseNum($('iN').value)),U=$('iU').value;if(!(N>=1))return err('eInt','Zadej celé číslo, např. 3.');
+      const cycle={months:U==='m'?N:U==='y'?N*12:0,days:U==='d'?N:U==='w'?N*7:0};
+      const w=parseNum($('iWarn').value);
+      const d={icon:$('iIcon').value.trim()||'🔧',name,cycle,lastDone:$('iLast').value||null,warnDays:w>=0?Math.round(w):null,buy:$('iBuy').value.trim(),note:$('iNote').value.trim()};
+      if(isNew)items.push(normItem({id:uid(),...d,history:d.lastDone?[d.lastDone]:[]}));else Object.assign(it,d);
+      toast('Uloženo');
+    },isNew?null:()=>{items=items.filter(x=>x.id!==it.id);});
+  $('mBody').querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{const x=PRESETS[Number(b.dataset.pre)];
+    $('iIcon').value=x[0];$('iName').value=x[1];const m=x[2].months||0,dd=x[2].days||0;
+    if(dd){$('iN').value=dd%7===0?dd/7:dd;$('iU').value=dd%7===0?'w':'d';}else{$('iN').value=m%12===0?m/12:m;$('iU').value=m%12===0?'y':'m';}
+    $('iBuy').value=x[3]||'';});
+}
+function done(it){
+  const prev=it.lastDone,prevH=it.history.slice();
+  it.lastDone=isoD(today());it.history.push(it.lastDone);save();render();
+  toast(`✅ ${it.name} – další ${fmt(nextDue(it))}`,'↩️ Zpět',()=>{it.lastDone=prev;it.history=prevH;save();render();});
+}
+// Převzít opakované věci z Hlídače dokladů (např. filtry)
+function importForm(){
+  const cand=hlidacCandidates();
+  if(!cand.length){toast('V Hlídači dokladů nejsou žádné opakované věci typu „Ostatní“.');return;}
+  openModal('Převzít z Hlídače dokladů',`<div class="imp"><p class="sub" style="font-size:15px">Opakované věci typu „Ostatní“ s intervalem do 2 let – v Údržbě budou mít tlačítko Hotovo, které posune další termín od dne, kdy to uděláš.</p>
+    ${cand.map(d=>`<label class="check"><input type="checkbox" data-imp="${esc(d.id)}" checked> ${esc(d.name)} <span class="sub" style="font-size:14px">– příště ${fmt(parseD(d.expiryDate))}</span></label>`).join('')}
+    <hr style="border:0;border-top:1px solid var(--line)"><label class="check"><input type="checkbox" id="impDel" checked> A smazat je z Hlídače dokladů</label></div>`,
+    ()=>{
+      const ids=[...$('mBody').querySelectorAll('[data-imp]')].filter(x=>x.checked).map(x=>x.dataset.imp);
+      if(!ids.length)return false;
+      for(const d of cand.filter(x=>ids.includes(x.id))){
+        const cycle={months:d.recurDays?0:d.recurMonths,days:d.recurDays||0};
+        const last=cycle.days?addDays(parseD(d.expiryDate),-cycle.days):addMonths(parseD(d.expiryDate),-cycle.months);
+        const nm=String(d.name).toLowerCase(),p=PRESETS.find(x=>{const q=x[1].toLowerCase();return nm.includes(q)||q.includes(nm);});
+        items.push(normItem({id:uid(),name:d.name,icon:p?p[0]:'🔧',cycle,lastDone:isoD(last),warnDays:d.warningDays,note:d.note||'',buy:p?p[3]:'',history:[isoD(last)]}));
+      }
+      if($('impDel').checked){
+        try{const all=JSON.parse(store.get('doklady.items.v1')||'[]');store.set('doklady.items.v1',JSON.stringify(all.filter(x=>!ids.includes(x.id))));
+          if(EMBED)parent.postMessage({type:'lifeadmin:reload',id:'doklady'},location.origin==='null'?'*':location.origin);}catch(e){}
+      }
+      markSeen(cand.map(x=>x.id));
+      toast(`Převzato: ${ids.length}`);
+    });
+}
+function markSeen(ids){try{const s=JSON.parse(store.get(KEY_IMP)||'[]');store.set(KEY_IMP,JSON.stringify([...new Set([...s,...ids])]));}catch(e){}}
+
+// ===== Ovládání =====
+document.addEventListener('click',e=>{
+  if(e.target.closest('#overlay'))return;
+  const d=e.target.closest('[data-do]');
+  if(d){setMenu(false);if(d.dataset.do==='import')importForm();if(d.dataset.do==='dismiss'){markSeen(hlidacCandidates().map(x=>x.id));render();}return;}
+  const pr=e.target.closest('[data-preset]');if(pr){itemForm(null,PRESETS[Number(pr.dataset.preset)]);return;}
+  const f=e.target.closest('[data-f]');if(f){filter=f.dataset.f;render();return;}
+  const dn=e.target.closest('[data-done]');if(dn){const it=items.find(x=>x.id===dn.dataset.done);if(it)done(it);return;}
+  const ed=e.target.closest('[data-edit]');if(ed){const it=items.find(x=>x.id===ed.dataset.edit);if(it)itemForm(it);return;}
+  if(!$('menu').hidden&&!e.target.closest('.menuwrap'))setMenu(false);
+});
+function setMenu(open){$('menu').hidden=!open;$('btnMenu').setAttribute('aria-expanded',String(open));}
+$('btnMenu').addEventListener('click',e=>{e.stopPropagation();setMenu($('menu').hidden);});
+$('btnAdd').onclick=()=>itemForm();
+$('btnFab').onclick=()=>itemForm();
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden)setMenu(false);else closeModal();});
+let toastT,toastFn=null;
+function toast(m,btn,fn){const t=$('toast');t.innerHTML=esc(m)+(btn?`<button id="tBtn">${esc(btn)}</button>`:'');t.classList.toggle('act',!!btn);toastFn=fn||null;
+  t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>{t.classList.remove('show','act');toastFn=null;},btn?6000:3000);}
+$('toast').addEventListener('click',e=>{if(e.target.id==='tBtn'&&toastFn){toastFn();toastFn=null;$('toast').classList.remove('show','act');}});
+
+// ===== Life Admin =====
+const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+if(EMBED)document.body.classList.add('embedded');
+$('ver').textContent='Údržba domácnosti · verze '+APP_VERSION;
+function publish(rows){
+  try{
+    const hot=rows.filter(r=>r.s.level==='red'||r.s.level==='orange'),next=rows.filter(r=>r.s.due).sort((a,b)=>a.s.due-b.s.due)[0];
+    const hl=items.length?[{label:'Úkolů',value:String(items.length)},{label:'Udělat brzy',value:String(hot.length)},...(next?[{label:'Nejbližší',value:`${next.s.due.getDate()}. ${next.s.due.getMonth()+1}.`}]:[])]:[];
+    const alerts=hot.map(r=>({level:r.s.level,title:`${r.it.icon} ${r.it.name}`,sub:r.it.buy?`koupit: ${r.it.buy}`:cycleText(r.it.cycle),date:isoD(r.s.due)}));
+    store.set('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:items.length,headline:hl,alerts,
+      desc:items.length?'':'Filtry, odvápnění, revize – co je potřeba a kdy.'}));
+    if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
+window.addEventListener('storage',e=>{if(e.key==='doklady.items.v1')render();});
+let lastDay=isoD(today());setInterval(()=>{const d=isoD(today());if(d!==lastDay){lastDay=d;render();}},60000);
+render();
+</script>
+</body>
+</html>

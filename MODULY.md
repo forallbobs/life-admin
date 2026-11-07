@@ -15,6 +15,8 @@ doklady.html      ← Hlídač dokladů
 predplatne.html   ← Předplatné a platby
 bilkoviny.html    ← Cena bílkovin
 meny.html         ← Měny a směnárna
+auto.html         ← Auto (servis, pneu, tankování)
+udrzba.html       ← Údržba domácnosti
 manifest.json     ← název a ikona pro instalaci
 sw.js             ← offline režim
 icon-192.png, icon-512.png
@@ -67,6 +69,21 @@ Aktualizace = na GitHubu **Add file → Upload files**, přetáhnout změněné 
    na mobilu plovoucí + vpravo dole, karty klepnutím otevřou úpravu, tmavý režim).
    Vzor: `predplatne.html` (aplikace s daty), `meny.html` (kalkulačka).
 
+## Viditelnost aplikací
+
+Každý si na Přehledu v „Aplikace → ⚙️ Upravit“ (nebo na mobilu v „⋯ Další“) zapne
+jen aplikace, které používá, a určí jejich pořadí. Uloženo v `lifeadmin.settings.v1`
+(`{hidden:[…], order:[…]}`). Skrytá aplikace se nenačítá, nemá upozornění v „Co hoří“,
+ale její data zůstávají a jsou i ve společné záloze.
+Na mobilu se do spodní lišty vejde Přehled + 3 aplikace, ostatní jsou pod „⋯ Další“.
+
+## Spolupráce mezi aplikacemi
+
+- Aplikace může číst data jiné aplikace (stejná doména) – např. Auto ukazuje STK z Dokladů.
+- Když aplikace **změní** data jiné aplikace, pošle
+  `parent.postMessage({type:'lifeadmin:reload', id:'<id té druhé>'}, location.origin)`
+  a Life Admin tu druhou znovu načte.
+
 ## Registrace nové aplikace
 
 1. **`index.html`** – do pole `APPS` přidat řádek a zvýšit `VERSION`:
@@ -74,10 +91,9 @@ Aktualizace = na GitHubu **Add file → Upload files**, přetáhnout změněné 
    {id:'auto', name:'Auto', full:'Auto a servis', icon:'🚗', path:'auto.html', prefix:'auto.', backupKey:'auto.lastBackup'},
    ```
    `name` = krátký popisek do navigace (na mobilu max. ~9 znaků).
-   Do spodní navigace se vejde zhruba 6 položek (Přehled + 5 aplikací);
-   při víc aplikacích sloučit kalkulačky pod jednu záložku „Nástroje“.
+   Nová aplikace je viditelná automaticky; uživatel ji může skrýt.
 2. **`sw.js`** – do `ASSETS` přidat `'./auto.html'` a zvýšit verzi
-   (`'lifeadmin-v2'` → `'lifeadmin-v3'`).
+   (`'lifeadmin-v3'` → `'lifeadmin-v4'`).
 3. **Nahrát** nový soubor + upravené `index.html` a `sw.js`.
 
 Data stávajících aplikací se tím nijak nezmění.

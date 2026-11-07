@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auto</title>
+<style>
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#7c3aed;--accent-bg:#f1eafe;
+--red:#c62828;--red-bg:#fdecec;--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32;--green-bg:#e9f5ea;--gray-bg:#ececea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#a78bfa;--accent-bg:#2a2040;
+--red:#f28b82;--red-bg:#3b1d1d;--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995;--green-bg:#1b3021;--gray-bg:#2e2e2b}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
+h1{font-size:26px;margin:4px 0 2px}
+h2.sec{font-size:20px;margin:22px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2.sec .r{margin-left:auto}
+.sub{color:var(--muted);margin:0}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.small{padding:6px 10px;min-height:38px;font-size:15px}
+button.confirm{background:var(--red);border-color:var(--red);color:#fff}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:4px 0 12px}
+.tactions{display:flex;gap:8px;align-items:center;flex-shrink:0;margin-top:4px}
+.menuwrap{position:relative}
+#btnMenu{font-size:22px;min-width:50px;padding:4px 12px;line-height:1}
+.menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:6px;z-index:15;min-width:250px;display:flex;flex-direction:column}
+.menu[hidden]{display:none}
+.menu button{border:0;text-align:left;background:none;border-radius:8px;white-space:nowrap}
+.menu button:hover{background:var(--bg)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
+.menuver{font-size:12px;color:var(--muted);padding:6px 12px 2px;opacity:.8}
+.cars{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border-radius:999px;padding:6px 14px;min-height:38px;font-size:15px}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+body.embedded .top h1,body.embedded .top .sub{display:none}
+body.embedded .wrap{padding-top:8px}
+body.embedded .top{align-items:center;margin:0 0 10px}
+body.embedded .tactions{margin-top:0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:800px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat .lbl{color:var(--muted);font-size:14px}
+.stat .big{font-size:22px;font-weight:700;line-height:1.25}
+.stat .small{font-size:13px;color:var(--muted)}
+.tirebox{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:10px 14px;margin-top:10px}
+.tirebox.red{border-left-color:var(--red)}.tirebox.orange{border-left-color:var(--orange)}
+.tirebox .tx{flex:1;min-width:200px}
+.tasks{display:grid;gap:10px}
+@media(min-width:900px){.tasks{grid-template-columns:1fr 1fr}}
+.task{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.task:hover{box-shadow:0 2px 12px rgba(0,0,0,.14)}
+.task.red{border-left-color:var(--red)}.task.orange{border-left-color:var(--orange)}.task.unknown{border-left-color:var(--line)}
+.task .th{display:flex;align-items:flex-start;gap:8px}
+.task .tn{font-weight:600;font-size:18px;flex:1}
+.task .tm{color:var(--muted);font-size:15px}
+.task .st{font-size:15px}
+.task .st.red{color:var(--red)}.task .st.orange{color:var(--orange)}
+.track{height:8px;background:var(--gray-bg);border-radius:999px;overflow:hidden;margin:4px 0}
+.fill{height:100%;background:var(--green);border-radius:999px}
+.fill.orange{background:var(--orange)}.fill.red{background:var(--red)}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 14px}
+.prow{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.prow:last-child{border-bottom:0}
+.prow .tx{flex:1;min-width:0}
+.prow .t1{font-weight:600;font-size:16px}
+.prow .t2{color:var(--muted)}
+.prow .r{text-align:right;white-space:nowrap}
+.prow.click{cursor:pointer}
+.red-t{color:var(--red)}.orange-t{color:var(--orange)}.green-t{color:var(--green)}
+.empty{text-align:center;padding:36px 16px;background:var(--card);border:1px dashed var(--line);border-radius:12px}
+.empty .big{font-size:44px}
+.tip{font-size:14px;color:var(--muted);margin-top:8px}
+.more{display:block;width:100%;border:0;background:none;color:var(--accent);font-weight:600;min-height:40px}
+.fab{display:none}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.overlay.open{display:flex}
+.modal{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:20px;max-height:92vh;overflow:auto}
+@media(min-width:600px){.overlay{align-items:center}.modal{border-radius:16px}}
+.modal h2{margin:0 0 4px;font-size:22px}
+.mfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:16px}
+.mfoot>div{display:flex;flex-wrap:wrap;gap:8px}
+label{display:block;font-size:15px;color:var(--muted);margin:12px 0 4px}
+label.check{display:flex;align-items:center;gap:10px;color:var(--text);font-size:16px;cursor:pointer}
+label.check input{width:22px;height:22px;min-height:0;margin:0}
+.modal input,.modal select,.modal textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:44px}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+.err{color:var(--red);font-size:14px;margin-top:4px}
+.hint{font-size:14px;color:var(--muted);margin-top:4px}
+.qchips{display:flex;gap:6px;flex-wrap:wrap}
+.qchips button{border-radius:999px;padding:6px 12px;min-height:36px;font-size:14px}
+.sheet button{display:block;width:100%;text-align:left;margin-top:8px;font-size:18px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90%}
+.toast.show{opacity:1}
+@media(max-width:599px){
+  .wrap{padding-top:8px;padding-bottom:110px}
+  .top h1{font-size:22px}
+  .top .sub,#btnFuel{display:none}
+  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
+  .toast{bottom:96px}
+}
+.ver{font-size:13px;color:var(--muted);margin-top:24px;opacity:.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div id="topLeft">
+      <h1>🚗 Auto</h1>
+      <p class="sub">Servis, pneumatiky, tankování a doklady na jednom místě.</p>
+    </div>
+    <div class="tactions">
+      <button class="primary" id="btnFuel">⛽ Tankovat</button>
+      <div class="menuwrap">
+        <button id="btnMenu" aria-haspopup="true" aria-expanded="false" aria-label="Menu" title="Menu">☰</button>
+        <div class="menu" id="menu" role="menu" hidden>
+          <button role="menuitem" data-do="odo">📏 Zapsat stav tachometru</button>
+          <button role="menuitem" data-do="task">🔧 Přidat servisní úkol</button>
+          <hr>
+          <button role="menuitem" data-do="addcar">🚗 Přidat auto</button>
+          <button role="menuitem" data-do="editcar">✏️ Upravit auto</button>
+          <div class="menuver" id="menuVer"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div id="view"></div>
+  <div class="ver" id="ver"></div>
+</div>
+<button class="fab" id="btnFab" aria-label="Přidat záznam" title="Přidat záznam"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 4v20M4 14h20" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></button>
+
+<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <h2 id="mTitle"></h2><div id="mBody"></div>
+  <div class="mfoot" id="mFoot"><div id="mLeft"></div><div><button id="mCancel">Zrušit</button><button class="primary" id="mSave">Uložit</button></div></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const APP_ID='auto',APP_VERSION='2026.11.07';
+// ===== Pomocné =====
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+const plural=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
+const parseD=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const isISO=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s);
+const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const today=()=>{const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())};
+const fmt=d=>`${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`;
+const dayNum=d=>Math.round(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);
+const diffDays=(a,b)=>dayNum(b)-dayNum(a);
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function addMonths(d,m){const r=new Date(d.getFullYear(),d.getMonth()+m,1);const last=new Date(r.getFullYear(),r.getMonth()+1,0).getDate();r.setDate(Math.min(d.getDate(),last));return r;}
+const parseNum=v=>{const s=String(v??'').replace(/[\s ]/g,'').replace(',','.');return s===''?NaN:Number(s);};
+const nf=(v,dec=0)=>new Intl.NumberFormat('cs-CZ',{minimumFractionDigits:dec,maximumFractionDigits:dec}).format(v);
+const km=v=>nf(Math.round(v))+' km';
+const kc=(v,dec=0)=>nf(v,dec)+' Kč';
+function rel(n){if(n<0)return `před ${-n} ${plural(-n,'dnem','dny','dny')}`;if(n===0)return 'dnes';if(n===1)return 'zítra';return `za ${n} ${plural(n,'den','dny','dní')}`;}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const mem={};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
+
+// ===== Data =====
+const KEY='auto.items.v1',KEY_SEL='auto.selected';
+// Předvolby servisu – orientační, řiď se servisní knížkou
+const PRESETS=[
+  {name:'Výměna oleje a filtru',km:15000,months:12},
+  {name:'Brzdová kapalina',km:0,months:24},
+  {name:'Pylový (kabinový) filtr',km:15000,months:12},
+  {name:'Vzduchový filtr',km:30000,months:24},
+  {name:'Kontrola brzd (destičky, kotouče)',km:20000,months:12},
+  {name:'Zapalovací svíčky',km:60000,months:48},
+  {name:'Rozvody',km:120000,months:60},
+  {name:'Chladicí kapalina',km:0,months:48},
+  {name:'Servis klimatizace',km:0,months:24},
+];
+const DEFAULT_TASKS=[0,1,2];
+let cars=[];
+function normCar(c){
+  if(!c||typeof c!=='object'||!c.name)return null;
+  const arr=a=>Array.isArray(a)?a:[];
+  return{id:String(c.id||uid()),name:String(c.name),plate:String(c.plate||''),tires:['summer','winter','all'].includes(c.tires)?c.tires:'',
+    odo:arr(c.odo).filter(o=>o&&isISO(o.date)&&Number(o.km)>=0).map(o=>({date:o.date,km:Number(o.km)})),
+    tasks:arr(c.tasks).filter(t=>t&&t.name).map(t=>({id:String(t.id||uid()),name:String(t.name),km:Math.max(0,Number(t.km)||0),months:Math.max(0,Number(t.months)||0),
+      lastKm:Number(t.lastKm)>=0&&t.lastKm!==null&&t.lastKm!==''?Number(t.lastKm):null,lastDate:isISO(t.lastDate)?t.lastDate:null,note:String(t.note||'')})),
+    fuel:arr(c.fuel).filter(f=>f&&isISO(f.date)&&Number(f.km)>=0&&Number(f.liters)>0).map(f=>({id:String(f.id||uid()),date:f.date,km:Number(f.km),liters:Number(f.liters),price:Number(f.price)||0,full:f.full!==false})),
+    createdAt:isISO(c.createdAt)?c.createdAt:isoD(today())};
+}
+try{cars=(JSON.parse(store.get(KEY)||'[]')||[]).map(normCar).filter(Boolean);}catch(e){cars=[];}
+let selId=store.get(KEY_SEL);
+const save=()=>store.set(KEY,JSON.stringify(cars));
+const car=()=>cars.find(c=>c.id===selId)||cars[0]||null;
+
+// ===== Výpočty =====
+function points(c){   // všechny známé stavy tachometru (datum, km)
+  return[...c.odo.map(o=>({date:o.date,km:o.km})),...c.fuel.map(f=>({date:f.date,km:f.km})),
+    ...c.tasks.filter(t=>t.lastKm!=null&&t.lastDate).map(t=>({date:t.lastDate,km:t.lastKm}))]
+    .sort((a,b)=>a.date.localeCompare(b.date)||a.km-b.km);
+}
+function curKm(c){const p=points(c);return p.length?Math.max(...p.map(x=>x.km)):null;}
+function lastReading(c){const p=points(c);if(!p.length)return null;const m=Math.max(...p.map(x=>x.km));return p.filter(x=>x.km===m).sort((a,b)=>b.date.localeCompare(a.date))[0];}
+// Průměrně najeto km za den (z posledního roku záznamů) → odhad, kdy dojde servis podle km
+function kmPerDay(c){
+  const p=points(c),t=today(),from=isoD(addDays(t,-400)),q=p.filter(x=>x.date>=from);
+  if(q.length<2)return null;
+  const a=q[0],b=q.reduce((m,x)=>x.km>m.km?x:m,q[0]),days=diffDays(parseD(a.date),parseD(b.date));
+  return days>=14&&b.km>a.km?(b.km-a.km)/days:null;
+}
+function taskStatus(c,t){
+  const now=today(),cur=curKm(c),rate=kmPerDay(c);
+  if(t.lastKm==null&&!t.lastDate)return{level:'unknown',text:'Zadej, kdy se to dělalo naposledy.',pct:0};
+  let kmLeft=null,dueKm=null,estDate=null,dueDate=null,daysLeft=null,pct=0;
+  if(t.km&&t.lastKm!=null&&cur!=null){dueKm=t.lastKm+t.km;kmLeft=dueKm-cur;pct=Math.max(pct,(cur-t.lastKm)/t.km);
+    if(rate)estDate=addDays(now,Math.round(kmLeft/rate));}
+  if(t.months&&t.lastDate){dueDate=addMonths(parseD(t.lastDate),t.months);daysLeft=diffDays(now,dueDate);
+    const span=diffDays(parseD(t.lastDate),dueDate);pct=Math.max(pct,span>0?diffDays(parseD(t.lastDate),now)/span:0);}
+  const estDays=estDate?diffDays(now,estDate):null;
+  const overdue=(kmLeft!=null&&kmLeft<=0)||(daysLeft!=null&&daysLeft<=0);
+  let level='ok';
+  if(overdue||(kmLeft!=null&&kmLeft<=300)||(daysLeft!=null&&daysLeft<=7))level='red';
+  else if((kmLeft!=null&&kmLeft<=Math.max(1000,t.km*0.1))||(daysLeft!=null&&daysLeft<=30)||(estDays!=null&&estDays<=30))level='orange';
+  const parts=[];
+  if(kmLeft!=null)parts.push(kmLeft<=0?`<b>${km(-kmLeft)} po termínu</b>`:`za <b>${km(kmLeft)}</b>${estDate?` (odhadem ${fmt(estDate)})`:''}`);
+  if(dueDate)parts.push(daysLeft<=0?`<b>termín ${fmt(dueDate)} prošel</b>`:`${kmLeft!=null?'nebo ':''}do <b>${fmt(dueDate)}</b>`);
+  // nejbližší datum pro souhrn / „Co hoří“
+  const dates=[dueDate,estDate].filter(Boolean);const due=dates.length?new Date(Math.min(...dates)):null;
+  return{level,text:(overdue?'⚠️ ':'')+parts.join(' '),pct:Math.min(1,pct),due,kmLeft,daysLeft};
+}
+// Pneumatiky: zimní povinné 1. 11. – 31. 3. při zimních podmínkách na silnici
+function tireStatus(c){
+  const t=today(),m=t.getMonth()+1,d=t.getDate(),y=t.getFullYear();
+  if(c.tires==='summer'){
+    if(m===10&&d>=15)return{level:'orange',text:'Blíží se zima – přezuj na zimní. Od 1. 11. do 31. 3. jsou při zimních podmínkách povinné.',date:isoD(new Date(y,10,1))};
+    if(m>=11||m<=3)return{level:'red',text:'Máš letní pneumatiky – od 1. 11. do 31. 3. jsou při zimních podmínkách na silnici povinné zimní.',date:isoD(t)};
+    return{level:'ok',text:'Letní pneumatiky.'};
+  }
+  if(c.tires==='winter'){
+    if(m>=4&&m<=9)return{level:m===4?'info':'orange',text:'Zimní pneumatiky se v teple rychle sjíždějí – čas přezout na letní.',date:isoD(t)};
+    return{level:'ok',text:'Zimní pneumatiky.'};
+  }
+  if(c.tires==='all')return{level:'ok',text:'Celoroční pneumatiky – přezouvat nemusíš.'};
+  return{level:'unknown',text:'Nastav, jaké máš teď nasazené pneumatiky.'};
+}
+function fuelStats(c){
+  const f=[...c.fuel].sort((a,b)=>a.km-b.km||a.date.localeCompare(b.date));
+  const r={cons:null,perKm:null,year:null,lastPrice:null,count:f.length};
+  if(f.length){const l=f[f.length-1];if(l.liters>0&&l.price>0)r.lastPrice=l.price/l.liters;}
+  // spotřeba z plných nádrží: litry natankované od minulé plné / ujeté km
+  const segs=[];let prev=null,acc=0;
+  for(const x of f){if(prev){acc+=x.liters;if(x.full){const dk=x.km-prev.km;if(dk>0)segs.push({l:acc,km:dk});prev=x;acc=0;}}else if(x.full)prev=x;}
+  const last=segs.slice(-5);
+  if(last.length){const L=last.reduce((s,x)=>s+x.l,0),K=last.reduce((s,x)=>s+x.km,0);r.cons=L/K*100;}
+  if(f.length>=2){const dk=f[f.length-1].km-f[0].km,P=f.slice(1).reduce((s,x)=>s+x.price,0);if(dk>0&&P>0)r.perKm=P/dk;}
+  const from=isoD(addDays(today(),-365)),y=f.filter(x=>x.date>=from);
+  if(y.length){const P=y.reduce((s,x)=>s+x.price,0),first=y.map(x=>x.date).sort()[0],months=Math.max(1,diffDays(parseD(first),today())/30.44);r.year={total:P,month:P/Math.min(12,months)};}
+  return r;
+}
+// Doklady a platby k autu z ostatních aplikací (podle názvu auta nebo SPZ)
+function linked(c){
+  const n=norm(c.name),p=norm(c.plate),out=[];
+  const match=s=>{const x=norm(s);return x&&(x.includes(n)||(n.length>=3&&n.includes(x)&&x.length>=3)||(p&&x.includes(p)));};
+  try{for(const d of JSON.parse(store.get('doklady.items.v1')||'[]'))if(d&&isISO(d.expiryDate)&&(match(d.name)||match(d.note)))
+    out.push({src:'doklady',name:d.name,type:d.type,date:d.expiryDate});}catch(e){}
+  try{for(const d of JSON.parse(store.get('predplatne.items.v1')||'[]'))if(d&&d.status!=='cancelled'&&(match(d.name)||match(d.note)))
+    out.push({src:'predplatne',name:d.name,price:d.price,currency:d.currency,cycle:d.cycle});}catch(e){}
+  return out;
+}
+const DTYPE={stk:'🔧 STK',emissions:'💨 Emise',vignette:'🛣️ Dálniční známka',insurance:'🛡️ Pojištění',other:'📄'};
+
+// ===== Vykreslení =====
+let fuelAll=false;
+function render(){
+  const c=car();
+  if(c&&selId!==c.id){selId=c.id;}
+  $('menuVer').textContent='Auto · verze '+APP_VERSION;
+  // výběr auta (víc aut)
+  let carsEl=$('carsChips');
+  if(!carsEl){carsEl=document.createElement('div');carsEl.id='carsChips';carsEl.className='cars';$('topLeft').appendChild(carsEl);}
+  carsEl.innerHTML=cars.length>1?cars.map(x=>`<button class="chip${x.id===c.id?' on':''}" data-car="${esc(x.id)}">${esc(x.name)}</button>`).join(''):'';
+  carsEl.style.marginTop=cars.length>1&&!document.body.classList.contains('embedded')?'8px':'0';
+  $('btnFuel').style.visibility=c?'':'hidden';
+  if(!c){
+    $('view').innerHTML=`<div class="empty"><div class="big">🚗</div><h2>Přidej své auto</h2><p class="sub">Pohlídám servis podle kilometrů i času, přezouvání pneumatik a spočítám spotřebu.</p><br><button class="primary" data-do="addcar">+ Přidat auto</button></div>`;
+    publish();return;
+  }
+  const cur=curKm(c),lr=lastReading(c),fs=fuelStats(c),ts=tireStatus(c);
+  let h=`<div class="stats">
+    <div class="stat"><div class="lbl">Tachometr</div><div class="big">${cur!=null?km(cur):'–'}</div><div class="small">${lr?'zapsáno '+fmt(parseD(lr.date)):'zatím nezapsáno'}</div></div>
+    <div class="stat"><div class="lbl">Spotřeba</div><div class="big">${fs.cons!=null?nf(fs.cons,1)+' l':'–'}</div><div class="small">${fs.cons!=null?'na 100 km':'po 2 plných nádržích'}</div></div>
+    <div class="stat"><div class="lbl">Palivo na 1 km</div><div class="big">${fs.perKm!=null?kc(fs.perKm,2):'–'}</div><div class="small">${fs.lastPrice?`naposledy ${kc(fs.lastPrice,2)}/l`:'&nbsp;'}</div></div>
+    <div class="stat"><div class="lbl">Palivo měsíčně</div><div class="big">${fs.year?kc(fs.year.month):'–'}</div><div class="small">${fs.year?`za rok ${kc(fs.year.total)}`:'&nbsp;'}</div></div>
+  </div>`;
+  const tl={summer:'☀️ letní',winter:'❄️ zimní',all:'🌦️ celoroční'}[c.tires]||'nenastaveno';
+  h+=`<div class="tirebox ${ts.level==='red'?'red':ts.level==='orange'?'orange':''}"><div class="tx"><b>🛞 Pneumatiky: ${tl}</b><div class="${ts.level==='red'?'red-t':ts.level==='orange'?'orange-t':'sub'}" style="font-size:15px">${esc(ts.text)}</div></div>
+    ${c.tires==='summer'||c.tires==='winter'?`<button class="small" data-do="swap">🔄 Přezuto na ${c.tires==='summer'?'zimní':'letní'}</button>`:`<button class="small" data-do="editcar">Nastavit</button>`}</div>`;
+  // servis
+  const order={red:0,orange:1,unknown:2,ok:3};
+  const tasks=c.tasks.map(t=>({t,s:taskStatus(c,t)})).sort((a,b)=>order[a.s.level]-order[b.s.level]||((a.s.due||8e15)-(b.s.due||8e15)));
+  h+=`<h2 class="sec">🔧 Servis <button class="small r" data-do="task">+ Úkol</button></h2>`;
+  h+=tasks.length?`<div class="tasks">${tasks.map(({t,s})=>`<div class="task ${s.level}" data-edit="${esc(t.id)}">
+      <div class="th"><div class="tn">${esc(t.name)}</div><span aria-hidden="true">✏️</span></div>
+      <div class="tm">každých ${[t.km?km(t.km):'',t.months?`${t.months} ${plural(t.months,'měsíc','měsíce','měsíců')}`:''].filter(Boolean).join(' nebo ')}${t.lastDate||t.lastKm!=null?` · naposledy ${[t.lastDate?fmt(parseD(t.lastDate)):'',t.lastKm!=null?km(t.lastKm):''].filter(Boolean).join(', ')}`:''}</div>
+      ${s.level!=='unknown'?`<div class="track"><div class="fill ${s.level==='red'?'red':s.level==='orange'?'orange':''}" style="width:${(s.pct*100).toFixed(0)}%"></div></div>`:''}
+      <div class="st ${s.level}">${s.level==='unknown'?esc(s.text):'Další: '+s.text}</div>
+      ${t.note?`<div class="tm" style="font-style:italic">${esc(t.note)}</div>`:''}
+      <div class="actions"><button class="small" data-done="${esc(t.id)}">✅ ${s.level==='unknown'?'Zadat poslední servis':'Hotovo'}</button></div>
+    </div>`).join('')}</div>`
+    :`<div class="panel"><div class="prow"><div class="tx sub">Zatím žádné servisní úkoly. <button class="small" data-do="task">+ Přidat</button></div></div></div>`;
+  h+=`<p class="tip">Intervaly jsou orientační – řiď se servisní knížkou svého auta. ${kmPerDay(c)?`Jezdíš průměrně ${km(kmPerDay(c)*30.44)} měsíčně, podle toho odhaduji termíny.`:'Když budeš zapisovat km (stačí při tankování), odhadnu i datum servisu podle km.'}</p>`;
+  // doklady
+  const L=linked(c);
+  h+=`<h2 class="sec">📄 Doklady a platby</h2><div class="panel">`;
+  if(L.length)h+=L.map(x=>{
+    if(x.src==='doklady'){const dd=diffDays(today(),parseD(x.date));return `<div class="prow"><div class="tx"><div class="t1">${DTYPE[x.type]||'📄'} ${esc(x.name)}</div><div class="t2">Hlídač dokladů</div></div><div class="r ${dd<0||dd<=14?'red-t':dd<=30?'orange-t':''}">do ${fmt(parseD(x.date))}<br><span class="t2">${rel(dd)}</span></div></div>`;}
+    return `<div class="prow"><div class="tx"><div class="t1">💳 ${esc(x.name)}</div><div class="t2">Předplatné a platby</div></div><div class="r">${nf(x.price,x.price%1?2:0)} ${x.currency==='CZK'?'Kč':esc(x.currency)}</div></div>`;}).join('');
+  else h+=`<div class="prow"><div class="tx t2">Nic nenalezeno. STK, dálniční známku nebo pojištění pojmenuj v Hlídači dokladů nebo v Platbách tak, aby obsahovaly „${esc(c.name)}“${c.plate?` nebo SPZ ${esc(c.plate)}`:''} – a objeví se tady.</div></div>`;
+  h+=`</div>`;
+  // tankování
+  const fl=[...c.fuel].sort((a,b)=>b.date.localeCompare(a.date)||b.km-a.km);
+  h+=`<h2 class="sec">⛽ Tankování <button class="small r" data-do="fuel">+ Tankování</button></h2><div class="panel">`;
+  h+=fl.length?(fuelAll?fl:fl.slice(0,5)).map(f=>`<div class="prow click" data-fuel="${esc(f.id)}"><div class="tx"><div class="t1">${fmt(parseD(f.date))} · ${nf(f.liters,2)} l${f.full?'':' <span class="t2">(nedotankováno)</span>'}</div><div class="t2">${km(f.km)}${f.price&&f.liters?` · ${kc(f.price/f.liters,2)}/l`:''}</div></div><div class="r">${f.price?kc(f.price,f.price%1?2:0):''}</div></div>`).join('')+
+    (fl.length>5?`<button class="more" data-do="fuelall">${fuelAll?'Zobrazit méně':`Zobrazit všech ${fl.length}`}</button>`:'')
+    :`<div class="prow"><div class="tx t2">Zatím žádné tankování. Zapisuj km a litry – spočítám spotřebu a kolik tě auto stojí.</div></div>`;
+  h+=`</div>`;
+  $('view').innerHTML=h;
+  publish();
+}
+
+// ===== Formuláře (jedno okno, různý obsah) =====
+let mSave=null,mDelete=null,delT=null;
+function openModal(title,body,onSave,onDelete){
+  $('mTitle').textContent=title;$('mBody').innerHTML=body;mSave=onSave;mDelete=onDelete||null;
+  $('mLeft').innerHTML=onDelete?'<button id="mDel">🗑️ Smazat</button>':'';
+  $('mSave').style.display=onSave?'':'none';
+  $('overlay').classList.add('open');
+  setTimeout(()=>{const f=$('mBody').querySelector('input:not([type=checkbox]),select');if(f&&window.innerWidth>600)f.focus();},50);
+}
+function closeModal(){$('overlay').classList.remove('open');clearTimeout(delT);}
+$('mCancel').onclick=closeModal;
+$('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal();
+  if(e.target.id==='mDel'){const b=e.target;if(b.classList.contains('confirm')){mDelete();closeModal();save();render();toast('Smazáno');}
+    else{b.classList.add('confirm');b.textContent='Opravdu smazat?';delT=setTimeout(()=>{b.classList.remove('confirm');b.textContent='🗑️ Smazat';},4000);}}});
+$('mSave').onclick=()=>{if(mSave&&mSave()!==false){closeModal();save();render();}};
+const err=(id,msg)=>{const e=$(id);if(e)e.textContent=msg;return false;};
+const fld=(id,label,type,value,extra='')=>`<label for="${id}">${label}</label><input id="${id}" ${type==='num'?'inputmode="decimal"':`type="${type}"`} value="${esc(value??'')}" ${extra}>`;
+
+function carForm(c){
+  const isNew=!c;
+  openModal(isNew?'Přidat auto':'Upravit auto',
+    fld('fName','Název auta','text',c?c.name:'','placeholder="např. Volvo S60"')+`<div class="err" id="eName"></div>`+
+    fld('fPlate','SPZ (nepovinné)','text',c?c.plate:'','placeholder="1AB 2345"')+
+    `<label for="fTires">Jaké pneumatiky máš teď nasazené</label><select id="fTires"><option value="">– nenastaveno –</option>
+      ${[['summer','☀️ Letní'],['winter','❄️ Zimní'],['all','🌦️ Celoroční']].map(([v,l])=>`<option value="${v}"${c&&c.tires===v?' selected':''}>${l}</option>`).join('')}</select>`+
+    (isNew?fld('fKm','Stav tachometru (km)','num','','placeholder="např. 123456"')+
+      `<label class="check" style="margin-top:12px"><input type="checkbox" id="fPre" checked> Přidat běžné servisní úkoly (olej, brzdová kapalina, pylový filtr)</label>`:''),
+    ()=>{
+      const name=$('fName').value.trim();if(!name)return err('eName','Zadej název auta.');
+      if(isNew){
+        const k=parseNum($('fKm').value);
+        const n={id:uid(),name,plate:$('fPlate').value.trim(),tires:$('fTires').value,odo:k>=0?[{date:isoD(today()),km:k}]:[],tasks:[],fuel:[],createdAt:isoD(today())};
+        if($('fPre').checked)n.tasks=DEFAULT_TASKS.map(i=>({id:uid(),...PRESETS[i],lastKm:null,lastDate:null,note:''}));
+        cars.push(n);selId=n.id;store.set(KEY_SEL,selId);toast('Auto přidáno');
+      }else{c.name=name;c.plate=$('fPlate').value.trim();c.tires=$('fTires').value;toast('Uloženo');}
+    },
+    isNew?null:()=>{cars=cars.filter(x=>x.id!==c.id);selId=cars[0]?cars[0].id:null;});
+}
+function taskForm(t){
+  const c=car();if(!c)return;const isNew=!t;
+  openModal(isNew?'Nový servisní úkol':'Upravit úkol',
+    (isNew?`<label>Rychlý výběr</label><div class="qchips">${PRESETS.map((p,i)=>`<button type="button" data-pre="${i}">${esc(p.name)}</button>`).join('')}</div>`:'')+
+    fld('tName','Co se dělá','text',t?t.name:'','placeholder="např. Výměna oleje a filtru"')+`<div class="err" id="eTName"></div>`+
+    `<div class="row"><div>${fld('tKm','Každých … km','num',t&&t.km?t.km:'','placeholder="15000"')}</div><div>${fld('tMonths','nebo každých … měsíců','num',t&&t.months?t.months:'','placeholder="12"')}</div></div>
+    <div class="hint">Stačí jedno z toho. Když vyplníš obojí, platí to, co nastane dřív.</div><div class="err" id="eTInt"></div>
+    <div class="row"><div>${fld('tLastDate','Naposledy (datum)','date',t?t.lastDate:'')}</div><div>${fld('tLastKm','Naposledy (km)','num',t&&t.lastKm!=null?t.lastKm:'')}</div></div>
+    <label for="tNote">Poznámka</label><textarea id="tNote" rows="2" placeholder="např. olej 5W-30, servis XY">${esc(t?t.note:'')}</textarea>`,
+    ()=>{
+      const name=$('tName').value.trim();if(!name)return err('eTName','Napiš, o jaký servis jde.');
+      const k=Math.round(parseNum($('tKm').value))||0,m=Math.round(parseNum($('tMonths').value))||0;
+      if(!(k>0)&&!(m>0))return err('eTInt','Zadej interval v km nebo v měsících.');
+      const lk=parseNum($('tLastKm').value);
+      const d={name,km:k>0?k:0,months:m>0?m:0,lastDate:$('tLastDate').value||null,lastKm:lk>=0?lk:null,note:$('tNote').value.trim()};
+      if(isNew)c.tasks.push({id:uid(),...d});else Object.assign(t,d);
+      toast('Uloženo');
+    },
+    isNew?null:()=>{c.tasks=c.tasks.filter(x=>x.id!==t.id);});
+  if(isNew)$('mBody').querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{const p=PRESETS[Number(b.dataset.pre)];
+    $('tName').value=p.name;$('tKm').value=p.km||'';$('tMonths').value=p.months||'';$('tLastDate').focus();});
+}
+function doneForm(t){
+  const c=car(),cur=curKm(c);
+  openModal(`Hotovo: ${t.name}`,
+    `<div class="row"><div>${fld('dDate','Kdy','date',isoD(today()))}</div><div>${fld('dKm','Stav tachometru (km)','num',cur!=null?cur:'')}</div></div>
+     <div class="hint">Podle toho spočítám další termín.</div>`,
+    ()=>{const d=$('dDate').value||isoD(today()),k=parseNum($('dKm').value);
+      t.lastDate=d;t.lastKm=k>=0?k:null;if(k>=0)c.odo.push({date:d,km:k});toast(`✅ ${t.name} – zapsáno`);});
+}
+function odoForm(){
+  const c=car();if(!c)return;const cur=curKm(c);
+  openModal('Stav tachometru',fld('oKm','Kolik ukazuje tachometr (km)','num','',`placeholder="${cur!=null?nf(cur):'např. 123456'}"`)+`<div class="err" id="eOKm"></div>`+fld('oDate','Datum','date',isoD(today())),
+    ()=>{const k=parseNum($('oKm').value);if(!(k>=0))return err('eOKm','Zadej počet km.');
+      if(cur!=null&&k<cur&&!$('oKm').dataset.ok){$('oKm').dataset.ok=1;return err('eOKm',`To je méně než poslední zápis (${km(cur)}). Pokud je to správně, dej znovu Uložit.`);}
+      c.odo.push({date:$('oDate').value||isoD(today()),km:k});toast('Zapsáno');});
+}
+function fuelForm(f){
+  const c=car();if(!c)return;const isNew=!f;const cur=curKm(c);
+  openModal(isNew?'Tankování':'Upravit tankování',
+    `<div class="row"><div>${fld('uL','Litrů','num',f?String(f.liters).replace('.',','):'','placeholder="45,3"')}</div><div>${fld('uP','Zaplaceno (Kč)','num',f?String(f.price).replace('.',','):'','placeholder="1 750"')}</div></div>
+     <div class="err" id="eU"></div>
+     <div class="row"><div>${fld('uKm','Tachometr (km)','num',f?f.km:'',`placeholder="${cur!=null?nf(cur):''}"`)}</div><div>${fld('uDate','Datum','date',f?f.date:isoD(today()))}</div></div>
+     <label class="check" style="margin-top:12px"><input type="checkbox" id="uFull" ${!f||f.full?'checked':''}> Plná nádrž</label>
+     <div class="hint">Spotřebu počítám mezi plnými nádržemi – proto je dobré tankovat do plna a vždy zapsat km.</div>`,
+    ()=>{const l=parseNum($('uL').value),p=parseNum($('uP').value),k=parseNum($('uKm').value);
+      if(!(l>0))return err('eU','Zadej počet litrů.');if(!(k>=0))return err('eU','Zadej stav tachometru – bez něj nejde spočítat spotřeba.');
+      const d={liters:l,price:p>0?p:0,km:k,date:$('uDate').value||isoD(today()),full:$('uFull').checked};
+      if(isNew)c.fuel.push({id:uid(),...d});else Object.assign(f,d);
+      toast(isNew?'⛽ Tankování zapsáno':'Uloženo');},
+    isNew?null:()=>{c.fuel=c.fuel.filter(x=>x.id!==f.id);});
+}
+function addSheet(){
+  openModal('Co chceš zapsat?',`<div class="sheet">
+    <button data-sheet="fuel">⛽ Tankování</button><button data-sheet="odo">📏 Stav tachometru</button><button data-sheet="task">🔧 Servisní úkol</button>
+    ${cars.length?'':'<button data-sheet="addcar">🚗 Auto</button>'}</div>`,null);
+  $('mBody').querySelectorAll('[data-sheet]').forEach(b=>b.onclick=()=>{closeModal();act(b.dataset.sheet);});
+}
+
+// ===== Ovládání =====
+function act(a){
+  const c=car();
+  if(a==='addcar')return carForm();
+  if(!c&&a!=='addcar')return carForm();
+  if(a==='editcar')carForm(c);
+  if(a==='task')taskForm();
+  if(a==='odo')odoForm();
+  if(a==='fuel')fuelForm();
+  if(a==='fuelall'){fuelAll=!fuelAll;render();}
+  if(a==='swap'){c.tires=c.tires==='summer'?'winter':'summer';save();render();toast(`🔄 Nasazeny ${c.tires==='winter'?'zimní':'letní'} pneumatiky`);}
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('#overlay'))return;
+  const d=e.target.closest('[data-do]');if(d){setMenu(false);act(d.dataset.do);return;}
+  const ch=e.target.closest('[data-car]');if(ch){selId=ch.dataset.car;store.set(KEY_SEL,selId);render();return;}
+  const dn=e.target.closest('[data-done]');if(dn){const t=car().tasks.find(x=>x.id===dn.dataset.done);if(t)doneForm(t);return;}
+  const ed=e.target.closest('[data-edit]');if(ed){const t=car().tasks.find(x=>x.id===ed.dataset.edit);if(t)taskForm(t);return;}
+  const fu=e.target.closest('[data-fuel]');if(fu){const f=car().fuel.find(x=>x.id===fu.dataset.fuel);if(f)fuelForm(f);return;}
+  if(!$('menu').hidden&&!e.target.closest('.menuwrap'))setMenu(false);
+});
+function setMenu(open){$('menu').hidden=!open;$('btnMenu').setAttribute('aria-expanded',String(open));}
+$('btnMenu').addEventListener('click',e=>{e.stopPropagation();setMenu($('menu').hidden);});
+$('btnFuel').onclick=()=>act('fuel');
+$('btnFab').onclick=()=>car()?addSheet():carForm();
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden)setMenu(false);else closeModal();});
+let toastT;
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ===== Life Admin: vložený režim, verze, souhrn pro přehled =====
+const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+if(EMBED)document.body.classList.add('embedded');
+$('ver').textContent='Auto · verze '+APP_VERSION;
+function publish(){
+  try{
+    const alerts=[],t=today();let hl=[];
+    for(const c of cars){
+      for(const tk of c.tasks){const s=taskStatus(c,tk);if(s.level==='red'||s.level==='orange')alerts.push({level:s.level,title:`${c.name}: ${tk.name}`,
+        sub:(s.kmLeft!=null?(s.kmLeft<=0?`${km(-s.kmLeft)} po termínu`:`za ${km(s.kmLeft)}`):'')+(s.daysLeft!=null&&s.daysLeft<=30?(s.kmLeft!=null?' / ':'')+(s.daysLeft<=0?'termín prošel':'termín se blíží'):''),date:isoD(s.due||t)});}
+      const ts=tireStatus(c);if(ts.level==='red'||ts.level==='orange'||ts.level==='info')alerts.push({level:ts.level,title:`${c.name}: přezout pneumatiky`,sub:ts.text,date:ts.date||isoD(t)});
+    }
+    const c=car();
+    if(c){const cur=curKm(c),fs=fuelStats(c);
+      const next=c.tasks.map(tk=>({tk,s:taskStatus(c,tk)})).filter(x=>x.s.due).sort((a,b)=>a.s.due-b.s.due)[0];
+      hl=[{label:c.name,value:cur!=null?km(cur):'–'}];
+      if(next)hl.push({label:'Další servis',value:next.s.kmLeft!=null&&next.s.kmLeft>0?`za ${km(next.s.kmLeft)}`:fmt(next.s.due)});
+      if(fs.cons!=null)hl.push({label:'Spotřeba',value:nf(fs.cons,1)+' l/100 km'});}
+    store.set('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:cars.length,headline:hl,alerts}));
+    if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
+  }catch(e){}
+}
+// Doklady se mohly změnit v jiné aplikaci → překreslit při návratu
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
+window.addEventListener('storage',e=>{if(e.key&&(e.key.startsWith('doklady.')||e.key.startsWith('predplatne.')||e.key===KEY))render();});
+let lastDay=isoD(today());setInterval(()=>{const d=isoD(today());if(d!==lastDay){lastDay=d;render();}},60000);
+
+render();
+</script>
+</body>
+</html>

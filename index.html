@@ -80,6 +80,24 @@ h2.sec{font-size:20px;margin:22px 0 8px}
 .foot.warn{color:var(--orange)}
 .confirmbox{background:var(--orange-bg);border:1px solid var(--orange);border-radius:12px;padding:12px 14px;margin-top:10px}
 .confirmbox .bk{margin-top:10px}
+.sheetwrap{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:15;display:flex;align-items:flex-end;justify-content:center}
+.sheetwrap[hidden]{display:none}
+.sheet{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:85vh;overflow:auto}
+@media(min-width:600px){.sheetwrap{align-items:center}.sheet{border-radius:16px}}
+.sheet h2{margin:0 0 8px;font-size:20px}
+.sheet .sbtn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-top:8px;font-size:17px}
+.sheet .sbtn .ti{font-size:24px}
+.sheet .sbtn .dot{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--red);color:#fff;font-size:12px;font-weight:700;line-height:20px;text-align:center}
+.arow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.arow:last-child{border-bottom:0}
+.arow label{flex:1;display:flex;align-items:center;gap:10px;cursor:pointer;font-size:17px}
+.arow input{width:22px;height:22px}
+.arow .ti{font-size:22px}
+.arow button{min-height:40px;padding:4px 12px}
+.arow button:disabled{opacity:.35;cursor:default}
+.sfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.hsec{display:flex;align-items:center;gap:8px}
+.hsec button{margin-left:auto;font-size:15px;min-height:38px;padding:4px 12px;font-weight:400}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:90%}
 .toast.show{opacity:1}
 .vers{margin-top:28px;font-size:13px;color:var(--muted)}
@@ -98,17 +116,20 @@ h2.sec{font-size:20px;margin:22px 0 8px}
 </main>
 <input type="file" id="fileImport" accept=".json,application/json" hidden>
 <div class="toast" id="toast"></div>
+<div class="sheetwrap" id="sheet" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><h2 id="sheetTitle"></h2><div id="sheetBody"></div></div></div>
 
 <script>
 // =====================================================================
 //  REGISTR APLIKACÍ – novou aplikaci přidáš sem (viz MODULY.md)
 // =====================================================================
-const VERSION='2026.11.07';   // verze hlavní aplikace – při každé úpravě změnit
+const VERSION='2026.11.07.2';   // verze hlavní aplikace – při každé úpravě změnit
 const APPS=[
   {id:'doklady',   name:'Doklady',   full:'Hlídač dokladů',      icon:'🗂️', path:'doklady.html',    prefix:'doklady.',    backupKey:'doklady.lastBackup'},
   {id:'predplatne',name:'Platby',    full:'Předplatné a platby', icon:'💳', path:'predplatne.html', prefix:'predplatne.', backupKey:'predplatne.lastBackup'},
   {id:'bilkoviny', name:'Bílkoviny', full:'Cena bílkovin',       icon:'🥩', path:'bilkoviny.html',  prefix:'bilkoviny.'},
   {id:'meny',      name:'Měny',      full:'Měny a směnárna',     icon:'💱', path:'meny.html',       prefix:'meny.'},
+  {id:'auto',      name:'Auto',      full:'Auto',                icon:'🚗', path:'auto.html',       prefix:'auto.'},
+  {id:'udrzba',    name:'Údržba',    full:'Údržba domácnosti',   icon:'🛠️', path:'udrzba.html',     prefix:'udrzba.'},
 ];
 
 // ===== Pomocné funkce =====
@@ -131,14 +152,41 @@ const mem={};
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
 const appOf=id=>APPS.find(a=>a.id===id);
 function summaryOf(id){try{const s=JSON.parse(store.get('lifeadmin.summary.'+id)||'null');return s&&s.v===1?s:null;}catch(e){return null;}}
+// Které aplikace jsou vidět a v jakém pořadí (každý si vybere, co používá)
+const KEY_SET='lifeadmin.settings.v1';
+let LS={hidden:[],order:[]};
+try{const s=JSON.parse(store.get(KEY_SET)||'null');if(s){LS.hidden=Array.isArray(s.hidden)?s.hidden:[];LS.order=Array.isArray(s.order)?s.order:[];}}catch(e){}
+const saveLS=()=>store.set(KEY_SET,JSON.stringify(LS));
+function orderedApps(){const idx=id=>{const i=LS.order.indexOf(id);return i<0?1000+APPS.findIndex(a=>a.id===id):i;};return[...APPS].sort((a,b)=>idx(a.id)-idx(b.id));}
+const visibleApps=()=>orderedApps().filter(a=>!LS.hidden.includes(a.id));
+const isVisible=id=>visibleApps().some(a=>a.id===id);
+const mq=window.matchMedia?window.matchMedia('(min-width:900px)'):null;
+const isMobile=()=>!mq||!mq.matches;
+const redCount=id=>{const s=summaryOf(id);return s&&Array.isArray(s.alerts)?s.alerts.filter(x=>x.level==='red').length:0;};
 function storageKeys(){const out=[];try{for(let i=0;i<localStorage.length;i++)out.push(localStorage.key(i));}catch(e){out.push(...Object.keys(mem));}return out;}
 
 // ===== Navigace a vložené aplikace =====
 let view='home';
 const frames={};
+let overflow=[];
+// Na mobilu se vejde Přehled + 3 aplikace + „Další“; na počítači všechny
 function buildTabs(){
-  $('tabs').innerHTML=[{id:'home',name:'Přehled',icon:'🏠'},...APPS].map(a=>
-    `<button class="tab" data-view="${a.id}" aria-label="${esc(a.full||a.name)}"><span class="ti" aria-hidden="true">${a.icon}</span><span>${esc(a.name)}</span><span class="dot" id="dot-${a.id}" hidden></span></button>`).join('');
+  const vis=visibleApps();let main=vis;overflow=[];
+  if(isMobile()&&vis.length>4){main=vis.slice(0,3);overflow=vis.slice(3);}
+  $('tabs').innerHTML=[{id:'home',name:'Přehled',icon:'🏠'},...main].map(a=>
+    `<button class="tab" data-view="${a.id}" aria-label="${esc(a.full||a.name)}"><span class="ti" aria-hidden="true">${a.icon}</span><span>${esc(a.name)}</span><span class="dot" id="dot-${a.id}" hidden></span></button>`).join('')+
+    (overflow.length?`<button class="tab" data-more aria-label="Další aplikace"><span class="ti" aria-hidden="true">⋯</span><span>Další</span><span class="dot" id="dot-more" hidden></span></button>`:'');
+  syncFrames();updateDots();markActive();
+}
+function markActive(){
+  const inMore=overflow.some(a=>a.id===view);
+  document.querySelectorAll('.tab').forEach(b=>{const on=b.dataset.view===view||(b.hasAttribute('data-more')&&inMore);b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false');});
+}
+// Vložené aplikace: načíst viditelné (spočítají souhrn), skryté zavřít
+function syncFrames(){
+  const vis=visibleApps().map(a=>a.id);
+  for(const id of Object.keys(frames))if(!vis.includes(id)){frames[id].remove();delete frames[id];}
+  for(const a of visibleApps())ensureFrame(a);
 }
 function ensureFrame(a){
   if(frames[a.id])return frames[a.id];
@@ -147,18 +195,56 @@ function ensureFrame(a){
   $('main').appendChild(f);frames[a.id]=f;return f;
 }
 function show(id){
-  if(id!=='home'&&!appOf(id))id='home';
+  if(id!=='home'&&(!appOf(id)||!isVisible(id)))id='home';
+  closeSheet();
   view=id;
   $('home').hidden=id!=='home';
   for(const a of APPS){const f=frames[a.id];if(f)f.hidden=a.id!==id;}
   if(id!=='home'){const f=ensureFrame(appOf(id));f.hidden=false;}
-  document.querySelectorAll('.tab').forEach(b=>{const on=b.dataset.view===id;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false');});
+  markActive();
   document.title=id==='home'?'Life Admin':`${appOf(id).full} · Life Admin`;
   if(id==='home')renderHome();
 }
 function go(id){if(location.hash.slice(1)!==id)location.hash=id==='home'?'':id;else show(id);}
 window.addEventListener('hashchange',()=>show(location.hash.slice(1)||'home'));
-$('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)go(b.dataset.view);});
+$('tabs').addEventListener('click',e=>{if(e.target.closest('[data-more]')){openMore();return;}const b=e.target.closest('[data-view]');if(b)go(b.dataset.view);});
+if(mq)(mq.addEventListener?mq.addEventListener('change',buildTabs):mq.addListener(buildTabs));
+
+// ===== Spodní okno: „Další“ aplikace a úprava aplikací =====
+function closeSheet(){$('sheet').hidden=true;}
+$('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();});
+function openMore(){
+  $('sheetTitle').textContent='Další aplikace';
+  $('sheetBody').innerHTML=overflow.map(a=>{const n=redCount(a.id);return `<button class="sbtn" data-go="${a.id}"><span class="ti" aria-hidden="true">${a.icon}</span>${esc(a.full)}${n?`<span class="dot">${n}</span>`:''}</button>`;}).join('')+
+    `<button class="sbtn" data-editapps style="color:var(--muted)"><span class="ti" aria-hidden="true">⚙️</span>Upravit aplikace</button>`;
+  $('sheet').hidden=false;
+}
+let editList=null;
+function openEditApps(){
+  editList=orderedApps().map(a=>({a,on:!LS.hidden.includes(a.id)}));
+  $('sheetTitle').textContent='Upravit aplikace';
+  drawEditApps();$('sheet').hidden=false;
+}
+function drawEditApps(){
+  $('sheetBody').innerHTML=`<p class="muted" style="margin:0 0 6px;font-size:15px">Zaškrtni aplikace, které chceš používat, a šipkami urči pořadí. Skryté aplikace si data nechávají – kdykoli je zase zapneš.${isMobile()?' Na mobilu se dole vejdou 3, ostatní budou pod „⋯ Další“.':''}</p>`+
+    editList.map((x,i)=>`<div class="arow"><label><input type="checkbox" data-vis="${i}"${x.on?' checked':''}><span class="ti" aria-hidden="true">${x.a.icon}</span>${esc(x.a.full)}</label>
+      <button data-mv="${i}" data-d="-1" aria-label="Posunout nahoru"${i===0?' disabled':''}>↑</button><button data-mv="${i}" data-d="1" aria-label="Posunout dolů"${i===editList.length-1?' disabled':''}>↓</button></div>`).join('')+
+    `<div class="sfoot"><button data-closesheet>Zrušit</button><button class="primary" data-saveapps>Uložit</button></div>`;
+}
+$('sheetBody').addEventListener('change',e=>{const c=e.target.closest('[data-vis]');if(c)editList[Number(c.dataset.vis)].on=c.checked;});
+$('sheetBody').addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');if(g){closeSheet();go(g.dataset.go);return;}
+  if(e.target.closest('[data-editapps]')){openEditApps();return;}
+  if(e.target.closest('[data-closesheet]')){closeSheet();return;}
+  const m=e.target.closest('[data-mv]');
+  if(m){const i=Number(m.dataset.mv),j=i+Number(m.dataset.d);if(j>=0&&j<editList.length){[editList[i],editList[j]]=[editList[j],editList[i]];drawEditApps();}return;}
+  if(e.target.closest('[data-saveapps]')){
+    LS.order=editList.map(x=>x.a.id);LS.hidden=editList.filter(x=>!x.on).map(x=>x.a.id);saveLS();
+    closeSheet();buildTabs();if(view!=='home'&&!isVisible(view))go('home');else if(view==='home')renderHome();
+    toast('Aplikace upraveny');
+  }
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();});
 
 // ===== Přehled (společná domovská stránka) =====
 let alertsAll=false;const ALERT_LIMIT=8;
@@ -169,12 +255,12 @@ function renderHome(){
   const months=['ledna','února','března','dubna','května','června','července','srpna','září','října','listopadu','prosince'];
   // sesbírat upozornění ze všech aplikací
   let al=[];
-  for(const a of APPS){const s=summaryOf(a.id);if(!s||!Array.isArray(s.alerts))continue;
+  for(const a of visibleApps()){const s=summaryOf(a.id);if(!s||!Array.isArray(s.alerts))continue;
     for(const x of s.alerts)al.push({...x,app:a});}
   al=al.filter(x=>x&&x.title).sort((a,b)=>(LV[a.level]??3)-(LV[b.level]??3)||String(a.date).localeCompare(String(b.date)));
   const reds=al.filter(x=>x.level==='red').length;
   // tečky s počtem červených v navigaci
-  for(const a of APPS){const s=summaryOf(a.id),n=s&&Array.isArray(s.alerts)?s.alerts.filter(x=>x.level==='red').length:0;const d=$('dot-'+a.id);if(d){d.hidden=!n;d.textContent=n;}}
+  updateDots();
   let h=`<h1>Life Admin</h1><p class="sub">Dnes je ${days[t.getDay()]} ${t.getDate()}. ${months[t.getMonth()]} ${t.getFullYear()}</p>`;
   h+=`<h2 class="sec">🔔 Co hoří${reds?` <span class="muted" style="font-size:16px;font-weight:400">· ${reds} ${plural(reds,'naléhavá věc','naléhavé věci','naléhavých věcí')}</span>`:''}</h2><div class="panel">`;
   if(!al.length)h+=`<div class="prow" style="cursor:default"><div class="tx muted">Nic nehoří. 👍</div></div>`;
@@ -187,8 +273,8 @@ function renderHome(){
         <div class="tx"><div class="t1">${esc(x.title)}</div><div class="t2">${dd!=null?`${fmt(parseD(x.date))} (${rel(dd)}) · `:''}${esc(x.sub||'')}</div></div></div>`;}).join('');
     if(al.length>ALERT_LIMIT)h+=`<button class="more" data-allalerts>${alertsAll?'Zobrazit méně':`Zobrazit všech ${al.length}`}</button>`;
   }
-  h+=`</div><h2 class="sec">Aplikace</h2><div class="cards">`;
-  h+=APPS.map(a=>{const s=summaryOf(a.id);
+  h+=`</div><h2 class="sec hsec">Aplikace <button data-editapps-home>⚙️ Upravit</button></h2><div class="cards">`;
+  h+=visibleApps().map(a=>{const s=summaryOf(a.id);
     const hl=s&&Array.isArray(s.headline)&&s.headline.length?`<div class="hl">${s.headline.slice(0,3).map(x=>`<div><span>${esc(x.label)}</span><b>${esc(x.value)}</b></div>`).join('')}</div>`
       :'';
     const desc=s&&s.desc?`<div class="muted" style="font-size:15px">${esc(s.desc)}</div>`:(!hl?`<div class="muted" style="font-size:15px">${s?'Zatím prázdné – přidej první položku.':'Načítám…'}</div>`:'');
@@ -210,6 +296,7 @@ function renderHome(){
 }
 $('home').addEventListener('click',e=>{
   if(e.target.closest('[data-allalerts]')){alertsAll=!alertsAll;renderHome();return;}
+  if(e.target.closest('[data-editapps-home]')){openEditApps();return;}
   const o=e.target.closest('[data-open]');if(o){go(o.dataset.open);return;}
   if(e.target.closest('#btnExportAll'))exportAll();
   if(e.target.closest('#btnImportAll'))$('fileImport').click();
@@ -221,9 +308,14 @@ $('home').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.ta
 
 // Aplikace hlásí změnu souhrnu (vložené přes postMessage, ostatní záložky přes storage event)
 window.addEventListener('message',e=>{if(e.origin!==location.origin&&!(location.origin==='null'&&e.origin==='null'))return;
-  if(e.data&&e.data.type==='lifeadmin:summary'&&view==='home')renderHome();else if(e.data&&e.data.type==='lifeadmin:summary')updateDots();});
+  if(e.data&&e.data.type==='lifeadmin:summary'&&view==='home')renderHome();else if(e.data&&e.data.type==='lifeadmin:summary')updateDots();
+  // jedna aplikace změnila data jiné (např. Údržba převzala filtry z Dokladů) → tu druhou znovu načíst
+  if(e.data&&e.data.type==='lifeadmin:reload'&&frames[e.data.id])try{frames[e.data.id].contentWindow.location.reload();}catch(err){}});
 window.addEventListener('storage',e=>{if(e.key&&e.key.startsWith('lifeadmin.summary.')){view==='home'?renderHome():updateDots();}});
-function updateDots(){for(const a of APPS){const s=summaryOf(a.id),n=s&&Array.isArray(s.alerts)?s.alerts.filter(x=>x.level==='red').length:0;const d=$('dot-'+a.id);if(d){d.hidden=!n;d.textContent=n;}}}
+function updateDots(){
+  for(const a of visibleApps()){const d=$('dot-'+a.id),n=redCount(a.id);if(d){d.hidden=!n;d.textContent=n;}}
+  const dm=$('dot-more');if(dm){const n=overflow.reduce((s,a)=>s+redCount(a.id),0);dm.hidden=!n;dm.textContent=n;}
+}
 
 // ===== Společná záloha =====
 function download(name,content,mime){
@@ -303,8 +395,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshIfN
 setInterval(refreshIfNewDay,60000);
 
 // ===== Start =====
-buildTabs();
-APPS.forEach(ensureFrame);          // načíst všechny aplikace hned – spočítají a pošlou svůj souhrn
+buildTabs();                         // vytvoří i vložené aplikace – hned spočítají a pošlou svůj souhrn
 show(location.hash.slice(1)||'home');
 </script>
 </body>
