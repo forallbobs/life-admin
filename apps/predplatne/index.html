@@ -115,6 +115,14 @@ details.box>summary{cursor:pointer;font-weight:600;padding:8px 0}
 /* Vloženo do Life Admin: vlastní nadpis schovat, název je v navigaci */
 body.embedded .top h1,body.embedded .top .sub{display:none}
 body.embedded .wrap{padding-top:8px}
+.item{cursor:pointer;transition:box-shadow .15s}
+.item:hover{box-shadow:0 2px 12px rgba(0,0,0,.14)}
+.editic{align-self:flex-start;flex:0 0 auto;border:0;background:none;padding:2px 6px;min-height:36px;font-size:18px;opacity:.75;margin:-4px -6px 0 0}
+.editic:hover{opacity:1}
+/* Vloženo do Life Admin: na řádek s menu ☰ dát obsah, který by jinak byl pod ním */
+body.embedded .top{align-items:center;margin:0 0 10px}
+body.embedded .tactions{margin-top:0}
+body.embedded .top .tabs{margin:0;border-bottom:0}
 .more{display:block;width:100%;margin:2px 0 8px;border:0;background:none;color:var(--accent);font-weight:600;min-height:40px}
 .ratesrc{font-size:14px;color:var(--muted);margin:2px 0}
 .ratecell input:disabled{opacity:.75}
@@ -633,7 +641,7 @@ function render(){
 }
 // ===== Souhrn pro Life Admin (hlavní aplikace ho čte a ukazuje na společném přehledu) =====
 const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
-if(EMBED)document.body.classList.add('embedded');
+if(EMBED){document.body.classList.add('embedded');document.querySelector('.top>div').appendChild($('tabs'));}  // Přehled/Statistiky na řádek s menu
 function publishSummary(T,alerts){
   try{
     const M=settings.mainCurrency;
@@ -695,7 +703,7 @@ function card(it,redIds){
   }
   const meta=[T.label,it.owner,CATS[it.category]!==T.label?CATS[it.category]:'',it.paymentMethod].filter(Boolean).map(esc).join(' · ');
   const id=esc(it.id);
-  return `<div class="item ${cls}">
+  return `<div class="item ${cls}" data-act="edit" data-id="${id}">
     <div class="icon" aria-hidden="true">${T.icon}</div>
     <div class="main">
       <div class="name">${esc(it.name)}</div>
@@ -706,11 +714,11 @@ function card(it,redIds){
       ${lines.join('')}${how}
       ${it.note?`<div class="note">${esc(it.note)}</div>`:''}
       <div class="actions">
-        <button class="small" data-act="edit" data-id="${id}">✏️ Upravit</button>
         ${cancelled?`<button class="small" data-act="restore" data-id="${id}">↩️ Znovu aktivní</button>`
           :`<button class="small" data-act="consider" data-id="${id}">${it.considering?'👍 Nechávám si':'🤔 Zvažuju zrušit'}</button>`}
       </div>
-    </div></div>`;
+    </div>
+    <button class="editic" data-act="edit" data-id="${id}" aria-label="Upravit" title="Upravit">✏️</button></div>`;
 }
 
 let qRaw='',searchFocus=false,cancOpen=false;
@@ -732,6 +740,7 @@ document.addEventListener('click',e=>{
   const qa=e.target.closest('[data-quick]');if(qa){openForm(null,QUICK[Number(qa.dataset.quick)]);return;}
   if(e.target.closest('[data-print]')){printOverview();return;}
   if(e.target.closest('[data-csv]')){exportCsv();return;}
+  if(e.target.closest('a'))return;   // odkaz „Jak zrušit“ neotevírá úpravu
   const b=e.target.closest('[data-act]');if(!b)return;
   const it=items.find(i=>i.id===b.dataset.id);if(!it)return;
   const a=b.dataset.act;
