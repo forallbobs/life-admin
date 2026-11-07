@@ -78,6 +78,16 @@ textarea{min-height:70px;resize:vertical}
 /* Vloženo do Life Admin: vlastní nadpis schovat, název je v navigaci */
 body.embedded .top h1,body.embedded .top .sub{display:none}
 body.embedded .wrap{padding-top:8px}
+.item{cursor:pointer;transition:box-shadow .15s}
+.item:hover{box-shadow:0 2px 12px rgba(0,0,0,.14)}
+.editic{align-self:flex-start;flex:0 0 auto;border:0;background:none;padding:2px 6px;min-height:36px;font-size:18px;opacity:.75;margin:-4px -6px 0 0}
+.editic:hover{opacity:1}
+.item{flex-wrap:wrap;align-content:space-between}
+.item>.actions{flex-basis:100%;margin-top:2px}
+/* Vloženo do Life Admin: na řádek s menu ☰ dát obsah, který by jinak byl pod ním */
+body.embedded .top{align-items:center;margin:0 0 10px}
+body.embedded .tactions{margin-top:0}
+body.embedded .top .summary{margin:0}
 @media(max-width:599px){
   .wrap{padding-top:8px;padding-bottom:110px}
   .top{margin-bottom:8px}
@@ -270,20 +280,20 @@ function render(){
     $('list').innerHTML=vis.map(({it,d,s})=>{
       const T=typeOf(it.type);
       const id=esc(it.id);
-      const num=it.docNumber?` · <span class="num" data-act="reveal" data-id="${id}"title="Klikni pro zobrazení">č. ${esc(revealed.has(it.id)?it.docNumber:mask(it.docNumber))}</span>`:'';
+      const num=it.docNumber?` · <span class="num" data-act="reveal" data-id="${id}" title="Klikni pro zobrazení">č. ${esc(revealed.has(it.id)?it.docNumber:mask(it.docNumber))}</span>`:'';
       const rec=hasRecur(it)?` · 🔁 ${recurText(it).toLowerCase()}`:'';
-      return `<div class="item ${s.cls}">
+      return `<div class="item ${s.cls}" data-act="edit" data-id="${id}">
         <div class="icon" aria-hidden="true">${T.icon}</div>
         <div class="main">
           <div class="name">${esc(it.name)}</div>
           <div class="meta">${esc(T.label)}${it.owner?' · '+esc(it.owner):''} · platí do ${fmt(parseD(it.expiryDate))}${rec}${num}</div>
           <span class="badge ${s.cls}">${s.label} – ${daysText(d)}</span>
           ${it.note?`<div class="note">${esc(it.note)}</div>`:''}
-          <div class="actions">
-            <button class="small" data-act="gcal" data-id="${id}">📆 Do kalendáře</button>
-            <button class="small" data-act="renew" data-id="${id}">✅ Obnoveno</button>
-            <button class="small" data-act="edit" data-id="${id}">✏️ Upravit</button>
-          </div>
+        </div>
+        <button class="editic" data-act="edit" data-id="${id}" aria-label="Upravit" title="Upravit">✏️</button>
+        <div class="actions">
+          <button class="small" data-act="gcal" data-id="${id}">📆 Do kalendáře</button>
+          <button class="small" data-act="renew" data-id="${id}">✅ Obnoveno</button>
         </div></div>`;
     }).join('');
   }
@@ -296,7 +306,7 @@ function render(){
 }
 // ===== Souhrn pro Life Admin (hlavní aplikace ho čte a ukazuje na společném přehledu) =====
 const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
-if(EMBED)document.body.classList.add('embedded');
+if(EMBED){document.body.classList.add('embedded');document.querySelector('.top>div').appendChild($('summary'));}  // souhrn na řádek s menu
 function publishSummary(rows,c){
   try{
     const hot=c.expired+c.urgent+c.soon;
