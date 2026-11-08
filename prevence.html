@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prevence</title>
+<style>
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#be185d;--accent-bg:#fce7f3;
+--red:#c62828;--red-bg:#fdecec;--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32;--green-bg:#e9f5ea;--gray-bg:#ececea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#be185d;--accent-bg:#3a1428;
+--red:#f28b82;--red-bg:#3b1d1d;--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995;--green-bg:#1b3021;--gray-bg:#2e2e2b}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
+h1{font-size:26px;margin:4px 0 2px}
+h2.sec{font-size:20px;margin:22px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2.sec .r{margin-left:auto}
+.sub{color:var(--muted);margin:0}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.small{padding:6px 10px;min-height:38px;font-size:15px}
+button.confirm{background:var(--red);border-color:var(--red);color:#fff}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:4px 0 12px}
+.tactions{display:flex;gap:8px;align-items:center;flex-shrink:0;margin-top:4px}
+.menuwrap{position:relative}
+#btnMenu{font-size:22px;min-width:50px;padding:4px 12px;line-height:1}
+.menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:6px;z-index:15;min-width:250px;display:flex;flex-direction:column}
+.menu[hidden]{display:none}
+.menu button{border:0;text-align:left;background:none;border-radius:8px;white-space:nowrap}
+.menu button:hover{background:var(--bg)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
+.menuver{font-size:12px;color:var(--muted);padding:6px 12px 2px;opacity:.8}
+.cars{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border-radius:999px;padding:6px 14px;min-height:38px;font-size:15px}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+body.embedded .top h1,body.embedded .top .sub{display:none}
+body.embedded .wrap{padding-top:8px}
+body.embedded .top{align-items:center;margin:0 0 10px}
+body.embedded .tactions{margin-top:0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:800px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat .lbl{color:var(--muted);font-size:14px}
+.stat .big{font-size:22px;font-weight:700;line-height:1.25}
+.stat .small{font-size:13px;color:var(--muted)}
+.tirebox{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:10px 14px;margin-top:10px}
+.tirebox.red{border-left-color:var(--red)}.tirebox.orange{border-left-color:var(--orange)}
+.tirebox .tx{flex:1;min-width:200px}
+.tasks{display:grid;gap:10px}
+@media(min-width:900px){.tasks{grid-template-columns:1fr 1fr}}
+.task{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.task:hover{box-shadow:0 2px 12px rgba(0,0,0,.14)}
+.task.red{border-left-color:var(--red)}.task.orange{border-left-color:var(--orange)}.task.unknown{border-left-color:var(--line)}
+.task .th{display:flex;align-items:flex-start;gap:8px}
+.task .tn{font-weight:600;font-size:18px;flex:1}
+.task .tm{color:var(--muted);font-size:15px}
+.task .st{font-size:15px}
+.task .st.red{color:var(--red)}.task .st.orange{color:var(--orange)}
+.track{height:8px;background:var(--gray-bg);border-radius:999px;overflow:hidden;margin:4px 0}
+.fill{height:100%;background:var(--green);border-radius:999px}
+.fill.orange{background:var(--orange)}.fill.red{background:var(--red)}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 14px}
+.prow{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.prow:last-child{border-bottom:0}
+.prow .tx{flex:1;min-width:0}
+.prow .t1{font-weight:600;font-size:16px}
+.prow .t2{color:var(--muted)}
+.prow .r{text-align:right;white-space:nowrap}
+.prow.click{cursor:pointer}
+.red-t{color:var(--red)}.orange-t{color:var(--orange)}.green-t{color:var(--green)}
+.empty{text-align:center;padding:36px 16px;background:var(--card);border:1px dashed var(--line);border-radius:12px}
+.empty .big{font-size:44px}
+.tip{font-size:14px;color:var(--muted);margin-top:8px}
+.more{display:block;width:100%;border:0;background:none;color:var(--accent);font-weight:600;min-height:40px}
+.fab{display:none}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.overlay.open{display:flex}
+.modal{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:20px;max-height:92vh;overflow:auto}
+@media(min-width:600px){.overlay{align-items:center}.modal{border-radius:16px}}
+.modal h2{margin:0 0 4px;font-size:22px}
+.mfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:16px}
+.mfoot>div{display:flex;flex-wrap:wrap;gap:8px}
+label{display:block;font-size:15px;color:var(--muted);margin:12px 0 4px}
+label.check{display:flex;align-items:center;gap:10px;color:var(--text);font-size:16px;cursor:pointer}
+label.check input{width:22px;height:22px;min-height:0;margin:0}
+.modal input,.modal select,.modal textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:44px}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+.err{color:var(--red);font-size:14px;margin-top:4px}
+.hint{font-size:14px;color:var(--muted);margin-top:4px}
+.qchips{display:flex;gap:6px;flex-wrap:wrap}
+.qchips button{border-radius:999px;padding:6px 12px;min-height:36px;font-size:14px}
+.sheet button{display:block;width:100%;text-align:left;margin-top:8px;font-size:18px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90%}
+.toast.show{opacity:1}
+@media(max-width:599px){
+  .wrap{padding-top:8px;padding-bottom:110px}
+  .top h1{font-size:22px}
+  .top .sub,#btnAdd{display:none}
+  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
+  .toast{bottom:96px}
+}
+.ver{font-size:13px;color:var(--muted);margin-top:24px;opacity:.8}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.task .ic{font-size:26px;line-height:1.1}
+.task .th{align-items:center}
+.buy{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px}
+.buy b{display:block;margin-bottom:4px}
+.buy ul{margin:0;padding-left:20px;font-size:15px}
+.banner{background:var(--accent-bg);border:1px solid var(--accent);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner .tx{flex:1;min-width:200px;font-size:15px}
+.toast.act{pointer-events:auto}
+.toast button{margin-left:10px;min-height:32px;padding:2px 10px;background:none;color:inherit;border-color:currentColor}
+.imp label.check{margin:8px 0}
+
+.task.booked{border-left-color:#2563eb}
+.st.booked{color:#2563eb}
+@media (prefers-color-scheme:dark){.task.booked{border-left-color:#93b4f8}.st.booked{color:#93b4f8}}
+.person{display:inline-block;font-size:13px;padding:1px 8px;border-radius:999px;background:var(--gray-bg);color:var(--muted);margin-left:6px;vertical-align:middle;font-weight:400}
+.info{font-size:13px;color:var(--muted)}
+.disc{font-size:13px;color:var(--muted);margin-top:16px}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div id="topLeft">
+      <h1>🩺 Prevence</h1>
+      <p class="sub">Prohlídky a očkování – ať se včas objednáš.</p>
+    </div>
+    <div class="tactions">
+      <button class="primary" id="btnAdd">+ Přidat</button>
+      <div class="menuwrap">
+        <button id="btnMenu" aria-haspopup="true" aria-expanded="false" aria-label="Menu" title="Menu">☰</button>
+        <div class="menu" id="menu" role="menu" hidden>
+          <button role="menuitem" data-do="ics">📅 Vše do kalendáře (.ics)</button>
+          <div class="menuver" id="menuVer"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div id="view"></div>
+  <p class="disc">Intervaly v předvolbách vycházejí z preventivních prohlídek hrazených pojišťovnou (vyhláška 70/2012 Sb., <a href="https://www.vzp.cz/pojistenci/prevence/preventivni-prohlidky" target="_blank" rel="noopener">přehled VZP</a>) a z doporučení k očkování. O tvém konkrétním termínu vždy rozhoduje lékař.</p>
+  <div class="ver" id="ver"></div>
+</div>
+<button class="fab" id="btnFab" aria-label="Přidat" title="Přidat"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 4v20M4 14h20" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></button>
+
+<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <h2 id="mTitle"></h2><div id="mBody"></div>
+  <div class="mfoot"><div id="mLeft"></div><div><button id="mCancel">Zrušit</button><button class="primary" id="mSave">Uložit</button></div></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const APP_ID='prevence',APP_VERSION='2026.11.08';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const plural=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
+const parseD=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const isISO=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s);
+const isTime=s=>typeof s==='string'&&/^\d{2}:\d{2}$/.test(s);
+const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const today=()=>{const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())};
+const fmt=d=>`${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`;
+const dayNum=d=>Math.round(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);
+const diffDays=(a,b)=>dayNum(b)-dayNum(a);
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function addMonths(d,m){const r=new Date(d.getFullYear(),d.getMonth()+m,1);const last=new Date(r.getFullYear(),r.getMonth()+1,0).getDate();r.setDate(Math.min(d.getDate(),last));return r;}
+const parseNum=v=>{const s=String(v??'').replace(/[\s\u00a0]/g,'').replace(',','.');return s===''?NaN:Number(s);};
+function rel(n){if(n<0)return `před ${-n} ${plural(-n,'dnem','dny','dny')}`;if(n===0)return 'dnes';if(n===1)return 'zítra';return `za ${n} ${plural(n,'den','dny','dní')}`;}
+function every(n,a,b,c){return n===1?`každý ${a}`:`${n>=2&&n<=4?'každé':'každých'} ${n} ${plural(n,a,b,c)}`;}
+const cycleText=c=>c.days?every(c.days,'den','dny','dní'):(c.months%12===0?every(c.months/12,'rok','roky','let'):every(c.months,'měsíc','měsíce','měsíců'));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const mem={};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
+
+// ===== Předvolby (VZP – vyhláška 70/2012 Sb.; očkování dle doporučení) =====
+const PRESETS=[
+  ['🩺','Preventivní prohlídka u praktického lékaře',{months:24},'Hrazeno 1× za 2 roky (po uplynutí 23 měsíců).'],
+  ['🦷','Zubař – preventivní prohlídka',{months:6},'Hrazeno: 1 preventivní + 1 pravidelná prohlídka ročně.'],
+  ['🪥','Dentální hygiena',{months:6},'Doporučení – hradí se zvlášť (některé pojišťovny přispívají).'],
+  ['🌸','Gynekologická prohlídka',{months:12},'Hrazeno každý rok (od 15 let).'],
+  ['🎗️','Mamografie',{months:24},'Od 45 let 1× za 2 roky – žádanku dává praktik nebo gynekolog.'],
+  ['🔬','Screening tlustého střeva (test TOKS)',{months:24},'Od 45 do 74 let 1× za 2 roky, nebo kolonoskopie 1× za 10 let.'],
+  ['💉','Očkování proti tetanu',{months:120},'Přeočkování po 10–15 letech, po 60 letech po 10 letech. Připomenu po 10 letech – zeptej se lékaře.'],
+  ['🕷️','Očkování proti klíšťové encefalitidě',{months:60},'1. přeočkování po 3 letech, další po 5 letech (u starších častěji) – nastav podle očkovacího průkazu.'],
+  ['👁️','Oční vyšetření',{months:24},'Doporučení.'],
+  ['🔍','Kontrola znamének u kožního lékaře',{months:12},'Doporučení.'],
+];
+
+// ===== Data =====
+const KEY='prevence.items.v1';
+let items=[];
+function normItem(x){
+  if(!x||!x.name)return null;
+  let months=Math.max(0,Math.round(Number(x.cycle&&x.cycle.months)||0)),days=Math.max(0,Math.round(Number(x.cycle&&x.cycle.days)||0));
+  if(days)months=0;else if(!months)months=12;
+  return{id:String(x.id||uid()),name:String(x.name),icon:String(x.icon||'🩺'),person:String(x.person||''),cycle:{months,days},
+    lastDate:isISO(x.lastDate)?x.lastDate:null,booked:isISO(x.booked)?x.booked:null,bookedTime:isTime(x.bookedTime)?x.bookedTime:'',
+    lead:x.lead!=null&&x.lead!==''&&Number(x.lead)>=0?Math.round(Number(x.lead)):null,doctor:String(x.doctor||''),info:String(x.info||''),note:String(x.note||''),
+    history:Array.isArray(x.history)?x.history.filter(isISO).slice(-30):[],createdAt:isISO(x.createdAt)?x.createdAt:isoD(today())};
+}
+try{items=(JSON.parse(store.get(KEY)||'[]')||[]).map(normItem).filter(Boolean);}catch(e){items=[];}
+const save=()=>store.set(KEY,JSON.stringify(items));
+
+// ===== Výpočty =====
+const nextDue=it=>it.lastDate?(it.cycle.days?addDays(parseD(it.lastDate),it.cycle.days):addMonths(parseD(it.lastDate),it.cycle.months)):null;
+// s jakým předstihem připomenout objednání (na prohlídky se často čeká týdny)
+const leadOf=it=>it.lead!=null?it.lead:(it.cycle.days||it.cycle.months*30)<=200?21:45;
+function status(it){
+  const t=today();
+  if(it.booked){const d=diffDays(t,parseD(it.booked));
+    if(d<0)return{level:'confirm',date:parseD(it.booked),days:d};          // termín proběhl – potvrdit
+    return{level:d<=1?'orange':'booked',date:parseD(it.booked),days:d};}
+  const due=nextDue(it);
+  if(!due)return{level:'unknown',date:null,days:null};
+  const d=diffDays(t,due);
+  return{level:d<0?'red':d<=leadOf(it)?'orange':'ok',date:due,days:d};
+}
+const who=it=>it.person?` (${it.person})`:'';
+
+// ===== Vykreslení =====
+let fPerson='';
+function render(){
+  $('menuVer').textContent='Prevence · verze '+APP_VERSION;
+  const people=[...new Set(items.map(i=>i.person.trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'cs'));
+  if(!people.includes(fPerson))fPerson='';
+  const rows=items.filter(i=>!fPerson||i.person.trim()===fPerson).map(it=>({it,s:status(it)}));
+  const order={confirm:0,red:1,orange:2,booked:3,unknown:4,ok:5};
+  rows.sort((a,b)=>order[a.s.level]-order[b.s.level]||((a.s.date||8e15)-(b.s.date||8e15)));
+  let h='';
+  if(!items.length){
+    h=`<div class="empty"><div class="big">🩺</div><h2>Na jaké prohlídky chodíš?</h2><p class="sub">Vyber z běžných prohlídek a očkování. Pohlídám, kdy se objednat, a připomenu termín.</p><br>
+      <div class="qchips" style="justify-content:center">${PRESETS.map((p,i)=>`<button data-preset="${i}">${p[0]} ${esc(p[1])}</button>`).join('')}</div></div>`;
+  }else{
+    if(people.length>1)h+=`<div class="chips"><button class="chip${!fPerson?' on':''}" data-p="">Všichni</button>${people.map(p=>`<button class="chip${fPerson===p?' on':''}" data-p="${esc(p)}">${esc(p)}</button>`).join('')}</div>`;
+    h+=`<div class="tasks">${rows.map(({it,s})=>{
+      let st='';
+      if(s.level==='confirm')st=`<div class="st orange">Termín byl ${fmt(s.date)}${it.bookedTime?' v '+it.bookedTime:''} – byl jsi tam?</div>`;
+      else if(s.level==='booked'||(it.booked&&s.level==='orange'))st=`<div class="st booked">📅 Objednáno na <b>${fmt(s.date)}${it.bookedTime?' v '+it.bookedTime:''}</b> (${rel(s.days)})</div>`;
+      else if(s.level==='unknown')st=`<div class="st">Zadej, kdy jsi byl naposledy – podle toho pohlídám další termín.</div>`;
+      else if(s.level==='red')st=`<div class="st red">⚠️ Termín ${fmt(s.date)} prošel – objednej se.</div>`;
+      else if(s.level==='orange')st=`<div class="st orange">📞 Čas se objednat – termín ${fmt(s.date)} (${rel(s.days)})</div>`;
+      else st=`<div class="st">Další: <b>${fmt(s.date)}</b> (${rel(s.days)})</div>`;
+      const cls=s.level==='confirm'?'orange':s.level==='booked'?'booked':(it.booked&&s.level==='orange')?'booked':s.level;
+      const btns=s.level==='confirm'
+        ?`<button class="small" data-attended="${esc(it.id)}">✅ Ano, absolvováno</button><button class="small" data-missed="${esc(it.id)}">✕ Nebyl</button>`
+        :it.booked?`<button class="small" data-attended="${esc(it.id)}">✅ Absolvováno</button><button class="small" data-gcal="${esc(it.id)}">📆 Do kalendáře</button>`
+        :`<button class="small" data-book="${esc(it.id)}">📅 Objednáno</button><button class="small" data-attended="${esc(it.id)}">✅ Absolvováno</button>`;
+      return `<div class="task ${cls}" data-edit="${esc(it.id)}">
+        <div class="th"><span class="ic" aria-hidden="true">${esc(it.icon)}</span><div class="tn">${esc(it.name)}${it.person&&people.length>1&&!fPerson?`<span class="person">${esc(it.person)}</span>`:''}</div><span aria-hidden="true">✏️</span></div>
+        <div class="tm">${cycleText(it.cycle)}${it.lastDate?` · naposledy ${fmt(parseD(it.lastDate))}`:''}${it.doctor?` · ${esc(it.doctor)}`:''}</div>
+        ${st}${it.info?`<div class="info">ℹ️ ${esc(it.info)}</div>`:''}${it.note?`<div class="tm" style="font-style:italic">${esc(it.note)}</div>`:''}
+        <div class="actions">${btns}</div></div>`;}).join('')}</div>`;
+  }
+  $('view').innerHTML=h;
+  publish();
+}
+
+// ===== Formuláře =====
+let mSave=null,mDelete=null,delT=null;
+function openModal(title,body,onSave,onDelete){
+  $('mTitle').textContent=title;$('mBody').innerHTML=body;mSave=onSave;mDelete=onDelete||null;
+  $('mLeft').innerHTML=onDelete?'<button id="mDel">🗑️ Smazat</button>':'';
+  $('overlay').classList.add('open');
+}
+function closeModal(){$('overlay').classList.remove('open');clearTimeout(delT);}
+$('mCancel').onclick=closeModal;
+$('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal();
+  if(e.target.id==='mDel'){const b=e.target;if(b.classList.contains('confirm')){mDelete();closeModal();save();render();toast('Smazáno');}
+    else{b.classList.add('confirm');b.textContent='Opravdu smazat?';delT=setTimeout(()=>{b.classList.remove('confirm');b.textContent='🗑️ Smazat';},4000);}}});
+$('mSave').onclick=()=>{if(mSave&&mSave()!==false){closeModal();save();render();}};
+const err=(id,msg)=>{const e=$(id);if(e)e.textContent=msg;return false;};
+function peopleList(){return[...new Set(items.map(i=>i.person.trim()).filter(Boolean))];}
+
+function itemForm(it,preset){
+  const isNew=!it,p=preset?{icon:preset[0],name:preset[1],cycle:{months:preset[2].months||0,days:preset[2].days||0},info:preset[3]}:null;
+  const v=it||p||{icon:'🩺',name:'',cycle:{months:12,days:0},info:''};
+  const c=v.cycle,n=c.days?c.days:(c.months%12===0?c.months/12:c.months),u=c.days?'d':(c.months%12===0?'y':'m');
+  openModal(isNew?'Nová prohlídka':'Upravit',
+    (isNew&&!p?`<label>Rychlý výběr</label><div class="qchips">${PRESETS.map((x,i)=>`<button type="button" data-pre="${i}">${x[0]} ${esc(x[1])}</button>`).join('')}</div>`:'')+
+    `<div class="row"><div style="flex:0 0 80px"><label for="iIcon">Ikona</label><input id="iIcon" value="${esc(v.icon)}" maxlength="4"></div>
+      <div><label for="iName">Prohlídka / očkování</label><input id="iName" value="${esc(v.name)}" placeholder="např. Zubař"></div></div><div class="err" id="eName"></div>
+     <label for="iPerson">Pro koho (nepovinné)</label><input id="iPerson" list="people" value="${esc(it?it.person:(fPerson||''))}" placeholder="Já, Máma, Honza…"><datalist id="people">${peopleList().map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
+     <label>Jak často</label><div class="row"><input id="iN" inputmode="numeric" value="${n}"><select id="iU">${[['d','dní'],['m','měsíců'],['y','let']].map(([k,l])=>`<option value="${k}"${k===u?' selected':''}>${l}</option>`).join('')}</select></div><div class="err" id="eInt"></div>
+     <div class="info" id="iInfo" style="margin-top:4px">${v.info?'ℹ️ '+esc(v.info):''}</div>
+     <label for="iLast">Naposledy (datum)</label><input id="iLast" type="date" value="${esc(it?it.lastDate||'':'')}">
+     <div class="hint">Nevíš přesně? Stačí přibližně – třeba podle očkovacího průkazu nebo zprávy od lékaře.</div>
+     <div class="row"><div><label for="iBook">Objednáno na (nepovinné)</label><input id="iBook" type="date" value="${esc(it?it.booked||'':'')}"></div><div style="flex:0 0 120px"><label for="iTime">Čas</label><input id="iTime" type="time" value="${esc(it?it.bookedTime:'')}"></div></div>
+     <label for="iDoc">Lékař / kontakt (nepovinné)</label><input id="iDoc" value="${esc(it?it.doctor:'')}" placeholder="MUDr. Novák, tel. 123 456 789">
+     <label for="iLead">Připomenout objednání … dní předem</label><input id="iLead" inputmode="numeric" value="${it&&it.lead!=null?it.lead:''}" placeholder="automaticky (3–6 týdnů)">
+     <label for="iNote">Poznámka</label><textarea id="iNote" rows="2">${esc(it?it.note:'')}</textarea>`,
+    ()=>{
+      const name=$('iName').value.trim();if(!name)return err('eName','Napiš, o jakou prohlídku jde.');
+      const N=Math.round(parseNum($('iN').value)),U=$('iU').value;if(!(N>=1))return err('eInt','Zadej celé číslo, např. 2.');
+      const cycle={months:U==='m'?N:U==='y'?N*12:0,days:U==='d'?N:0};
+      const ld=parseNum($('iLead').value);
+      const d={icon:$('iIcon').value.trim()||'🩺',name,person:$('iPerson').value.trim(),cycle,lastDate:$('iLast').value||null,
+        booked:$('iBook').value||null,bookedTime:$('iBook').value?$('iTime').value:'',doctor:$('iDoc').value.trim(),lead:ld>=0?Math.round(ld):null,
+        info:isNew?(v.info||''):it.info,note:$('iNote').value.trim()};
+      if(isNew)items.push(normItem({id:uid(),...d,history:d.lastDate?[d.lastDate]:[]}));else Object.assign(it,d);
+      toast('Uloženo');
+    },isNew?null:()=>{items=items.filter(x=>x.id!==it.id);});
+  $('mBody').querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{const x=PRESETS[Number(b.dataset.pre)];
+    $('iIcon').value=x[0];$('iName').value=x[1];const m=x[2].months||0;
+    if(m%12===0){$('iN').value=m/12;$('iU').value='y';}else{$('iN').value=m;$('iU').value='m';}
+    v.info=x[3];$('iInfo').textContent='ℹ️ '+x[3];});
+}
+function bookForm(it){
+  openModal(`Objednáno: ${it.name}${who(it)}`,
+    `<div class="row"><div><label for="bDate">Datum</label><input id="bDate" type="date" value="${esc(it.booked||'')}"></div><div style="flex:0 0 120px"><label for="bTime">Čas</label><input id="bTime" type="time" value="${esc(it.bookedTime||'')}"></div></div><div class="err" id="eB"></div>
+     <label for="bDoc">Lékař / kde (nepovinné)</label><input id="bDoc" value="${esc(it.doctor)}">`,
+    ()=>{const d=$('bDate').value;if(!isISO(d))return err('eB','Zadej datum termínu.');
+      it.booked=d;it.bookedTime=$('bTime').value||'';it.doctor=$('bDoc').value.trim();toast('📅 Termín uložen – můžeš ho přidat do kalendáře');});
+}
+function attended(it){
+  const d=it.booked&&parseD(it.booked)<=today()?it.booked:isoD(today());
+  const prev={lastDate:it.lastDate,booked:it.booked,bookedTime:it.bookedTime,history:it.history.slice()};
+  it.lastDate=d;it.booked=null;it.bookedTime='';it.history.push(d);save();render();
+  toast(`✅ ${it.name} – další ${fmt(nextDue(it))}`,'↩️ Zpět',()=>{Object.assign(it,prev);save();render();});
+}
+
+// ===== Kalendář =====
+const ymd=d=>isoD(d).replace(/-/g,'');
+function icsEsc(s){return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');}
+function fold(l){const out=[];while(l.length>36){let c=36;const cc=l.charCodeAt(c-1);if(cc>=0xD800&&cc<=0xDBFF)c--;out.push(l.slice(0,c));l=' '+l.slice(c);}out.push(l);return out.join('\r\n');}
+function events(it){
+  const ev=[],t=today();
+  if(it.booked&&parseD(it.booked)>=t){const tm=it.bookedTime||'08:00';
+    ev.push({uid:`${it.id}-book-${ymd(parseD(it.booked))}`,date:parseD(it.booked),time:tm.replace(':','')+'00',dur:'PT1H',summary:`${it.icon} ${it.name}${who(it)}`,alarm:'-P1D',desc:it.doctor});}
+  else{const s=status(it);if(s.date&&(s.level==='ok'||s.level==='orange'||s.level==='red')){
+    const remind=s.level==='ok'?addDays(s.date,-leadOf(it)):t;
+    ev.push({uid:`${it.id}-due-${ymd(s.date)}`,date:remind,time:'090000',dur:'PT15M',summary:`Objednat se: ${it.name}${who(it)}`,alarm:'PT0M',desc:`Termín prohlídky: ${fmt(s.date)}${it.doctor?'\n'+it.doctor:''}`});}}
+  return ev;
+}
+function buildIcs(){
+  const stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Prevence//CS','CALSCALE:GREGORIAN','METHOD:PUBLISH'];let n=0;
+  for(const it of items)for(const e of events(it)){n++;L.push('BEGIN:VEVENT','UID:'+e.uid+'@prevence','DTSTAMP:'+stamp,'DTSTART:'+ymd(e.date)+'T'+e.time,'DURATION:'+e.dur,
+    'SUMMARY:'+icsEsc(e.summary),'DESCRIPTION:'+icsEsc(e.desc),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(e.summary),'TRIGGER:'+e.alarm,'END:VALARM','END:VEVENT');}
+  L.push('END:VCALENDAR');return{text:L.map(fold).join('\r\n')+'\r\n',count:n};
+}
+function download(name,content,mime){const url=URL.createObjectURL(new Blob([content],{type:mime+';charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+function gcal(it){
+  const d=parseD(it.booked),tm=it.bookedTime;
+  let dates;if(tm){const[h,m]=tm.split(':').map(Number);const s=new Date(d.getFullYear(),d.getMonth(),d.getDate(),h,m),e=new Date(s.getTime()+3600e3);
+    const f=x=>ymd(x)+'T'+String(x.getHours()).padStart(2,'0')+String(x.getMinutes()).padStart(2,'0')+'00';dates=f(s)+'/'+f(e);}
+  else dates=ymd(d)+'/'+ymd(addDays(d,1));
+  const p=new URLSearchParams({action:'TEMPLATE',text:`${it.icon} ${it.name}${who(it)}`,dates,details:it.doctor||''});
+  window.open('https://calendar.google.com/calendar/render?'+p.toString(),'_blank');
+}
+
+// ===== Ovládání =====
+document.addEventListener('click',e=>{
+  if(e.target.closest('#overlay'))return;
+  if(e.target.closest('a'))return;
+  const d=e.target.closest('[data-do]');
+  if(d){setMenu(false);if(d.dataset.do==='ics'){const r=buildIcs();if(!r.count){toast('Zatím není co přidat – zadej, kdy jsi byl naposledy, nebo termín.');return;}
+    download('prevence.ics',r.text,'text/calendar');toast(`Staženo ${r.count} ${plural(r.count,'událost','události','událostí')} – nahraj je do kalendáře.`);}return;}
+  const pr=e.target.closest('[data-preset]');if(pr){itemForm(null,PRESETS[Number(pr.dataset.preset)]);return;}
+  const pp=e.target.closest('[data-p]');if(pp){fPerson=pp.dataset.p;render();return;}
+  const find=id=>items.find(x=>x.id===id);
+  const at=e.target.closest('[data-attended]');if(at){const it=find(at.dataset.attended);if(it)attended(it);return;}
+  const ms=e.target.closest('[data-missed]');if(ms){const it=find(ms.dataset.missed);if(it){it.booked=null;it.bookedTime='';save();render();toast('Termín zrušen – nezapomeň se objednat znovu.');}return;}
+  const bk=e.target.closest('[data-book]');if(bk){const it=find(bk.dataset.book);if(it)bookForm(it);return;}
+  const gc=e.target.closest('[data-gcal]');if(gc){const it=find(gc.dataset.gcal);if(it&&it.booked)gcal(it);return;}
+  const ed=e.target.closest('[data-edit]');if(ed){const it=find(ed.dataset.edit);if(it)itemForm(it);return;}
+  if(!$('menu').hidden&&!e.target.closest('.menuwrap'))setMenu(false);
+});
+function setMenu(open){$('menu').hidden=!open;$('btnMenu').setAttribute('aria-expanded',String(open));}
+$('btnMenu').addEventListener('click',e=>{e.stopPropagation();setMenu($('menu').hidden);});
+$('btnAdd').onclick=()=>itemForm();
+$('btnFab').onclick=()=>itemForm();
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden)setMenu(false);else closeModal();});
+let toastT,toastFn=null;
+function toast(m,btn,fn){const t=$('toast');t.innerHTML=esc(m)+(btn?`<button id="tBtn">${esc(btn)}</button>`:'');t.classList.toggle('act',!!btn);toastFn=fn||null;
+  t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>{t.classList.remove('show','act');toastFn=null;},btn?6000:3500);}
+$('toast').addEventListener('click',e=>{if(e.target.id==='tBtn'&&toastFn){toastFn();toastFn=null;$('toast').classList.remove('show','act');}});
+
+// ===== Life Admin =====
+const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+if(EMBED)document.body.classList.add('embedded');
+$('ver').textContent='Prevence · verze '+APP_VERSION;
+function publish(){
+  try{
+    const rows=items.map(it=>({it,s:status(it)}));
+    const booked=rows.filter(r=>r.it.booked&&r.s.days>=0),toBook=rows.filter(r=>!r.it.booked&&(r.s.level==='red'||r.s.level==='orange'));
+    const hl=items.length?[{label:'Prohlídek',value:String(items.length)},{label:'Objednáno',value:String(booked.length)},{label:'Objednat se',value:String(toBook.length)}]:[];
+    const alerts=[];
+    for(const{it,s}of rows){
+      if(s.level==='confirm')alerts.push({level:'orange',title:`${it.icon} ${it.name}${who(it)}`,sub:'termín proběhl – potvrď, že jsi tam byl',date:isoD(s.date)});
+      else if(it.booked&&s.days<=7)alerts.push({level:s.days<=1?'orange':'info',title:`${it.icon} ${it.name}${who(it)}${it.bookedTime?' v '+it.bookedTime:''}`,sub:'objednaný termín'+(it.doctor?' · '+it.doctor:''),date:it.booked});
+      else if(!it.booked&&s.level==='red')alerts.push({level:'red',title:`Objednat se: ${it.name}${who(it)}`,sub:'termín prošel',date:isoD(s.date)});
+      else if(!it.booked&&s.level==='orange')alerts.push({level:'orange',title:`Objednat se: ${it.name}${who(it)}`,sub:`termín ${fmt(s.date)}`,date:isoD(s.date)});
+    }
+    store.set('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:items.length,headline:hl,alerts,
+      desc:items.length?'':'Prohlídky a očkování – ať se včas objednáš.'}));
+    if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
+let lastDay=isoD(today());setInterval(()=>{const d=isoD(today());if(d!==lastDay){lastDay=d;render();}},60000);
+render();
+</script>
+</body>
+</html>

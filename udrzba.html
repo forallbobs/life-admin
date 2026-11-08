@@ -147,7 +147,7 @@ label.check input{width:22px;height:22px;min-height:0;margin:0}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_ID='udrzba',APP_VERSION='2026.11.07';
+const APP_ID='udrzba',APP_VERSION='2026.11.08';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const plural=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
@@ -186,7 +186,7 @@ function normItem(x){
   let months=Math.max(0,Math.round(Number(x.cycle&&x.cycle.months)||0)),days=Math.max(0,Math.round(Number(x.cycle&&x.cycle.days)||0));
   if(days)months=0;else if(!months)months=1;
   return{id:String(x.id||uid()),name:String(x.name),icon:String(x.icon||'🔧'),cycle:{months,days},lastDone:isISO(x.lastDone)?x.lastDone:null,
-    warnDays:Number(x.warnDays)>=0?Math.round(Number(x.warnDays)):null,buy:String(x.buy||''),note:String(x.note||''),
+    warnDays:x.warnDays!=null&&x.warnDays!==''&&Number(x.warnDays)>=0?Math.round(Number(x.warnDays)):null,buy:String(x.buy||''),note:String(x.note||''),
     history:Array.isArray(x.history)?x.history.filter(isISO).slice(-50):[],createdAt:isISO(x.createdAt)?x.createdAt:isoD(today())};
 }
 try{items=(JSON.parse(store.get(KEY)||'[]')||[]).map(normItem).filter(Boolean);}catch(e){items=[];}
