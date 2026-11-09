@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Návody</title>
+<style>
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#4f46e5;--accent-bg:#eef0fe;
+--red:#c62828;--red-bg:#fdecec;--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32;--green-bg:#e9f5ea;--gray-bg:#ececea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#6366f1;--accent-bg:#1e2040;
+--red:#f28b82;--red-bg:#3b1d1d;--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995;--green-bg:#1b3021;--gray-bg:#2e2e2b}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
+h1{font-size:26px;margin:4px 0 2px}
+h2.sec{font-size:20px;margin:22px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2.sec .r{margin-left:auto}
+.sub{color:var(--muted);margin:0}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.small{padding:6px 10px;min-height:38px;font-size:15px}
+button.confirm{background:var(--red);border-color:var(--red);color:#fff}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:4px 0 12px}
+.tactions{display:flex;gap:8px;align-items:center;flex-shrink:0;margin-top:4px}
+.menuwrap{position:relative}
+#btnMenu{font-size:22px;min-width:50px;padding:4px 12px;line-height:1}
+.menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:6px;z-index:15;min-width:250px;display:flex;flex-direction:column}
+.menu[hidden]{display:none}
+.menu button{border:0;text-align:left;background:none;border-radius:8px;white-space:nowrap}
+.menu button:hover{background:var(--bg)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
+.menuver{font-size:12px;color:var(--muted);padding:6px 12px 2px;opacity:.8}
+.cars{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border-radius:999px;padding:6px 14px;min-height:38px;font-size:15px}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+body.embedded .top h1,body.embedded .top .sub{display:none}
+body.embedded .wrap{padding-top:8px}
+body.embedded .top{align-items:center;margin:0 0 10px}
+body.embedded .tactions{margin-top:0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:800px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat .lbl{color:var(--muted);font-size:14px}
+.stat .big{font-size:22px;font-weight:700;line-height:1.25}
+.stat .small{font-size:13px;color:var(--muted)}
+.tirebox{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:10px 14px;margin-top:10px}
+.tirebox.red{border-left-color:var(--red)}.tirebox.orange{border-left-color:var(--orange)}
+.tirebox .tx{flex:1;min-width:200px}
+.tasks{display:grid;gap:10px}
+@media(min-width:900px){.tasks{grid-template-columns:1fr 1fr}}
+.task{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.task:hover{box-shadow:0 2px 12px rgba(0,0,0,.14)}
+.task.red{border-left-color:var(--red)}.task.orange{border-left-color:var(--orange)}.task.unknown{border-left-color:var(--line)}
+.task .th{display:flex;align-items:flex-start;gap:8px}
+.task .tn{font-weight:600;font-size:18px;flex:1}
+.task .tm{color:var(--muted);font-size:15px}
+.task .st{font-size:15px}
+.task .st.red{color:var(--red)}.task .st.orange{color:var(--orange)}
+.track{height:8px;background:var(--gray-bg);border-radius:999px;overflow:hidden;margin:4px 0}
+.fill{height:100%;background:var(--green);border-radius:999px}
+.fill.orange{background:var(--orange)}.fill.red{background:var(--red)}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 14px}
+.prow{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.prow:last-child{border-bottom:0}
+.prow .tx{flex:1;min-width:0}
+.prow .t1{font-weight:600;font-size:16px}
+.prow .t2{color:var(--muted)}
+.prow .r{text-align:right;white-space:nowrap}
+.prow.click{cursor:pointer}
+.red-t{color:var(--red)}.orange-t{color:var(--orange)}.green-t{color:var(--green)}
+.empty{text-align:center;padding:36px 16px;background:var(--card);border:1px dashed var(--line);border-radius:12px}
+.empty .big{font-size:44px}
+.tip{font-size:14px;color:var(--muted);margin-top:8px}
+.more{display:block;width:100%;border:0;background:none;color:var(--accent);font-weight:600;min-height:40px}
+.fab{display:none}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.overlay.open{display:flex}
+.modal{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:20px;max-height:92vh;overflow:auto}
+@media(min-width:600px){.overlay{align-items:center}.modal{border-radius:16px}}
+.modal h2{margin:0 0 4px;font-size:22px}
+.mfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:16px}
+.mfoot>div{display:flex;flex-wrap:wrap;gap:8px}
+label{display:block;font-size:15px;color:var(--muted);margin:12px 0 4px}
+label.check{display:flex;align-items:center;gap:10px;color:var(--text);font-size:16px;cursor:pointer}
+label.check input{width:22px;height:22px;min-height:0;margin:0}
+.modal input,.modal select,.modal textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:44px}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+.err{color:var(--red);font-size:14px;margin-top:4px}
+.hint{font-size:14px;color:var(--muted);margin-top:4px}
+.qchips{display:flex;gap:6px;flex-wrap:wrap}
+.qchips button{border-radius:999px;padding:6px 12px;min-height:36px;font-size:14px}
+.sheet button{display:block;width:100%;text-align:left;margin-top:8px;font-size:18px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90%}
+.toast.show{opacity:1}
+@media(max-width:599px){
+  .wrap{padding-top:8px;padding-bottom:110px}
+  .top h1{font-size:22px}
+  .top .sub,#btnAdd{display:none}
+  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
+  .toast{bottom:96px}
+}
+.ver{font-size:13px;color:var(--muted);margin-top:24px;opacity:.8}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.task .ic{font-size:26px;line-height:1.1}
+.task .th{align-items:center}
+.buy{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px}
+.buy b{display:block;margin-bottom:4px}
+.buy ul{margin:0;padding-left:20px;font-size:15px}
+.banner{background:var(--accent-bg);border:1px solid var(--accent);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner .tx{flex:1;min-width:200px;font-size:15px}
+.toast.act{pointer-events:auto}
+.toast button{margin-left:10px;min-height:32px;padding:2px 10px;background:none;color:inherit;border-color:currentColor}
+.imp label.check{margin:8px 0}
+
+.search{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);min-height:44px;font:inherit;color:inherit;margin-bottom:10px}
+.cards{display:grid;gap:10px}
+@media(min-width:800px){.cards{grid-template-columns:1fr 1fr}}
+@media(min-width:1150px){.cards{grid-template-columns:1fr 1fr 1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.card:hover{box-shadow:0 2px 12px rgba(0,0,0,.14)}
+.card .ch{display:flex;align-items:center;gap:8px}
+.card .ic{font-size:26px}
+.card .tn{font-weight:600;font-size:18px;flex:1}
+.card .pin{border:0;background:none;min-height:36px;padding:2px 6px;font-size:20px;opacity:.5}
+.card .pin.on{opacity:1}
+.card .meta{font-size:14px;color:var(--muted)}
+.card .prev{font-size:15px;color:var(--muted);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.guide ol{padding-left:24px;margin:8px 0}
+.guide ol li{margin-bottom:8px;font-size:17px}
+.guide table{border-collapse:collapse;width:100%;font-size:16px;margin:8px 0}
+.guide th,.guide td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.guide th{background:var(--bg);font-weight:600}
+.guide .txt{white-space:pre-wrap;font-size:17px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;border-radius:0;min-height:42px;padding:6px 8px;font-size:15px;background:none;color:var(--muted)}
+.seg button.on{background:var(--accent-bg);color:var(--accent);font-weight:600}
+.tedit{overflow-x:auto}
+.tedit table{border-collapse:collapse;min-width:100%}
+.tedit td{padding:2px}
+.tedit input{min-width:90px;padding:8px!important;min-height:40px!important}
+.tedit th input{font-weight:600}
+.tedit .x{border:0;background:none;min-height:36px;padding:2px 6px;color:var(--muted)}
+.tbtns{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.tpl{display:grid;gap:8px}
+.tpl button{text-align:left;display:flex;gap:10px;align-items:center}
+.tpl .ti{font-size:22px}
+.tpl small{display:block;color:var(--muted);font-size:13px}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div id="topLeft">
+      <h1>📒 Návody</h1>
+      <p class="sub">Jak na věci, které děláš párkrát ročně.</p>
+    </div>
+    <div class="tactions">
+      <button class="primary" id="btnAdd">+ Nový návod</button>
+      <div class="menuwrap">
+        <button id="btnMenu" aria-haspopup="true" aria-expanded="false" aria-label="Menu" title="Menu">☰</button>
+        <div class="menu" id="menu" role="menu" hidden>
+          <div class="menuver" id="menuVer"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div id="view"></div>
+  <div class="ver" id="ver"></div>
+</div>
+<button class="fab" id="btnFab" aria-label="Nový návod" title="Nový návod"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 4v20M4 14h20" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></button>
+
+<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <h2 id="mTitle"></h2><div id="mBody"></div>
+  <div class="mfoot"><div id="mLeft"></div><div id="mRight"><button id="mCancel">Zrušit</button><button class="primary" id="mSave">Uložit</button></div></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const APP_ID='navody',APP_VERSION='2026.11.09';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const plural=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
+const isoD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const mem={};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
+
+// ===== Šablony (jen struktura – hodnoty doplníš podle svého spotřebiče) =====
+const TEMPLATES=[
+  {icon:'🧺',title:'Pračka – programy',category:'Praní',type:'table',table:{cols:['Program','Teplota','Délka','Na co'],rows:[['Bavlna','','',''],['Syntetika','','',''],['Rychlé praní','','',''],['Jemné / vlna','','','']]},desc:'Tabulka programů, teplot a délek'},
+  {icon:'🧊',title:'Lednice – léto / zima',category:'Kuchyně',type:'table',table:{cols:['Období','Lednice','Mrazák'],rows:[['Léto','',''],['Zima','','']]},desc:'Nastavení termostatu podle ročního období'},
+  {icon:'☕',title:'Výměna filtru v kávovaru',category:'Kuchyně',type:'steps',steps:['Nový filtr namočit do vody (jak dlouho: …)','Propláchnout pod tekoucí vodou','Vyndat starý filtr a vložit nový'],desc:'Postup krok za krokem'},
+  {icon:'🍽️',title:'Myčka – sůl a leštidlo',category:'Kuchyně',type:'steps',steps:['Kam se doplňuje sůl: …','Kam se doplňuje leštidlo: …','Jak poznám, že dochází: …'],desc:'Kde co doplnit'},
+  {icon:'🔥',title:'Kotel – doplnění tlaku',category:'Technika',type:'steps',steps:['Správný tlak: … bar','Kde je napouštěcí ventil: …','…'],desc:'Postup, když klesne tlak'},
+  {icon:'⚡',title:'Jističe – co je co',category:'Technika',type:'table',table:{cols:['Jistič','Okruh'],rows:[['1',''],['2',''],['3','']]},desc:'Který jistič vypíná co'},
+  {icon:'🚰',title:'Hlavní uzávěry',category:'Technika',type:'note',text:'Voda: …\nPlyn: …\nElektřina (hlavní jistič): …',desc:'Kde zavřít vodu, plyn, elektřinu'},
+  {icon:'📝',title:'',category:'',type:'steps',steps:[''],desc:'Prázdný postup'},
+  {icon:'📊',title:'',category:'',type:'table',table:{cols:['',''],rows:[['','']]},desc:'Prázdná tabulka'},
+  {icon:'🗒️',title:'',category:'',type:'note',text:'',desc:'Prázdná poznámka'},
+];
+const TYPE_L={steps:'Postup',table:'Tabulka',note:'Poznámka'};
+
+// ===== Data =====
+const KEY='navody.items.v1';
+let items=[];
+function normItem(x){
+  if(!x||!x.title)return null;
+  const type=['steps','table','note'].includes(x.type)?x.type:'note';
+  const cols=Array.isArray(x.table&&x.table.cols)?x.table.cols.map(String):[];
+  const rows=Array.isArray(x.table&&x.table.rows)?x.table.rows.filter(Array.isArray).map(r=>cols.map((_,i)=>String(r[i]??''))):[];
+  return{id:String(x.id||uid()),title:String(x.title),icon:String(x.icon||'📒'),category:String(x.category||''),type,
+    steps:Array.isArray(x.steps)?x.steps.map(String).filter(s=>s.trim()):[],table:{cols,rows},text:String(x.text||''),
+    pinned:!!x.pinned,updated:typeof x.updated==='string'?x.updated:isoD(new Date())};
+}
+try{items=(JSON.parse(store.get(KEY)||'[]')||[]).map(normItem).filter(Boolean);}catch(e){items=[];}
+const save=()=>store.set(KEY,JSON.stringify(items));
+
+// ===== Zobrazení návodu (stejné jako v Údržbě) =====
+function guideHtml(g){
+  if(g.type==='steps')return g.steps.length?`<ol>${g.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`:'<p class="sub">Zatím žádné kroky.</p>';
+  if(g.type==='table'){const c=g.table.cols;return `<div style="overflow-x:auto"><table><thead><tr>${c.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${g.table.rows.map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
+  return g.text?`<div class="txt">${esc(g.text)}</div>`:'<p class="sub">Prázdná poznámka.</p>';
+}
+const plain=g=>g.type==='steps'?g.steps.join(' · '):g.type==='table'?g.table.rows.map(r=>r.filter(c=>c.trim()).join(' – ')).filter(Boolean).join(' · '):g.text;
+
+// ===== Vykreslení =====
+let q='',cat='',qRaw='';
+function render(){
+  $('menuVer').textContent='Návody · verze '+APP_VERSION;
+  const cats=[...new Set(items.map(i=>i.category.trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'cs'));
+  if(!cats.includes(cat))cat='';
+  let h='';
+  if(!items.length){
+    h=`<div class="empty"><div class="big">📒</div><h2>Zapiš si, jak se co dělá</h2><p class="sub">Programy pračky, nastavení lednice, výměna filtru… Začni šablonou, nebo prázdným návodem.</p><br>
+      <div class="qchips" style="justify-content:center">${TEMPLATES.slice(0,7).map((t,i)=>`<button data-tpl="${i}">${t.icon} ${esc(t.title)}</button>`).join('')}</div></div>`;
+  }else{
+    h+=`<input class="search" id="search" type="search" placeholder="🔍 Hledat (pračka, filtr, jistič…)" value="${esc(qRaw)}" aria-label="Hledat">`;
+    if(cats.length>1)h+=`<div class="chips"><button class="chip${!cat?' on':''}" data-cat="">Vše (${items.length})</button>${cats.map(c=>`<button class="chip${cat===c?' on':''}" data-cat="${esc(c)}">${esc(c)} (${items.filter(i=>i.category.trim()===c).length})</button>`).join('')}</div>`;
+    const vis=items.filter(i=>(!cat||i.category.trim()===cat)&&(!q||norm([i.title,i.category,plain(i)].join(' ')).includes(q)))
+      .sort((a,b)=>(b.pinned-a.pinned)||a.title.localeCompare(b.title,'cs'));
+    h+=vis.length?`<div class="cards">${vis.map(g=>`<div class="card" data-open="${esc(g.id)}">
+        <div class="ch"><span class="ic" aria-hidden="true">${esc(g.icon)}</span><div class="tn">${esc(g.title)}</div>
+          <button class="pin${g.pinned?' on':''}" data-pin="${esc(g.id)}" aria-label="${g.pinned?'Odebrat z oblíbených':'Přidat do oblíbených'}" title="Oblíbené">${g.pinned?'⭐':'☆'}</button></div>
+        <div class="meta">${[g.category,TYPE_L[g.type]+(g.type==='steps'?` · ${g.steps.length} ${plural(g.steps.length,'krok','kroky','kroků')}`:g.type==='table'?` · ${g.table.rows.length} ${plural(g.table.rows.length,'řádek','řádky','řádků')}`:'')].filter(Boolean).map(esc).join(' · ')}</div>
+        <div class="prev">${esc(plain(g))}</div></div>`).join('')}</div>`
+      :`<div class="empty"><p class="sub">Nic nenalezeno.</p></div>`;
+  }
+  $('view').innerHTML=h;
+  if(searchFocus){const s=$('search');if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
+  publish();
+}
+let searchFocus=false;
+document.addEventListener('input',e=>{if(e.target.id==='search'){qRaw=e.target.value;q=norm(qRaw.trim());searchFocus=true;render();searchFocus=false;}});
+
+// ===== Okno =====
+let mSave=null,mDelete=null,delT=null;
+function openModal(title,body,onSave,onDelete,extraRight){
+  $('mTitle').textContent=title;$('mBody').innerHTML=body;mSave=onSave;mDelete=onDelete||null;
+  $('mLeft').innerHTML=onDelete?'<button id="mDel">🗑️ Smazat</button>':'';
+  $('mRight').innerHTML=onSave?'<button id="mCancel">Zrušit</button><button class="primary" id="mSave">Uložit</button>':(extraRight||'')+'<button id="mCancel">Zavřít</button>';
+  $('overlay').classList.add('open');
+}
+function closeModal(){$('overlay').classList.remove('open');clearTimeout(delT);}
+$('overlay').addEventListener('click',e=>{
+  if(e.target.id==='overlay'||e.target.id==='mCancel'){closeModal();return;}
+  if(e.target.id==='mSave'){if(mSave&&mSave()!==false){closeModal();save();render();}return;}
+  if(e.target.id==='mDel'){const b=e.target;if(b.classList.contains('confirm')){mDelete();closeModal();save();render();toast('Smazáno');}
+    else{b.classList.add('confirm');b.textContent='Opravdu smazat?';delT=setTimeout(()=>{b.classList.remove('confirm');b.textContent='🗑️ Smazat';},4000);}return;}
+  if(e.target.id==='mEdit'){const g=items.find(x=>x.id===e.target.dataset.id);if(g)editForm(g);}
+});
+const err=(id,msg)=>{const e=$(id);if(e)e.textContent=msg;return false;};
+
+function view(g){
+  openModal(`${g.icon} ${g.title}`,`<div class="meta" style="color:var(--muted);font-size:14px">${esc([g.category,TYPE_L[g.type]].filter(Boolean).join(' · '))}</div><div class="guide">${guideHtml(g)}</div>`,
+    null,null,`<button id="mEdit" data-id="${esc(g.id)}">✏️ Upravit</button>`);
+}
+function chooseTemplate(){
+  openModal('Nový návod',`<div class="tpl">${TEMPLATES.map((t,i)=>`<button data-tplm="${i}"><span class="ti" aria-hidden="true">${t.icon}</span><span>${esc(t.title||t.desc)}${t.title?`<small>${esc(t.desc)}</small>`:''}</span></button>`).join('')}</div>`,null);
+  $('mBody').querySelectorAll('[data-tplm]').forEach(b=>b.onclick=()=>editForm(null,TEMPLATES[Number(b.dataset.tplm)]));
+}
+// Editor: typ postup / tabulka / poznámka
+let draft=null;
+function editForm(g,tpl){
+  const isNew=!g,src=g||tpl||TEMPLATES[7];
+  draft={type:src.type,steps:(src.steps||['']).slice(),table:{cols:(src.table?src.table.cols:['','']).slice(),rows:(src.table?src.table.rows:[['','']]).map(r=>r.slice())},text:src.text||''};
+  const cats=[...new Set(items.map(i=>i.category.trim()).filter(Boolean))];
+  openModal(isNew?'Nový návod':'Upravit návod',
+    `<div class="row"><div style="flex:0 0 80px"><label for="gIcon">Ikona</label><input id="gIcon" value="${esc(src.icon||'📒')}" maxlength="4"></div>
+      <div><label for="gTitle">Název</label><input id="gTitle" value="${esc(src.title||'')}" placeholder="např. Pračka – programy"></div></div><div class="err" id="eTitle"></div>
+     <label for="gCat">Kategorie (nepovinné)</label><input id="gCat" list="cats" value="${esc(src.category||'')}" placeholder="Kuchyně, Praní, Technika, Auto…"><datalist id="cats">${cats.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
+     <label>Typ</label><div class="seg" id="gType">${Object.entries(TYPE_L).map(([k,l])=>`<button type="button" data-type="${k}" class="${draft.type===k?'on':''}">${l}</button>`).join('')}</div>
+     <div id="gEditor"></div>`,
+    ()=>{
+      const title=$('gTitle').value.trim();if(!title)return err('eTitle','Napiš název návodu.');
+      readEditor();
+      const d={title,icon:$('gIcon').value.trim()||'📒',category:$('gCat').value.trim(),type:draft.type,
+        steps:draft.steps.map(s=>s.trim()).filter(Boolean),table:{cols:draft.table.cols,rows:draft.table.rows.filter(r=>r.some(c=>c.trim()))},text:draft.text,updated:isoD(new Date())};
+      if(isNew)items.push(normItem({id:uid(),...d,pinned:false}));else Object.assign(g,normItem({...g,...d}));
+      toast('Uloženo');
+    },isNew?null:()=>{items=items.filter(x=>x.id!==g.id);});
+  drawEditor();
+  $('gType').onclick=e=>{const b=e.target.closest('[data-type]');if(!b)return;readEditor();draft.type=b.dataset.type;
+    $('gType').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));drawEditor();};
+  setTimeout(()=>{if(window.innerWidth>600)$('gTitle').focus();},50);
+}
+function readEditor(){
+  if(draft.type==='steps'){const t=$('gSteps');if(t)draft.steps=t.value.split('\n');}
+  else if(draft.type==='table'){
+    const cols=[...document.querySelectorAll('[data-col]')].map(i=>i.value);if(cols.length)draft.table.cols=cols;
+    const rows=[];document.querySelectorAll('[data-r]').forEach(i=>{const r=Number(i.dataset.r),c=Number(i.dataset.c);(rows[r]=rows[r]||[])[c]=i.value;});
+    if(document.querySelector('[data-r]')||!draft.table.rows.length)draft.table.rows=rows.filter(Boolean);
+  }else{const t=$('gText');if(t)draft.text=t.value;}
+}
+function drawEditor(){
+  const el=$('gEditor');
+  if(draft.type==='steps')el.innerHTML=`<label for="gSteps">Kroky – každý na nový řádek</label><textarea id="gSteps" rows="7" placeholder="Namočit nový filtr do vody&#10;Propláchnout pod tekoucí vodou&#10;Vyměnit">${esc(draft.steps.join('\n'))}</textarea>`;
+  else if(draft.type==='note')el.innerHTML=`<label for="gText">Text</label><textarea id="gText" rows="8">${esc(draft.text)}</textarea>`;
+  else{
+    const T=draft.table;
+    el.innerHTML=`<label>Tabulka – první řádek jsou názvy sloupců</label><div class="tedit"><table>
+      <tr>${T.cols.map((c,i)=>`<th><input data-col="${i}" value="${esc(c)}" placeholder="Sloupec ${i+1}" aria-label="Název sloupce ${i+1}"></th>`).join('')}<th></th></tr>
+      ${T.rows.map((r,ri)=>`<tr>${T.cols.map((_,ci)=>`<td><input data-r="${ri}" data-c="${ci}" value="${esc(r[ci]??'')}" aria-label="Řádek ${ri+1}, ${esc(T.cols[ci]||'sloupec '+(ci+1))}"></td>`).join('')}<td><button type="button" class="x" data-rmrow="${ri}" aria-label="Smazat řádek ${ri+1}">✕</button></td></tr>`).join('')}
+      </table></div><div class="tbtns"><button type="button" class="small" id="addRow">+ Řádek</button><button type="button" class="small" id="addCol">+ Sloupec</button>${T.cols.length>1?'<button type="button" class="small" id="rmCol">− Poslední sloupec</button>':''}</div>`;
+    $('addRow').onclick=()=>{readEditor();draft.table.rows.push(draft.table.cols.map(()=>''));drawEditor();const l=[...document.querySelectorAll('[data-c="0"]')].pop();if(l)l.focus();};
+    $('addCol').onclick=()=>{readEditor();draft.table.cols.push('');draft.table.rows.forEach(r=>r.push(''));drawEditor();};
+    if($('rmCol'))$('rmCol').onclick=()=>{readEditor();draft.table.cols.pop();draft.table.rows.forEach(r=>r.pop());drawEditor();};
+    el.querySelectorAll('[data-rmrow]').forEach(b=>b.onclick=()=>{readEditor();draft.table.rows.splice(Number(b.dataset.rmrow),1);drawEditor();});
+  }
+}
+
+// ===== Ovládání =====
+document.addEventListener('click',e=>{
+  if(e.target.closest('#overlay'))return;
+  const pin=e.target.closest('[data-pin]');if(pin){const g=items.find(x=>x.id===pin.dataset.pin);if(g){g.pinned=!g.pinned;save();render();}return;}
+  const op=e.target.closest('[data-open]');if(op){const g=items.find(x=>x.id===op.dataset.open);if(g)view(g);return;}
+  const t=e.target.closest('[data-tpl]');if(t){editForm(null,TEMPLATES[Number(t.dataset.tpl)]);return;}
+  const c=e.target.closest('[data-cat]');if(c){cat=c.dataset.cat;render();return;}
+  if(!$('menu').hidden&&!e.target.closest('.menuwrap'))setMenu(false);
+});
+function setMenu(open){$('menu').hidden=!open;$('btnMenu').setAttribute('aria-expanded',String(open));}
+$('btnMenu').addEventListener('click',e=>{e.stopPropagation();setMenu($('menu').hidden);});
+$('btnAdd').onclick=chooseTemplate;$('btnFab').onclick=chooseTemplate;
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden)setMenu(false);else closeModal();});
+let toastT;
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ===== Life Admin =====
+const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+if(EMBED)document.body.classList.add('embedded');
+$('ver').textContent='Návody · verze '+APP_VERSION;
+function publish(){
+  try{
+    const pinned=items.filter(i=>i.pinned);
+    store.set('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:items.length,
+      headline:items.length?[{label:'Návodů',value:String(items.length)},...(pinned.length?[{label:'Oblíbené',value:String(pinned.length)}]:[])]:[],alerts:[],
+      desc:items.length?(pinned.length?'⭐ '+pinned.slice(0,3).map(i=>i.title).join(', '):''):'Jak na věci, které děláš párkrát ročně.'}));
+    if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
+  }catch(e){}
+}
+// Údržba může otevřít konkrétní návod: navody.html#<id>
+window.addEventListener('storage',e=>{if(e.key===KEY){try{items=(JSON.parse(store.get(KEY)||'[]')||[]).map(normItem).filter(Boolean);}catch(x){}render();}});
+render();
+</script>
+</body>
+</html>

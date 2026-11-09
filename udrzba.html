@@ -115,6 +115,10 @@ label.check input{width:22px;height:22px;min-height:0;margin:0}
 .toast.act{pointer-events:auto}
 .toast button{margin-left:10px;min-height:32px;padding:2px 10px;background:none;color:inherit;border-color:currentColor}
 .imp label.check{margin:8px 0}
+.guide ol{padding-left:24px;margin:8px 0}.guide ol li{margin-bottom:8px;font-size:17px}
+.guide table{border-collapse:collapse;width:100%;font-size:16px;margin:8px 0}
+.guide th,.guide td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}.guide th{background:var(--bg);font-weight:600}
+.guide .txt{white-space:pre-wrap;font-size:17px}
 </style>
 </head>
 <body>
@@ -147,7 +151,7 @@ label.check input{width:22px;height:22px;min-height:0;margin:0}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_ID='udrzba',APP_VERSION='2026.11.08';
+const APP_ID='udrzba',APP_VERSION='2026.11.09';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const plural=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
@@ -187,7 +191,7 @@ function normItem(x){
   if(days)months=0;else if(!months)months=1;
   return{id:String(x.id||uid()),name:String(x.name),icon:String(x.icon||'🔧'),cycle:{months,days},lastDone:isISO(x.lastDone)?x.lastDone:null,
     warnDays:x.warnDays!=null&&x.warnDays!==''&&Number(x.warnDays)>=0?Math.round(Number(x.warnDays)):null,buy:String(x.buy||''),note:String(x.note||''),
-    history:Array.isArray(x.history)?x.history.filter(isISO).slice(-50):[],createdAt:isISO(x.createdAt)?x.createdAt:isoD(today())};
+    guide:String(x.guide||''),history:Array.isArray(x.history)?x.history.filter(isISO).slice(-50):[],createdAt:isISO(x.createdAt)?x.createdAt:isoD(today())};
 }
 try{items=(JSON.parse(store.get(KEY)||'[]')||[]).map(normItem).filter(Boolean);}catch(e){items=[];}
 const save=()=>store.set(KEY,JSON.stringify(items));
@@ -233,7 +237,7 @@ function render(){
         ${s.due?`<div class="track"><div class="fill ${s.level==='red'?'red':s.level==='orange'?'orange':''}" style="width:${(s.pct*100).toFixed(0)}%"></div></div>
           <div class="st ${s.level}">Další: <b>${fmt(s.due)}</b> (${rel(s.days)})</div>`:`<div class="st">Ještě nezadáno, kdy naposledy – klepni na Hotovo, až to uděláš.</div>`}
         ${it.buy?`<div class="tm">🛒 ${esc(it.buy)}</div>`:''}${it.note?`<div class="tm" style="font-style:italic">${esc(it.note)}</div>`:''}
-        <div class="actions"><button class="small" data-done="${esc(it.id)}">✅ Hotovo</button></div></div>`).join('')}</div>`
+        <div class="actions"><button class="small" data-done="${esc(it.id)}">✅ Hotovo</button>${guideOf(it)?`<button class="small" data-guide="${esc(it.id)}">📒 Návod</button>`:''}</div></div>`).join('')}</div>`
       :`<div class="empty"><p class="sub">Nic nehoří. 👍</p></div>`;
   }
   $('view').innerHTML=h;
@@ -245,7 +249,7 @@ let mSave=null,mDelete=null,delT=null;
 function openModal(title,body,onSave,onDelete){
   $('mTitle').textContent=title;$('mBody').innerHTML=body;mSave=onSave;mDelete=onDelete||null;
   $('mLeft').innerHTML=onDelete?'<button id="mDel">🗑️ Smazat</button>':'';
-  $('mSave').style.display=onSave?'':'none';
+  $('mSave').style.display=onSave?'':'none';$('mCancel').textContent=onSave?'Zrušit':'Zavřít';
   $('overlay').classList.add('open');
 }
 function closeModal(){$('overlay').classList.remove('open');clearTimeout(delT);}
@@ -269,13 +273,15 @@ function itemForm(it,preset){
      <div class="hint">Nevíš přesně? Dej přibližně – nebo nech prázdné a klepni na „Hotovo“, až to uděláš.</div>
      <label for="iWarn">Upozornit … dní předem</label><input id="iWarn" inputmode="numeric" value="${it&&it.warnDays!=null?it.warnDays:''}" placeholder="automaticky (3–7)">
      <label for="iBuy">Co je potřeba koupit (nepovinné)</label><input id="iBuy" value="${esc(v.buy||'')}" placeholder="např. filtr Brita Maxtra">
+     <label for="iGuide">📒 Návod (z aplikace Návody)</label><select id="iGuide"><option value="">– žádný –</option>${guides().map(g=>`<option value="${esc(g.id)}"${(it?it.guide:autoGuide(v.name))===g.id?' selected':''}>${esc(g.icon+' '+g.title)}</option>`).join('')}</select>
+     <div class="hint">${guides().length?'Postup se pak ukáže tlačítkem „📒 Návod“ přímo u úkolu.':'Zatím nemáš žádné návody – vytvoříš je v aplikaci Návody.'}</div>
      <label for="iNote">Poznámka</label><textarea id="iNote" rows="2">${esc(it?it.note:'')}</textarea>`,
     ()=>{
       const name=$('iName').value.trim();if(!name)return err('eName','Napiš, co je potřeba udělat.');
       const N=Math.round(parseNum($('iN').value)),U=$('iU').value;if(!(N>=1))return err('eInt','Zadej celé číslo, např. 3.');
       const cycle={months:U==='m'?N:U==='y'?N*12:0,days:U==='d'?N:U==='w'?N*7:0};
       const w=parseNum($('iWarn').value);
-      const d={icon:$('iIcon').value.trim()||'🔧',name,cycle,lastDone:$('iLast').value||null,warnDays:w>=0?Math.round(w):null,buy:$('iBuy').value.trim(),note:$('iNote').value.trim()};
+      const d={icon:$('iIcon').value.trim()||'🔧',name,cycle,lastDone:$('iLast').value||null,warnDays:w>=0?Math.round(w):null,buy:$('iBuy').value.trim(),note:$('iNote').value.trim(),guide:$('iGuide').value};
       if(isNew)items.push(normItem({id:uid(),...d,history:d.lastDone?[d.lastDone]:[]}));else Object.assign(it,d);
       toast('Uloženo');
     },isNew?null:()=>{items=items.filter(x=>x.id!==it.id);});
@@ -315,6 +321,22 @@ function importForm(){
 }
 function markSeen(ids){try{const s=JSON.parse(store.get(KEY_IMP)||'[]');store.set(KEY_IMP,JSON.stringify([...new Set([...s,...ids])]));}catch(e){}}
 
+// ===== Návody (čte data aplikace Návody) =====
+function guides(){try{return(JSON.parse(store.get('navody.items.v1')||'[]')||[]).filter(g=>g&&g.id&&g.title);}catch(e){return[];}}
+const guideOf=it=>it.guide?guides().find(g=>g.id===it.guide)||null:null;
+// u nového úkolu předvybrat návod s podobným názvem (např. „Filtr v kávovaru“)
+// porovnání podle slov bez koncovek: „Filtr v kávovaru“ ≈ „Výměna filtru v kávovaru“
+const words=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>=3).map(w=>w.slice(0,5));
+function autoGuide(name){const w=words(name);if(!w.length)return '';
+  const g=guides().find(g=>{const t=words(g.title);return w.every(x=>t.includes(x));});return g?g.id:'';}
+function guideHtml(g){
+  if(g.type==='steps')return `<ol>${(g.steps||[]).map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`;
+  if(g.type==='table'){const c=(g.table&&g.table.cols)||[];return `<div style="overflow-x:auto"><table><thead><tr>${c.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${((g.table&&g.table.rows)||[]).map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
+  return `<div class="txt">${esc(g.text||'')}</div>`;
+}
+function showGuide(it){const g=guideOf(it);if(!g)return;
+  openModal(`${g.icon||'📒'} ${g.title}`,`<div class="guide">${guideHtml(g)}</div><div class="hint">Upravit ho můžeš v aplikaci Návody.</div>`,null);}
+
 // ===== Ovládání =====
 document.addEventListener('click',e=>{
   if(e.target.closest('#overlay'))return;
@@ -322,6 +344,7 @@ document.addEventListener('click',e=>{
   if(d){setMenu(false);if(d.dataset.do==='import')importForm();if(d.dataset.do==='dismiss'){markSeen(hlidacCandidates().map(x=>x.id));render();}return;}
   const pr=e.target.closest('[data-preset]');if(pr){itemForm(null,PRESETS[Number(pr.dataset.preset)]);return;}
   const f=e.target.closest('[data-f]');if(f){filter=f.dataset.f;render();return;}
+  const gd=e.target.closest('[data-guide]');if(gd){const it=items.find(x=>x.id===gd.dataset.guide);if(it)showGuide(it);return;}
   const dn=e.target.closest('[data-done]');if(dn){const it=items.find(x=>x.id===dn.dataset.done);if(it)done(it);return;}
   const ed=e.target.closest('[data-edit]');if(ed){const it=items.find(x=>x.id===ed.dataset.edit);if(it)itemForm(it);return;}
   if(!$('menu').hidden&&!e.target.closest('.menuwrap'))setMenu(false);
@@ -351,7 +374,7 @@ function publish(rows){
   }catch(e){}
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
-window.addEventListener('storage',e=>{if(e.key==='doklady.items.v1')render();});
+window.addEventListener('storage',e=>{if(e.key==='doklady.items.v1'||e.key==='navody.items.v1')render();});
 let lastDay=isoD(today());setInterval(()=>{const d=isoD(today());if(d!==lastDay){lastDay=d;render();}},60000);
 render();
 </script>

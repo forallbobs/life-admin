@@ -113,6 +113,10 @@ details.box>summary{cursor:pointer;font-weight:600;padding:8px 0}
 .menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
 .menuver{font-size:12px;color:var(--muted);padding:6px 12px 2px;opacity:.8}
 .fab{display:none}
+.hrow{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:16px}
+.hrow:last-child{border-bottom:0}
+.hrow b{margin-left:auto}
+.hrow button{min-height:38px;padding:4px 10px}
 /* Vloženo do Life Admin: vlastní nadpis schovat, název je v navigaci */
 body.embedded .top h1,body.embedded .top .sub{display:none}
 body.embedded .wrap{padding-top:8px}
@@ -234,6 +238,8 @@ body.embedded .top .tabs{margin:0;border-bottom:0}
       <div class="narrow"><label for="fCur">Měna</label><select id="fCur"></select></div>
     </div>
     <div class="err" id="errPrice"></div>
+    <label class="check" id="riseRow" style="display:none;margin-top:10px"><input type="checkbox" id="fRise" checked> Je to zdražení / zlevnění – zapsat do historie cen</label>
+    <div class="hint" id="riseHint" style="display:none">Odškrtni, když cenu jen opravuješ (třeba kvůli sdílení) – historie cen pak začne znovu od nové ceny.</div>
     <label class="check" style="margin-top:10px"><input type="checkbox" id="fEst"> Cena je odhad (≈) – např. zálohy na energie</label>
     <label for="fShared">Kolik lidí se na tom podílí (včetně tebe)</label>
     <input id="fShared" type="number" min="1" max="99" step="1" value="1" style="max-width:140px">
@@ -283,6 +289,12 @@ body.embedded .top .tabs{margin:0;border-bottom:0}
       <label for="fUses">Kolikrát za měsíc to využiju (nepovinné)</label>
       <input id="fUses" type="number" min="0" step="1" placeholder="např. 8">
       <div class="hint">Spočítám cenu za jedno použití – třeba posilovna 900 Kč / 3 návštěvy = 300 Kč.</div>
+    </details>
+
+    <details class="box" id="histBox">
+      <summary>📈 Historie cen</summary>
+      <div id="histList"></div>
+      <div class="hint">Zapsalo se tu něco, co nebylo zdražení? Smaž starou cenu – upozornění na zdražení zmizí.</div>
     </details>
 
     <details class="box" id="moreBox">
@@ -642,7 +654,7 @@ function render(){
   publishSummary(T,alerts);
 }
 // ===== Souhrn pro Life Admin (hlavní aplikace ho čte a ukazuje na společném přehledu) =====
-const APP_VERSION='2026.11.07';   // ← při každé úpravě změnit
+const APP_VERSION='2026.11.09';   // ← při každé úpravě změnit
 const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 $('menuVer').textContent='Předplatné a platby · verze '+APP_VERSION;
 if(EMBED){document.body.classList.add('embedded');document.querySelector('.top>div').appendChild($('tabs'));}  // Přehled/Statistiky na řádek s menu
@@ -884,7 +896,7 @@ function applyQuick(x){
   $('fCur').value=x.cur&&CURRENCIES.includes(x.cur)?x.cur:settings.mainCurrency;
 }
 $('qchips').addEventListener('click',e=>{const b=e.target.closest('[data-qf]');if(!b)return;applyQuick(QUICK[Number(b.dataset.qf)]);setTimeout(()=>$('fPrice').focus(),30);});
-const snapForm=()=>FORM_IDS.map(i=>{const el=$(i);return el.type==='checkbox'?el.checked:el.value;}).join('\u0001');
+const snapForm=()=>FORM_IDS.map(i=>{const el=$(i);return el.type==='checkbox'?el.checked:el.value;}).join('\u0001')+'\u0001'+JSON.stringify(histWork);
 function showCustom(on){$('cycleCustom').style.display=on?'flex':'none';}
 function setCycle(c){
   $('errCycle').textContent='';
@@ -914,6 +926,27 @@ function applyTypeDefaults(T){
 }
 function resetDel(){clearTimeout(delTimer);$('btnDel').classList.remove('confirm');$('btnDel').textContent='🗑️ Smazat';}
 function clearErrs(){['errPrice','errCycle','errFirst','errTrial'].forEach(i=>$(i).textContent='');}
+// ===== Historie cen v detailu platby (mazání až po potvrzení) =====
+let histWork=[],histDelT=null;
+function renderHist(){
+  const M=x=>money(x.price,x.currency||$('fCur').value);
+  const rows=histWork.map((h,i)=>({h,i})).sort((a,b)=>b.h.date.localeCompare(a.h.date));
+  $('histList').innerHTML=rows.length?rows.map(({h,i})=>`<div class="hrow"><span>${fmt(parseD(h.date))}</span><b>${M(h)}</b><button type="button" data-hdel="${i}" aria-label="Smazat cenu z ${fmt(parseD(h.date))}">🗑️</button></div>`).join('')
+    :'<div class="hint">Historie je prázdná.</div>';
+}
+$('histList').addEventListener('click',e=>{
+  const b=e.target.closest('[data-hdel]');if(!b)return;
+  if(b.classList.contains('confirm')){histWork.splice(Number(b.dataset.hdel),1);clearTimeout(histDelT);renderHist();return;}
+  $('histList').querySelectorAll('.confirm').forEach(x=>{x.classList.remove('confirm');x.textContent='🗑️';});
+  b.classList.add('confirm');b.textContent='Opravdu?';clearTimeout(histDelT);
+  histDelT=setTimeout(()=>{b.classList.remove('confirm');b.textContent='🗑️';},4000);
+});
+function riseCheck(){
+  const old=editingId?items.find(x=>x.id===editingId):null;if(!old)return;
+  const ch=parseNum($('fPrice').value)!==old.price||$('fCur').value!==old.currency;
+  $('riseRow').style.display=ch?'':'none';$('riseHint').style.display=ch?'':'none';
+}
+$('fPrice').addEventListener('input',riseCheck);$('fCur').addEventListener('change',riseCheck);
 function openForm(it,quick){
   editingId=it?it.id:null;touched=it?{cycle:1,cat:1,est:1,contract:1}:{};
   $('formTitle').textContent=it?'Upravit platbu':'Nová platba';
@@ -933,6 +966,9 @@ function openForm(it,quick){
   $('fManual').checked=!!(it&&it.manualPay);$('fRating').value=it&&it.rating||'';
   $('fUses').value=it&&it.usesPerMonth||'';$('fShared').value=it?it.sharedWith:1;
   $('quickBox').style.display=it?'none':'';
+  histWork=it?it.priceHistory.slice():[];renderHist();
+  $('histBox').style.display=it&&histWork.length?'':'none';$('histBox').open=false;
+  $('fRise').checked=true;$('riseRow').style.display='none';$('riseHint').style.display='none';
   $('worthBox').open=!!(it&&(it.rating||it.usesPerMonth));
   if(it){
     setCycle(it.cycle);$('fCat').value=it.category;$('fEst').checked=it.isEstimate;
@@ -1016,8 +1052,9 @@ $('btnSave').onclick=()=>{
   if(!manual)paidThrough=null;
   else if(!(old&&old.manualPay)){const pp=prevPayment({cycle,firstPaymentDate:first},today());paidThrough=pp?isoD(pp):null;}  // starší platby beru jako zaplacené
   const uses=parseNum($('fUses').value),shared=Math.round(parseNum($('fShared').value));
-  let hist=old?old.priceHistory.slice():[];
-  if(!old||priceChanged)hist.push({date:td,price,currency:cur});
+  let hist=old?histWork.slice():[];
+  if(!old)hist.push({date:td,price,currency:cur});
+  else if(priceChanged){if($('fRise').checked)hist.push({date:td,price,currency:cur});else hist=[{date:td,price,currency:cur}];}  // oprava ceny → historie znovu od nové ceny
   const data={type,name:$('fName').value.trim()||typeOf(type).label,category:$('fCat').value,owner:$('fOwner').value.trim(),
     price,currency:cur,isEstimate:$('fEst').checked,cycle,firstPaymentDate:first,status,considering:$('fConsider').checked,
     trialEndDate:trialOn?trialEnd:null,contract:hasContract?contract:null,howToCancel:$('fCancel').value.trim(),
@@ -1026,7 +1063,7 @@ $('btnSave').onclick=()=>{
     cancelledDate:status==='cancelled'?(old&&old.status==='cancelled'&&old.cancelledDate?old.cancelledDate:td):null};
   if(old)Object.assign(old,data);
   else items.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),...data,createdAt:td});
-  save();closeForm();render();toast(priceChanged?'Uloženo – změna ceny zapsána do historie':'Uloženo');
+  save();closeForm();render();toast(priceChanged&&$('fRise').checked?'Uloženo – změna ceny zapsána do historie':'Uloženo');
 };
 
 // ===== Nastavení =====
