@@ -139,7 +139,7 @@ label.check input{width:22px;height:22px;min-height:0;margin:0}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_ID='auto',APP_VERSION='2026.11.07';
+const APP_ID='auto',APP_VERSION='2026.11.09';
 // ===== Pomocné =====
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -182,7 +182,7 @@ let cars=[];
 function normCar(c){
   if(!c||typeof c!=='object'||!c.name)return null;
   const arr=a=>Array.isArray(a)?a:[];
-  return{id:String(c.id||uid()),name:String(c.name),plate:String(c.plate||''),tires:['summer','winter','all'].includes(c.tires)?c.tires:'',
+  return{id:String(c.id||uid()),name:String(c.name),plate:String(c.plate||''),tires:['summer','winter','all'].includes(c.tires)?c.tires:'',washer:['summer','winter','allyear'].includes(c.washer)?c.washer:'',
     odo:arr(c.odo).filter(o=>o&&isISO(o.date)&&Number(o.km)>=0).map(o=>({date:o.date,km:Number(o.km)})),
     tasks:arr(c.tasks).filter(t=>t&&t.name).map(t=>({id:String(t.id||uid()),name:String(t.name),km:Math.max(0,Number(t.km)||0),months:Math.max(0,Number(t.months)||0),
       lastKm:Number(t.lastKm)>=0&&t.lastKm!==null&&t.lastKm!==''?Number(t.lastKm):null,lastDate:isISO(t.lastDate)?t.lastDate:null,note:String(t.note||'')})),
@@ -244,6 +244,22 @@ function tireStatus(c){
   if(c.tires==='all')return{level:'ok',text:'Celoroční pneumatiky – přezouvat nemusíš.'};
   return{level:'unknown',text:'Nastav, jaké máš teď nasazené pneumatiky.'};
 }
+// Kapalina do ostřikovačů: letní zamrzá už kolem 0 °C → zimní před prvními mrazy (do konce října)
+function washerStatus(c){
+  const t=today(),m=t.getMonth()+1,d=t.getDate(),y=t.getFullYear();
+  if(c.washer==='summer'){
+    if(m===10&&d<15)return{level:'info',text:'Před prvními mrazy doplň zimní kapalinu (nemrznoucí aspoň do −20 °C).',date:isoD(new Date(y,9,15))};
+    if(m===10)return{level:'orange',text:'Blíží se mrazy – vyjezdi letní kapalinu a doplň zimní.',date:isoD(new Date(y,10,1))};
+    if(m>=11||m<=3)return{level:'red',text:'Letní kapalina v mrazu zamrzne – hrozí poškození nádržky a čerpadla. Doplň zimní.',date:isoD(t)};
+    return{level:'ok',text:'Letní kapalina (lépe smývá hmyz).'};
+  }
+  if(c.washer==='winter'){
+    if(m===4||m===5)return{level:'info',text:'Až zimní kapalinu vyjezdíš, můžeš přejít na letní – lépe smývá hmyz. Nespěchá to.',date:isoD(t)};
+    return{level:'ok',text:'Zimní (nemrznoucí) kapalina.'};
+  }
+  if(c.washer==='allyear')return{level:'ok',text:'Zimní kapalina celý rok – hlídat nemusíš.'};
+  return{level:'unknown',text:'Nastav, jakou kapalinu máš teď v nádržce.'};
+}
 function fuelStats(c){
   const f=[...c.fuel].sort((a,b)=>a.km-b.km||a.date.localeCompare(b.date));
   const r={cons:null,perKm:null,year:null,lastPrice:null,count:f.length};
@@ -286,7 +302,7 @@ function render(){
     $('view').innerHTML=`<div class="empty"><div class="big">🚗</div><h2>Přidej své auto</h2><p class="sub">Pohlídám servis podle kilometrů i času, přezouvání pneumatik a spočítám spotřebu.</p><br><button class="primary" data-do="addcar">+ Přidat auto</button></div>`;
     publish();return;
   }
-  const cur=curKm(c),lr=lastReading(c),fs=fuelStats(c),ts=tireStatus(c);
+  const cur=curKm(c),lr=lastReading(c),fs=fuelStats(c),ts=tireStatus(c),ws=washerStatus(c);
   let h=`<div class="stats">
     <div class="stat"><div class="lbl">Tachometr</div><div class="big">${cur!=null?km(cur):'–'}</div><div class="small">${lr?'zapsáno '+fmt(parseD(lr.date)):'zatím nezapsáno'}</div></div>
     <div class="stat"><div class="lbl">Spotřeba</div><div class="big">${fs.cons!=null?nf(fs.cons,1)+' l':'–'}</div><div class="small">${fs.cons!=null?'na 100 km':'po 2 plných nádržích'}</div></div>
@@ -296,6 +312,9 @@ function render(){
   const tl={summer:'☀️ letní',winter:'❄️ zimní',all:'🌦️ celoroční'}[c.tires]||'nenastaveno';
   h+=`<div class="tirebox ${ts.level==='red'?'red':ts.level==='orange'?'orange':''}"><div class="tx"><b>🛞 Pneumatiky: ${tl}</b><div class="${ts.level==='red'?'red-t':ts.level==='orange'?'orange-t':'sub'}" style="font-size:15px">${esc(ts.text)}</div></div>
     ${c.tires==='summer'||c.tires==='winter'?`<button class="small" data-do="swap">🔄 Přezuto na ${c.tires==='summer'?'zimní':'letní'}</button>`:`<button class="small" data-do="editcar">Nastavit</button>`}</div>`;
+  const wl={summer:'☀️ letní',winter:'❄️ zimní',allyear:'❄️ zimní celý rok'}[c.washer]||'nenastaveno';
+  h+=`<div class="tirebox ${ws.level==='red'?'red':ws.level==='orange'?'orange':''}"><div class="tx"><b>💧 Ostřikovače: ${wl}</b><div class="${ws.level==='red'?'red-t':ws.level==='orange'?'orange-t':'sub'}" style="font-size:15px">${esc(ws.text)}</div></div>
+    ${c.washer==='summer'||c.washer==='winter'?`<button class="small" data-do="wswap">🔄 Doplněno ${c.washer==='summer'?'zimní':'letní'}</button>`:`<button class="small" data-do="editcar">Nastavit</button>`}</div>`;
   // servis
   const order={red:0,orange:1,unknown:2,ok:3};
   const tasks=c.tasks.map(t=>({t,s:taskStatus(c,t)})).sort((a,b)=>order[a.s.level]-order[b.s.level]||((a.s.due||8e15)-(b.s.due||8e15)));
@@ -354,16 +373,18 @@ function carForm(c){
     fld('fPlate','SPZ (nepovinné)','text',c?c.plate:'','placeholder="1AB 2345"')+
     `<label for="fTires">Jaké pneumatiky máš teď nasazené</label><select id="fTires"><option value="">– nenastaveno –</option>
       ${[['summer','☀️ Letní'],['winter','❄️ Zimní'],['all','🌦️ Celoroční']].map(([v,l])=>`<option value="${v}"${c&&c.tires===v?' selected':''}>${l}</option>`).join('')}</select>`+
+    `<label for="fWasher">Jakou kapalinu do ostřikovačů máš teď v nádržce</label><select id="fWasher"><option value="">– nehlídat –</option>
+      ${[['summer','☀️ Letní'],['winter','❄️ Zimní'],['allyear','❄️ Zimní celý rok (nehlídat)']].map(([v,l])=>`<option value="${v}"${c&&c.washer===v?' selected':''}>${l}</option>`).join('')}</select>`+
     (isNew?fld('fKm','Stav tachometru (km)','num','','placeholder="např. 123456"')+
       `<label class="check" style="margin-top:12px"><input type="checkbox" id="fPre" checked> Přidat běžné servisní úkoly (olej, brzdová kapalina, pylový filtr)</label>`:''),
     ()=>{
       const name=$('fName').value.trim();if(!name)return err('eName','Zadej název auta.');
       if(isNew){
         const k=parseNum($('fKm').value);
-        const n={id:uid(),name,plate:$('fPlate').value.trim(),tires:$('fTires').value,odo:k>=0?[{date:isoD(today()),km:k}]:[],tasks:[],fuel:[],createdAt:isoD(today())};
+        const n={id:uid(),name,plate:$('fPlate').value.trim(),tires:$('fTires').value,washer:$('fWasher').value,odo:k>=0?[{date:isoD(today()),km:k}]:[],tasks:[],fuel:[],createdAt:isoD(today())};
         if($('fPre').checked)n.tasks=DEFAULT_TASKS.map(i=>({id:uid(),...PRESETS[i],lastKm:null,lastDate:null,note:''}));
         cars.push(n);selId=n.id;store.set(KEY_SEL,selId);toast('Auto přidáno');
-      }else{c.name=name;c.plate=$('fPlate').value.trim();c.tires=$('fTires').value;toast('Uloženo');}
+      }else{c.name=name;c.plate=$('fPlate').value.trim();c.tires=$('fTires').value;c.washer=$('fWasher').value;toast('Uloženo');}
     },
     isNew?null:()=>{cars=cars.filter(x=>x.id!==c.id);selId=cars[0]?cars[0].id:null;});
 }
@@ -436,6 +457,7 @@ function act(a){
   if(a==='odo')odoForm();
   if(a==='fuel')fuelForm();
   if(a==='fuelall'){fuelAll=!fuelAll;render();}
+  if(a==='wswap'){c.washer=c.washer==='summer'?'winter':'summer';save();render();toast(`💧 V nádržce je ${c.washer==='winter'?'zimní':'letní'} kapalina`);}
   if(a==='swap'){c.tires=c.tires==='summer'?'winter':'summer';save();render();toast(`🔄 Nasazeny ${c.tires==='winter'?'zimní':'letní'} pneumatiky`);}
 }
 document.addEventListener('click',e=>{
@@ -466,6 +488,7 @@ function publish(){
       for(const tk of c.tasks){const s=taskStatus(c,tk);if(s.level==='red'||s.level==='orange')alerts.push({level:s.level,title:`${c.name}: ${tk.name}`,
         sub:(s.kmLeft!=null?(s.kmLeft<=0?`${km(-s.kmLeft)} po termínu`:`za ${km(s.kmLeft)}`):'')+(s.daysLeft!=null&&s.daysLeft<=30?(s.kmLeft!=null?' / ':'')+(s.daysLeft<=0?'termín prošel':'termín se blíží'):''),date:isoD(s.due||t)});}
       const ts=tireStatus(c);if(ts.level==='red'||ts.level==='orange'||ts.level==='info')alerts.push({level:ts.level,title:`${c.name}: přezout pneumatiky`,sub:ts.text,date:ts.date||isoD(t)});
+      const ws=washerStatus(c);if(ws.level==='red'||ws.level==='orange'||ws.level==='info')alerts.push({level:ws.level,title:`${c.name}: ${c.washer==='summer'?'zimní':'letní'} kapalina do ostřikovačů`,sub:ws.text,date:ws.date||isoD(t)});
     }
     const c=car();
     if(c){const cur=curKm(c),fs=fuelStats(c);

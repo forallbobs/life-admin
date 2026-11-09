@@ -25,6 +25,7 @@ button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 /* Navigace: na mobilu dole, na počítači nahoře */
 .nav{display:flex;align-items:stretch;background:var(--navbg);border-top:1px solid var(--line);order:2;padding-bottom:env(safe-area-inset-bottom)}
 .brand{display:none}
+.navedit{display:none}
 .tabs{display:flex;flex:1}
 .tab{flex:1;border:0;border-radius:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   padding:6px 4px;min-height:62px;font-size:13px;color:var(--muted);position:relative}
@@ -40,7 +41,11 @@ button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .tab .ti{font-size:20px}
   .tab.on::before{top:auto;bottom:0;left:12px;right:12px;border-radius:3px 3px 0 0}
   .tab .dot{position:static;margin-left:2px}
+  .tabs{overflow-x:auto;scrollbar-width:thin}
+  .navedit{display:block;margin-left:auto;flex:none;border:0;background:none;font-size:20px;min-height:44px;padding:4px 10px;border-radius:10px;cursor:pointer}
+  .navedit:hover{background:var(--card)}
 }
+@media(min-width:900px) and (max-width:1350px){.nav{gap:12px;padding:0 12px}.tab{padding:6px 10px;font-size:15px;gap:6px}}
 
 main{flex:1;position:relative;min-height:0}
 .view{position:absolute;inset:0}
@@ -110,6 +115,7 @@ h2.sec{font-size:20px;margin:22px 0 8px}
 <nav class="nav" aria-label="Aplikace">
   <div class="brand">🧭 Life Admin</div>
   <div class="tabs" id="tabs"></div>
+  <button class="navedit" id="navEdit" title="Upravit aplikace – skrýt / přeřadit" aria-label="Upravit aplikace">⚙️</button>
 </nav>
 <main id="main">
   <section class="view" id="home"><div class="wrap" id="homeIn"></div></section>
@@ -122,7 +128,7 @@ h2.sec{font-size:20px;margin:22px 0 8px}
 // =====================================================================
 //  REGISTR APLIKACÍ – novou aplikaci přidáš sem (viz MODULY.md)
 // =====================================================================
-const VERSION='2026.11.09';   // verze hlavní aplikace – při každé úpravě změnit
+const VERSION='2026.11.09.2';   // verze hlavní aplikace – při každé úpravě změnit
 const APPS=[
   {id:'doklady',   name:'Doklady',   full:'Hlídač dokladů',      icon:'🗂️', path:'doklady.html',    prefix:'doklady.',    backupKey:'doklady.lastBackup'},
   {id:'predplatne',name:'Platby',    full:'Předplatné a platby', icon:'💳', path:'predplatne.html', prefix:'predplatne.', backupKey:'predplatne.lastBackup'},
@@ -233,6 +239,7 @@ function drawEditApps(){
       <button data-mv="${i}" data-d="-1" aria-label="Posunout nahoru"${i===0?' disabled':''}>↑</button><button data-mv="${i}" data-d="1" aria-label="Posunout dolů"${i===editList.length-1?' disabled':''}>↓</button></div>`).join('')+
     `<div class="sfoot"><button data-closesheet>Zrušit</button><button class="primary" data-saveapps>Uložit</button></div>`;
 }
+$('navEdit').addEventListener('click',openEditApps);
 $('sheetBody').addEventListener('change',e=>{const c=e.target.closest('[data-vis]');if(c)editList[Number(c.dataset.vis)].on=c.checked;});
 $('sheetBody').addEventListener('click',e=>{
   const g=e.target.closest('[data-go]');if(g){closeSheet();go(g.dataset.go);return;}
