@@ -128,11 +128,12 @@ h2.sec{font-size:20px;margin:22px 0 8px}
 // =====================================================================
 //  REGISTR APLIKACÍ – novou aplikaci přidáš sem (viz MODULY.md)
 // =====================================================================
-const VERSION='2026.11.09.2';   // verze hlavní aplikace – při každé úpravě změnit
+const VERSION='2026.11.10';   // verze hlavní aplikace – při každé úpravě změnit
 const APPS=[
   {id:'doklady',   name:'Doklady',   full:'Hlídač dokladů',      icon:'🗂️', path:'doklady.html',    prefix:'doklady.',    backupKey:'doklady.lastBackup'},
   {id:'predplatne',name:'Platby',    full:'Předplatné a platby', icon:'💳', path:'predplatne.html', prefix:'predplatne.', backupKey:'predplatne.lastBackup'},
   {id:'bilkoviny', name:'Bílkoviny', full:'Cena bílkovin',       icon:'🥩', path:'bilkoviny.html',  prefix:'bilkoviny.'},
+  {id:'vareni',    name:'Vaření',    full:'Vaření',              icon:'🍳', path:'vareni.html',     prefix:'vareni.'},
   {id:'meny',      name:'Měny',      full:'Měny a směnárna',     icon:'💱', path:'meny.html',       prefix:'meny.'},
   {id:'auto',      name:'Auto',      full:'Auto',                icon:'🚗', path:'auto.html',       prefix:'auto.'},
   {id:'udrzba',    name:'Údržba',    full:'Údržba domácnosti',   icon:'🛠️', path:'udrzba.html',     prefix:'udrzba.'},
@@ -199,7 +200,7 @@ function syncFrames(){
 function ensureFrame(a){
   if(frames[a.id])return frames[a.id];
   const f=document.createElement('iframe');
-  f.className='view';f.title=a.full;f.src=a.path;f.hidden=true;
+  f.className='view';f.title=a.full;f.allow='screen-wake-lock';f.src=a.path;f.hidden=true;
   $('main').appendChild(f);frames[a.id]=f;return f;
 }
 function show(id){

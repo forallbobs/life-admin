@@ -3,10 +3,10 @@
 // Mezipaměť sdílí celá doména forallbobs.github.io, proto mažeme jen vlastní (předpona PREFIX).
 // Při přidání nové aplikace připiš její soubor do ASSETS a zvyš číslo v CACHE.
 const PREFIX = 'lifeadmin-';
-const CACHE = PREFIX + 'v6';
+const CACHE = PREFIX + 'v7';
 const ASSETS = [
   './', './index.html', './manifest.json', './icon-192.png', './icon-512.png',
-  './doklady.html', './predplatne.html', './bilkoviny.html', './meny.html', './auto.html', './udrzba.html', './prevence.html', './navody.html'
+  './doklady.html', './predplatne.html', './bilkoviny.html', './meny.html', './auto.html', './udrzba.html', './prevence.html', './navody.html', './vareni.html'
 ];
 
 self.addEventListener('install', e => {

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vaření</title>
+<style>
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#a16207;--accent-bg:#fdf4dc;
+--green:#2e7d32;--green-bg:#e9f5ea;--orange:#b45309}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#facc15;--accent-bg:#3a3214;
+--green:#81c995;--green-bg:#1b3021;--orange:#fbbf6a}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 90px}
+h1{font-size:26px;margin:4px 0 2px}
+h2{font-size:21px;margin:6px 0 10px}
+h3{font-size:17px;margin:0 0 6px}
+.sub{color:var(--muted);margin:0 0 12px}
+body.embedded .top{display:none}
+body.embedded .wrap{padding-top:12px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
+button:hover{border-color:var(--muted)}
+input[type=text]{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:44px;font-size:20px;font-weight:600}
+input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.lbl{font-size:15px;color:var(--muted);margin:14px 0 6px}
+.cols{display:grid;gap:14px}
+@media(min-width:900px){.cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chip{text-align:left;display:flex;flex-direction:column;gap:0;padding:8px 12px;border-radius:12px}
+.chip b{font-weight:600}
+.chip span{font-size:14px;color:var(--muted)}
+.chip.on{border-color:var(--accent);background:var(--accent-bg);box-shadow:0 0 0 1px var(--accent)}
+.chip.on b{color:var(--accent)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;border-radius:0;min-height:42px;padding:6px 8px;font-size:15px;background:none;color:var(--muted)}
+.seg button.on{background:var(--accent-bg);color:var(--accent);font-weight:600}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:52px;font-size:24px;padding:0;line-height:1}
+.stepper .n{font-size:30px;font-weight:700;min-width:64px;text-align:center}
+.stepper .u{color:var(--muted)}
+.inrow{display:flex;align-items:center;gap:8px}
+.inrow input{max-width:180px}
+.pp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:15px;color:var(--muted)}
+.pp input{width:84px;font-size:17px;min-height:40px;padding:6px 8px}
+.pp .reset{min-height:36px;padding:4px 10px;font-size:14px}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:16px;cursor:pointer}
+.check input{width:22px;height:22px;margin:1px 0 0;flex:none;accent-color:var(--accent)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(min-width:560px){.tiles{grid-template-columns:1fr 1fr 1fr}}
+.tile{background:var(--bg);border-radius:10px;padding:8px 10px}
+.tile .k{font-size:14px;color:var(--muted)}
+.tile .v{font-size:22px;font-weight:700;line-height:1.25}
+.tile .s{font-size:13px;color:var(--muted)}
+.tile.main{background:var(--accent-bg)}
+.tile.main .v{color:var(--accent);font-size:26px}
+.note{font-size:15px;color:var(--muted);margin:10px 0 0}
+.steps{margin:0;padding-left:22px}
+.steps li{margin:6px 0}
+.timers{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.timers button{flex:1;min-width:150px;font-weight:600}
+.tbar{position:fixed;left:12px;right:12px;bottom:12px;max-width:560px;margin:0 auto;background:var(--text);color:var(--bg);border-radius:14px;padding:10px 14px;
+  display:flex;align-items:center;gap:12px;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:20}
+.tbar[hidden]{display:none}
+.tbar .tt{flex:1}
+.tbar .tl{font-size:14px;opacity:.8}
+.tbar .tc{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.tbar button{background:transparent;color:inherit;border-color:currentColor;opacity:.9}
+.tbar.done{background:var(--green);color:#fff;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.75}}
+details{margin-top:14px}
+summary{cursor:pointer;color:var(--muted);font-size:15px}
+table{border-collapse:collapse;width:100%;font-size:14px;margin-top:8px}
+th,td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600}
+.tw{overflow-x:auto}
+.ver{font-size:13px;color:var(--muted);margin-top:24px;opacity:.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>🍳 Vaření</h1>
+    <p class="sub">Kolik čeho uvařit a jak dlouho.</p>
+  </header>
+  <h2>🍚 Rýže</h2>
+  <div class="cols">
+    <div class="card">
+      <div class="lbl" style="margin-top:0">Na co ji vaříš</div>
+      <div class="chips" id="types"></div>
+      <div class="pp" id="ppRow"></div>
+      <div class="lbl">Počítat podle</div>
+      <div class="seg" id="modes" role="group" aria-label="Počítat podle">
+        <button data-mode="persons">Počtu osob</button><button data-mode="rice">Rýže (g)</button><button data-mode="water">Vody (ml)</button>
+      </div>
+      <div id="inputBox" style="margin-top:12px"></div>
+      <label class="check" id="leakyRow"><input type="checkbox" id="leaky"><span>Poklička netěsní nebo má otvor na páru <span style="color:var(--muted)">(přidá trochu vody)</span></span></label>
+    </div>
+    <div class="card" id="result"></div>
+  </div>
+  <div class="card" style="margin-top:14px" id="howto"></div>
+  <div class="ver" id="ver"></div>
+</div>
+<div class="tbar" id="tbar" hidden role="status" aria-live="polite"><div class="tt"><div class="tl" id="tLabel"></div><div class="tc" id="tCount"></div></div><button id="tStop">Zrušit</button></div>
+
+<script>
+const APP_ID='vareni',APP_VERSION='2026.11.10';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const parseNum=v=>{const s=String(v??'').replace(/\s/g,'').replace(',','.');return s===''?NaN:Number(s);};
+const nf=(v,d=0)=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:d}).format(v);
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+
+// Typy jídla – liší se dávkou na osobu (a rizoto i postupem)
+const TYPES=[
+  {id:'side', icon:'🍛',name:'Příloha',      pp:75, hint:'k masu, omáčce'},
+  {id:'big',  icon:'🍽️',name:'Větší porce', pp:100,hint:'větší jedlíci, do krabičky'},
+  {id:'fried',icon:'🥡',name:'Smažená rýže', pp:100,hint:'samostatné jídlo'},
+  {id:'risotto',icon:'🧀',name:'Rizoto',     pp:100,hint:'arborio, s vývarem'},
+];
+const RATIO=1.5;   // 1 g rýže : 1,5 ml vody
+
+const KEY='vareni.settings.v1';
+let S={type:'side',mode:'persons',persons:4,rice:'',water:'',leaky:false,pp:{}};
+try{const s=JSON.parse(store.get(KEY)||'null');if(s)S={...S,...s,pp:{...(s.pp||{})}};}catch(e){}
+if(!TYPES.some(t=>t.id===S.type))S.type='side';
+const save=()=>store.set(KEY,JSON.stringify(S));
+const typ=()=>TYPES.find(t=>t.id===S.type);
+const ppOf=()=>{const v=Number(S.pp[S.type]);return v>0?v:typ().pp;};
+
+// Hodnoty z tabulky v tvém návodu (podle gramů rýže) – mezi řádky se dopočítá
+const T_SALT=[[80,.15],[160,.5],[250,1],[300,1],[350,1.15],[500,1.5]];      // čajové lžičky
+const T_FAT =[[80,1],[160,1.5],[250,3],[350,3],[500,4.5]];                   // čajové lžičky (1 lžíce = 3 lžičky)
+const T_COOK=[[80,10,12],[160,12,12],[250,12,12],[300,12,13],[350,12,13],[500,13,15]];
+const T_REST=[[80,5,5],[160,5,8],[250,8,10],[350,10,10],[500,10,10]];
+function interp(tab,g,col=1,scaleUp=false){
+  if(g<=tab[0][0])return tab[0][col];
+  const last=tab[tab.length-1];
+  if(g>=last[0])return scaleUp?last[col]*g/last[0]:last[col];
+  for(let i=1;i<tab.length;i++)if(g<=tab[i][0]){const a=tab[i-1],b=tab[i],f=(g-a[0])/(b[0]-a[0]);return a[col]+(b[col]-a[col])*f;}
+}
+const r5=v=>Math.round(v/5)*5;
+const plural=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
+function frac(v){   // 1.5 → „1½“
+  const q=Math.round(v*4)/4,w=Math.floor(q),f=q-w;
+  const fs={0:'',0.25:'¼',0.5:'½',0.75:'¾'}[f];
+  return (w?String(w):'')+fs||'0';
+}
+function tsp(v){
+  if(v<0.2)return'špetka';
+  const q=Math.round(v*4)/4;
+  return `${frac(q)} ${q===1?'lžička':(Number.isInteger(q)&&q>=2&&q<=4?'lžičky':Number.isInteger(q)?'lžiček':'lžičky')}`;
+}
+function fat(v){
+  if(v<2.75){const q=Math.round(v*2)/2;return `${frac(q)} ${q===1?'lžička':'lžičky'}`;}
+  const l=Math.round(v/3*2)/2;return `${frac(l)} ${l===1?'lžíce':Number.isInteger(l)&&l>=5?'lžic':'lžíce'}`;
+}
+const range=(a,b)=>{a=Math.round(a);b=Math.round(b);return a===b?`${a} min`:`${a}–${b} min`;};
+
+// Hlavní výpočet: z vybraného vstupu → gramy rýže
+function riceGrams(){
+  if(S.mode==='persons')return S.persons*ppOf();
+  if(S.mode==='rice'){const g=parseNum(S.rice);return g>0?g:null;}
+  const ml=parseNum(S.water);if(!(ml>0))return null;
+  return S.type==='risotto'?ml/3.5:Math.max(0,(ml-(S.leaky?leakExtra(ml/RATIO):0)))/RATIO;
+}
+const leakExtra=g=>g<=160?10:20;
+
+function renderControls(){
+  $('types').innerHTML=TYPES.map(t=>`<button class="chip${t.id===S.type?' on':''}" data-type="${t.id}" aria-pressed="${t.id===S.type}"><b>${t.icon} ${t.name}</b><span>${t.id===S.type?ppOf():t.pp} g na osobu · ${t.hint}</span></button>`).join('');
+  const custom=Number(S.pp[S.type])>0;
+  $('ppRow').innerHTML=`Na osobu <input type="text" inputmode="decimal" id="ppIn" value="${ppOf()}" aria-label="Gramů rýže na osobu"> g syrové rýže
+    ${custom?`<button class="reset" id="ppReset">Zpět na ${typ().pp} g</button>`:''}`;
+  document.querySelectorAll('#modes [data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===S.mode));
+  $('modes').querySelector('[data-mode=water]').textContent=S.type==='risotto'?'Vývaru (ml)':'Vody (ml)';
+  let h='';
+  if(S.mode==='persons')h=`<div class="stepper"><button data-step="-1" aria-label="O osobu méně">−</button><div class="n" id="pN">${S.persons}</div><div class="u">${plural(S.persons,'osoba','osoby','osob')}</div><button data-step="1" aria-label="O osobu více">+</button></div>`;
+  else if(S.mode==='rice')h=`<div class="inrow"><input type="text" inputmode="decimal" id="inRice" value="${esc(S.rice)}" placeholder="např. 230"><span>g syrové rýže</span></div>`;
+  else h=`<div class="inrow"><input type="text" inputmode="decimal" id="inWater" value="${esc(S.water)}" placeholder="např. 500"><span>ml ${S.type==='risotto'?'vývaru':'vody'}</span></div>`;
+  $('inputBox').innerHTML=h;
+  $('leakyRow').hidden=S.type==='risotto';
+  $('leaky').checked=!!S.leaky;
+}
+
+function renderResult(){
+  const g=riceGrams(),t=typ();
+  if(!(g>0)){$('result').innerHTML=`<h3>Výsledek</h3><p class="note" style="margin:0">Zadej ${S.mode==='rice'?'kolik máš rýže':'kolik máš '+(S.type==='risotto'?'vývaru':'vody')}.</p>`;renderHowto(null);return;}
+  const rice=r5(g),portions=g/ppOf();
+  const pTxt=S.mode==='persons'?`${S.persons} ${plural(S.persons,'osoba','osoby','osob')} × ${ppOf()} g`:`≈ ${nf(portions,1)} ${portions<1.5?'porce':portions<4.5?'porce':'porcí'} (${t.name.toLowerCase()}, ${ppOf()} g/os.)`;
+  let tiles='',note='',x;
+  if(S.type==='risotto'){
+    x={cook:[18,20],rest:[2,2]};
+    const broth=r5(g*3.5),onion=Math.max(1,Math.ceil(g/300)),butter=r5(g*.15),parm=r5(g*.2),wine=r5(g*.3);
+    tiles=`<div class="tile main"><div class="k">Rýže (arborio)</div><div class="v">${nf(rice)} g</div><div class="s">${pTxt}</div></div>
+      <div class="tile main"><div class="k">Horký vývar</div><div class="v">${nf(broth)} ml</div><div class="s">připrav, zbytek nevadí</div></div>
+      <div class="tile"><div class="k">Cibule / šalotka</div><div class="v">${onion} ${plural(onion,'menší','menší','menších')}</div></div>
+      <div class="tile"><div class="k">Máslo</div><div class="v">${nf(butter)} g</div><div class="s">půlka na začátek, půlka na konec</div></div>
+      <div class="tile"><div class="k">Parmazán</div><div class="v">${nf(parm)} g</div><div class="s">nastrouhaný</div></div>
+      <div class="tile"><div class="k">Bílé víno</div><div class="v">${nf(wine)} ml</div><div class="s">nepovinné</div></div>
+      <div class="tile"><div class="k">Vaření</div><div class="v">18–20 min</div><div class="s">za stálého míchání</div></div>
+      <div class="tile"><div class="k">Odpočinek</div><div class="v">2 min</div><div class="s">pod pokličkou</div></div>`;
+    note='Rizoto se nevaří v poměru 1 : 1,5 – vývar se přilévá postupně (obvykle 3–3,5× víc než rýže). Tohle je obecný postup, v tvém návodu není.';
+  }else{
+    const extra=S.leaky?leakExtra(g):0,water=r5(g*RATIO)+extra;
+    x={cook:[interp(T_COOK,g,1),interp(T_COOK,g,2)],rest:[interp(T_REST,g,1),interp(T_REST,g,2)]};
+    const salt=interp(T_SALT,g,1,true),ft=interp(T_FAT,g,1,true);
+    tiles=`<div class="tile main"><div class="k">Rýže</div><div class="v">${nf(rice)} g</div><div class="s">${pTxt}</div></div>
+      <div class="tile main"><div class="k">Voda</div><div class="v">${nf(water)} ml</div><div class="s">${extra?`1 : 1,5 + ${extra} ml na páru`:'poměr 1 : 1,5'}</div></div>
+      <div class="tile"><div class="k">Sůl</div><div class="v">${tsp(salt)}</div></div>
+      <div class="tile"><div class="k">Tuk (olej / máslo)</div><div class="v">${fat(ft)}</div><div class="s">≈ ${nf(Math.round(ft*5))} g, nepovinné</div></div>
+      <div class="tile"><div class="k">Dušení</div><div class="v">${range(...x.cook)}</div><div class="s">na stupni 1–2, nezvedat pokličku</div></div>
+      <div class="tile"><div class="k">Dojezd</div><div class="v">${range(...x.rest)}</div><div class="s">vypnuto, přiklopeno</div></div>`;
+    if(S.type==='fried')note='💡 Na smaženou rýži je nejlepší uvařit ji den předem a nechat vychladnout v lednici – při smažení se pak nelepí.';
+    if(g<=100)note+=(note?'<br>':'')+'💡 Malá porce: vezmi nejmenší rendlík a k varu ji přiváděj opatrně, ať se voda neodpaří.';
+    if(g>600)note+=(note?'<br>':'')+'💡 Velké množství: časy beru z řádku pro 500 g – vezmi široký hrnec, ať je vrstva rýže nízká.';
+  }
+  $('result').innerHTML=`<h3>Výsledek</h3><div class="tiles">${tiles}</div>${note?`<p class="note">${note}</p>`:''}`;
+  renderHowto(x);
+}
+
+function renderHowto(x){
+  const risotto=S.type==='risotto';
+  const cookMin=x?Math.round((x.cook[0]+x.cook[1])/2):null,restMin=x?Math.round((x.rest[0]+x.rest[1])/2):null;
+  const steps=risotto?[
+    'Rýži <b>neproplachuj</b> – škrob dělá rizoto krémové. Vývar ohřej a nech ho na vedlejší plotýnce horký.',
+    'Na polovině másla (nebo oleji) orestuj nadrobno nakrájenou cibuli 2–3 min doskelna, na středním výkonu.',
+    'Přidej rýži a 1–2 min ji restuj, až zrnka zesklovatí.',
+    'Podlij vínem (pokud ho dáváš) a nech ho odpařit.',
+    `Přilévej horký vývar po naběračkách a míchej; další až když se předchozí vstřebá. Celkem <b>18–20 min</b>, rýže má zůstat lehce na skus.`,
+    'Stáhni z plotny, vmíchej zbylé studené máslo a parmazán, osol podle chuti a nech <b>2 min</b> odpočinout pod pokličkou.',
+  ]:[
+    'Rýži propláchni v sítu pod studenou vodou, dokud neodtéká čirá voda – nebude lepivá.',
+    'Volitelně: okapanou rýži krátce orestuj na tuku – zvýrazní se oříšková chuť.',
+    'Zalij vodou, osol a přiveď k varu na vysoký výkon.',
+    `<b>Hned</b> stáhni na minimum (stupeň 1–2), přiklop těsnou pokličkou a nech dusit <b>${x?range(...x.cook):'10–13 min'}</b>. Pokličku nezvedej.`,
+    `Vypni a nech přiklopené dojít <b>${x?range(...x.rest):'5–10 min'}</b> mimo hlavní teplo. Nakonec načechrej vidličkou.`,
+  ];
+  $('howto').innerHTML=`<h3>Postup${risotto?' – rizoto':' na indukci'}</h3><ol class="steps">${steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+    ${x?`<div class="timers"><button data-timer="${cookMin}" data-label="${risotto?'Vaření rizota':'Dušení rýže'}">⏱️ ${risotto?'Vaření':'Dušení'} ${cookMin} min</button>
+      <button data-timer="${restMin}" data-label="${risotto?'Odpočinek':'Dojezd'}">⏱️ ${risotto?'Odpočinek':'Dojezd'} ${restMin} min</button></div>
+      <p class="note">Minutka pípne a zavibruje. Na mobilu nech displej zapnutý – po zamknutí ho telefon může uspat.</p>`:''}
+    ${risotto?'':`<details><summary>📋 Tabulka z tvého návodu</summary><div class="tw"><table>
+      <tr><th>Kolik</th><th>Rýže</th><th>Voda</th><th>Sůl</th><th>Tuk</th><th>Dušení</th><th>Dojezd</th></tr>
+      <tr><td>1 osoba</td><td>80 g</td><td>120 ml</td><td>špetka</td><td>1 lžička</td><td>10–12 min</td><td>5 min</td></tr>
+      <tr><td>2 porce</td><td>160 g</td><td>240 ml</td><td>½ lžičky</td><td>1 větší lžička</td><td>12 min</td><td>5–8 min</td></tr>
+      <tr><td>2–3 osoby</td><td>250 g</td><td>375 ml</td><td>1 lžička</td><td>1 lžíce</td><td>12 min</td><td>10 min</td></tr>
+      <tr><td>3–4 osoby</td><td>300 g</td><td>450 ml</td><td>1 lžička</td><td>1 lžíce</td><td>12–13 min</td><td>8–10 min</td></tr>
+      <tr><td>4 osoby</td><td>350 g</td><td>525 ml</td><td>1 plná lžička</td><td>1 lžíce</td><td>12–13 min</td><td>10 min</td></tr>
+      <tr><td>Velké množství</td><td>500 g</td><td>750 ml</td><td>1½ lžičky</td><td>1–2 lžíce</td><td>13–15 min</td><td>10 min</td></tr>
+    </table></div></details>`}`;
+}
+
+function render(){renderControls();renderResult();}
+
+// ===== Ovládání =====
+document.addEventListener('click',e=>{
+  const ty=e.target.closest('[data-type]');
+  if(ty){S.type=ty.dataset.type;save();render();return;}
+  const m=e.target.closest('[data-mode]');
+  if(m){S.mode=m.dataset.mode;save();render();const i=$('inRice')||$('inWater');if(i)i.focus();return;}
+  const st=e.target.closest('[data-step]');
+  if(st){S.persons=Math.min(30,Math.max(1,S.persons+Number(st.dataset.step)));save();$('pN').textContent=S.persons;
+    $('pN').nextElementSibling.textContent=plural(S.persons,'osoba','osoby','osob');renderResult();return;}
+  if(e.target.id==='ppReset'){delete S.pp[S.type];save();render();return;}
+  const tm=e.target.closest('[data-timer]');
+  if(tm){startTimer(Number(tm.dataset.timer),tm.dataset.label);return;}
+});
+document.addEventListener('input',e=>{
+  const id=e.target.id;
+  if(id==='inRice'){S.rice=e.target.value;save();renderResult();}
+  else if(id==='inWater'){S.water=e.target.value;save();renderResult();}
+  else if(id==='ppIn'){const v=parseNum(e.target.value);if(v>0&&v<=500){if(v===typ().pp)delete S.pp[S.type];else S.pp[S.type]=v;save();
+    document.querySelector('.chip.on span').textContent=`${ppOf()} g na osobu · ${typ().hint}`;renderResult();}}
+  else if(id==='leaky'){S.leaky=e.target.checked;save();renderResult();}
+});
+document.addEventListener('change',e=>{if(e.target.id==='ppIn')renderControls();});
+
+// ===== Minutka =====
+let tEnd=0,tLabel='',tInt=null,actx=null,wake=null,beepInt=null;
+function startTimer(min,label){
+  stopTimer();
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume&&actx.resume();}catch(e){}
+  try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(w=>wake=w).catch(()=>{});}catch(e){}
+  tEnd=Date.now()+min*60e3;tLabel=label;$('tLabel').textContent=label;$('tbar').hidden=false;$('tbar').classList.remove('done');$('tStop').textContent='Zrušit';
+  tick();tInt=setInterval(tick,500);
+}
+function tick(){
+  const left=Math.max(0,Math.round((tEnd-Date.now())/1000));
+  $('tCount').textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;
+  if(left===0){clearInterval(tInt);tInt=null;$('tbar').classList.add('done');$('tLabel').textContent=tLabel+' – hotovo!';$('tStop').textContent='OK';
+    beep();beepInt=setInterval(beep,2500);setTimeout(()=>{clearInterval(beepInt);beepInt=null;},30000);
+    try{navigator.vibrate&&navigator.vibrate([400,200,400,200,400]);}catch(e){}}
+}
+function beep(){
+  try{if(!actx)return;const t=actx.currentTime;
+    [0,.3,.6].forEach(d=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=880;g.gain.setValueAtTime(.0001,t+d);
+      g.gain.exponentialRampToValueAtTime(.3,t+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d+.22);o.connect(g).connect(actx.destination);o.start(t+d);o.stop(t+d+.25);});
+  }catch(e){}
+}
+function stopTimer(){clearInterval(tInt);tInt=null;clearInterval(beepInt);beepInt=null;$('tbar').hidden=true;try{wake&&wake.release();}catch(e){}wake=null;}
+$('tStop').onclick=stopTimer;
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&tInt)tick();});
+
+// ===== Life Admin: vložený režim, verze, souhrn pro přehled =====
+const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+if(EMBED)document.body.classList.add('embedded');
+$('ver').textContent='Vaření · verze '+APP_VERSION;
+try{
+  localStorage.setItem('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:0,
+    desc:'Kolik rýže a vody pro kolik lidí – příloha i rizoto, s minutkou.',headline:[],alerts:[]}));
+  if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
+}catch(e){}
+
+render();
+</script>
+</body>
+</html>
