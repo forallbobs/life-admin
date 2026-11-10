@@ -1,7 +1,7 @@
 {
   "name": "Life Admin",
   "short_name": "Life Admin",
-  "description": "Doklady, předplatné a platby na jednom místě.",
+  "description": "Doklady, platby, auto, domácnost, zdraví a další osobní agenda na jednom místě.",
   "lang": "cs",
   "id": "./",
   "start_url": "./",

@@ -407,7 +407,8 @@ const cycleKey=c=>c.days?'d'+c.days:'m'+c.months;
 // ===== Úložiště =====
 const KEY='predplatne.items.v1',KEY_SET='predplatne.settings.v1',KEY_BK='predplatne.lastBackup';
 const mem={};
-const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v;saveWarn()}}};
+let saveWarnT=0;function saveWarn(){if(Date.now()-saveWarnT<10000)return;saveWarnT=Date.now();setTimeout(()=>{try{toast('⚠️ Uložení se nepovedlo – úložiště prohlížeče je plné nebo zakázané. Změny zmizí po zavření, udělej zálohu.')}catch(e){}},500);}
 const DEFAULT_SETTINGS={mainCurrency:'CZK',rates:{EUR:25,USD:23},ratesUpdated:null,largePaymentLimit:2000,autoRates:true,ratesDate:null,ratesFetched:null};
 function normSettings(s){
   s=s&&typeof s==='object'?s:{};
@@ -654,7 +655,7 @@ function render(){
   publishSummary(T,alerts);
 }
 // ===== Souhrn pro Life Admin (hlavní aplikace ho čte a ukazuje na společném přehledu) =====
-const APP_VERSION='2026.11.09';   // ← při každé úpravě změnit
+const APP_VERSION='2026.11.10';   // ← při každé úpravě změnit
 const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 $('menuVer').textContent='Předplatné a platby · verze '+APP_VERSION;
 if(EMBED){document.body.classList.add('embedded');document.querySelector('.top>div').appendChild($('tabs'));}  // Přehled/Statistiky na řádek s menu
@@ -989,7 +990,16 @@ function openForm(it,quick){
   formSnap=snapForm();closeArmed=false;
   setTimeout(()=>(quick?$('fPrice'):$('fName')).focus(),50);
 }
-function closeForm(){$('overlay').classList.remove('open');resetDel();closeArmed=false;clearTimeout(closeArmT);}
+function closeForm(){$('overlay').classList.remove('open');resetDel();closeArmed=false;clearTimeout(closeArmT);if(pendingReload){pendingReload=false;setTimeout(reloadData,0);}}
+// jiné okno / záložka změnila platby → načíst znovu, při otevřeném formuláři až po zavření
+let pendingReload=false;
+function reloadData(){
+  try{items=(JSON.parse(store.get(KEY)||'[]')||[]).map(normItem).filter(Boolean);}catch(e){}
+  try{const s=store.get(KEY_SET);if(s)settings=normSettings(JSON.parse(s));}catch(e){}
+  render();
+}
+const anyOpen=()=>$('overlay').classList.contains('open')||$('setOverlay').classList.contains('open');
+window.addEventListener('storage',e=>{if(e.key!==KEY&&e.key!==KEY_SET)return;if(anyOpen())pendingReload=true;else reloadData();});
 function requestClose(){
   if($('setOverlay').classList.contains('open')){closeSettings();return;}
   if(!$('overlay').classList.contains('open'))return;
@@ -1089,7 +1099,7 @@ function openSettings(){
   $('sBudget').value=settings.monthlyBudget||'';$('sReview').value=settings.reviewDate||'';
   $('setOverlay').classList.add('open');
 }
-function closeSettings(){$('setOverlay').classList.remove('open');}
+function closeSettings(){$('setOverlay').classList.remove('open');if(pendingReload&&!$('overlay').classList.contains('open')){pendingReload=false;setTimeout(reloadData,0);}}
 // Při změně hlavní měny přepočítat kurzy do nové měny
 $('sMain').addEventListener('change',()=>{
   const old=setPrevMain,nw=$('sMain').value,R=readRates(),out={};

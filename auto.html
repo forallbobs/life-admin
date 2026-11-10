@@ -95,6 +95,15 @@ label.check input{width:22px;height:22px;min-height:0;margin:0}
 .sheet button{display:block;width:100%;text-align:left;margin-top:8px;font-size:18px}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90%}
 .toast.show{opacity:1}
+.toast.act{pointer-events:auto}
+.toast button{margin-left:10px;min-height:32px;padding:2px 10px;background:none;color:inherit;border-color:currentColor}
+.odolist{margin-top:14px;border-top:1px solid var(--line);padding-top:8px}
+.odolist h3{font-size:15px;color:var(--muted);margin:0 0 4px;font-weight:600}
+.orow{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:15px}
+.orow:last-child{border-bottom:0}
+.orow .ok{flex:1}.orow .src{color:var(--muted);font-size:13px}
+.orow button{min-height:34px;padding:2px 10px;font-size:14px}
+.orow button.confirm{border-color:var(--red);color:var(--red)}
 @media(max-width:599px){
   .wrap{padding-top:8px;padding-bottom:110px}
   .top h1{font-size:22px}
@@ -139,7 +148,7 @@ label.check input{width:22px;height:22px;min-height:0;margin:0}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_ID='auto',APP_VERSION='2026.11.09';
+const APP_ID='auto',APP_VERSION='2026.11.10';
 // ===== Pomocné =====
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -161,7 +170,8 @@ const kc=(v,dec=0)=>nf(v,dec)+' Kč';
 function rel(n){if(n<0)return `před ${-n} ${plural(-n,'dnem','dny','dny')}`;if(n===0)return 'dnes';if(n===1)return 'zítra';return `za ${n} ${plural(n,'den','dny','dní')}`;}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const mem={};
-const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v;saveWarn()}}};
+let saveWarnT=0;function saveWarn(){if(Date.now()-saveWarnT<10000)return;saveWarnT=Date.now();setTimeout(()=>{try{toast('⚠️ Uložení se nepovedlo – úložiště prohlížeče je plné nebo zakázané. Změny zmizí po zavření, udělej zálohu.')}catch(e){}},500);}
 
 // ===== Data =====
 const KEY='auto.items.v1',KEY_SEL='auto.selected';
@@ -354,14 +364,34 @@ function openModal(title,body,onSave,onDelete){
   $('mTitle').textContent=title;$('mBody').innerHTML=body;mSave=onSave;mDelete=onDelete||null;
   $('mLeft').innerHTML=onDelete?'<button id="mDel">🗑️ Smazat</button>':'';
   $('mSave').style.display=onSave?'':'none';
-  $('overlay').classList.add('open');
+  $('overlay').classList.add('open');mArmed=false;setTimeout(()=>{mSnap=snapM();},0);
   setTimeout(()=>{const f=$('mBody').querySelector('input:not([type=checkbox]),select');if(f&&window.innerWidth>600)f.focus();},50);
 }
-function closeModal(){$('overlay').classList.remove('open');clearTimeout(delT);}
-$('mCancel').onclick=closeModal;
-$('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal();
+function closeModal(){$('overlay').classList.remove('open');clearTimeout(delT);mArmed=false;if(pendingReload){pendingReload=false;setTimeout(reloadData,0);}}
+function reloadData(){try{cars=(JSON.parse(store.get(KEY)||'[]')||[]).map(normCar).filter(Boolean);}catch(e){}render();}
+// ===== Neuložené změny ve formuláři + změny z jiného okna =====
+let mSnap='',mArmed=false,mArmT,pendingReload=false;
+const snapM=()=>[...$('mBody').querySelectorAll('input,select,textarea')].map(x=>x.type==='checkbox'||x.type==='radio'?x.checked:x.value).join('\u0001');
+function requestClose(){
+  if(!$('overlay').classList.contains('open'))return;
+  if(!mSave||snapM()===mSnap||mArmed){closeModal();return;}
+  mArmed=true;clearTimeout(mArmT);mArmT=setTimeout(()=>mArmed=false,4000);
+  toast('Máš neuložené změny. Zavři znovu pro zahození, nebo dej Uložit.');
+}
+// jiné okno / záložka změnila data → načíst znovu (při otevřeném formuláři až po jeho zavření)
+window.addEventListener('storage',e=>{if(e.key!==KEY)return;if($('overlay').classList.contains('open'))pendingReload=true;else reloadData();});
+
+$('mCancel').onclick=()=>requestClose();
+$('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')requestClose();
   if(e.target.id==='mDel'){const b=e.target;if(b.classList.contains('confirm')){mDelete();closeModal();save();render();toast('Smazáno');}
     else{b.classList.add('confirm');b.textContent='Opravdu smazat?';delT=setTimeout(()=>{b.classList.remove('confirm');b.textContent='🗑️ Smazat';},4000);}}});
+$('mBody').addEventListener('click',e=>{
+  const b=e.target.closest('[data-odel]');if(!b)return;const c=car();if(!c)return;
+  if(!b.classList.contains('confirm')){b.classList.add('confirm');b.textContent='Opravdu?';setTimeout(()=>{if(b.isConnected){b.classList.remove('confirm');b.textContent='🗑️';}},4000);return;}
+  const o=c.odo[Number(b.dataset.odel)];if(!o)return;
+  c.odo=c.odo.filter(x=>x!==o);save();render();$('oList').innerHTML=odoList(c);$('oKm').dataset.ok='';
+  toast(`Smazáno: ${km(o.km)}`,'↩️ Zpět',()=>{c.odo.push(o);save();render();if($('oList'))$('oList').innerHTML=odoList(c);});
+});
 $('mSave').onclick=()=>{if(mSave&&mSave()!==false){closeModal();save();render();}};
 const err=(id,msg)=>{const e=$(id);if(e)e.textContent=msg;return false;};
 const fld=(id,label,type,value,extra='')=>`<label for="${id}">${label}</label><input id="${id}" ${type==='num'?'inputmode="decimal"':`type="${type}"`} value="${esc(value??'')}" ${extra}>`;
@@ -416,13 +446,26 @@ function doneForm(t){
     `<div class="row"><div>${fld('dDate','Kdy','date',isoD(today()))}</div><div>${fld('dKm','Stav tachometru (km)','num',cur!=null?cur:'')}</div></div>
      <div class="hint">Podle toho spočítám další termín.</div>`,
     ()=>{const d=$('dDate').value||isoD(today()),k=parseNum($('dKm').value);
-      t.lastDate=d;t.lastKm=k>=0?k:null;if(k>=0)c.odo.push({date:d,km:k});toast(`✅ ${t.name} – zapsáno`);});
+      const prev={lastDate:t.lastDate,lastKm:t.lastKm},added=k>=0?{date:d,km:k}:null;
+      t.lastDate=d;t.lastKm=k>=0?k:null;if(added)c.odo.push(added);
+      setTimeout(()=>toast(`✅ ${t.name} – zapsáno`,'↩️ Zpět',()=>{t.lastDate=prev.lastDate;t.lastKm=prev.lastKm;if(added)c.odo=c.odo.filter(o=>o!==added);save();render();toast('Vráceno');}),0);});
+}
+// Seznam všech zapsaných stavů km – zápisy tachometru jde smazat (oprava překlepu)
+function odoList(c){
+  const rows=[...c.odo.map((o,i)=>({date:o.date,km:o.km,src:'Zápis tachometru',i})),
+    ...c.fuel.map(f=>({date:f.date,km:f.km,src:'Tankování – uprav v seznamu tankování'})),
+    ...c.tasks.filter(t=>t.lastKm!=null&&t.lastDate).map(t=>({date:t.lastDate,km:t.lastKm,src:`${t.name} – uprav v úkolu`}))]
+    .sort((a,b)=>b.km-a.km||b.date.localeCompare(a.date)).slice(0,12);
+  if(!rows.length)return'';
+  return`<div class="odolist"><h3>Zapsané stavy (od nejvyššího)</h3>${rows.map(r=>`<div class="orow"><div class="ok"><b>${km(r.km)}</b> · ${fmt(parseD(r.date))}<div class="src">${esc(r.src)}</div></div>
+    ${r.i!=null?`<button data-odel="${r.i}" title="Smazat tento zápis">🗑️</button>`:''}</div>`).join('')}
+    <div class="hint">Aktuální stav je nejvyšší zapsaná hodnota. Když je nahoře překlep, smaž ho.</div></div>`;
 }
 function odoForm(){
   const c=car();if(!c)return;const cur=curKm(c);
-  openModal('Stav tachometru',fld('oKm','Kolik ukazuje tachometr (km)','num','',`placeholder="${cur!=null?nf(cur):'např. 123456'}"`)+`<div class="err" id="eOKm"></div>`+fld('oDate','Datum','date',isoD(today())),
-    ()=>{const k=parseNum($('oKm').value);if(!(k>=0))return err('eOKm','Zadej počet km.');
-      if(cur!=null&&k<cur&&!$('oKm').dataset.ok){$('oKm').dataset.ok=1;return err('eOKm',`To je méně než poslední zápis (${km(cur)}). Pokud je to správně, dej znovu Uložit.`);}
+  openModal('Stav tachometru',fld('oKm','Kolik ukazuje tachometr (km)','num','',`placeholder="${cur!=null?nf(cur):'např. 123456'}"`)+`<div class="err" id="eOKm"></div>`+fld('oDate','Datum','date',isoD(today()))+`<div id="oList">${odoList(c)}</div>`,
+    ()=>{const k=parseNum($('oKm').value);if(!(k>=0))return err('eOKm','Zadej počet km.');const cur=curKm(c);
+      if(cur!=null&&k<cur&&!$('oKm').dataset.ok){$('oKm').dataset.ok=1;return err('eOKm',`To je méně než nejvyšší zápis (${km(cur)}). Pokud je ten překlep, smaž ho v seznamu níže. Jinak dej znovu Uložit.`);}
       c.odo.push({date:$('oDate').value||isoD(today()),km:k});toast('Zapsáno');});
 }
 function fuelForm(f){
@@ -473,9 +516,12 @@ function setMenu(open){$('menu').hidden=!open;$('btnMenu').setAttribute('aria-ex
 $('btnMenu').addEventListener('click',e=>{e.stopPropagation();setMenu($('menu').hidden);});
 $('btnFuel').onclick=()=>act('fuel');
 $('btnFab').onclick=()=>car()?addSheet():carForm();
-document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden)setMenu(false);else closeModal();});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden)setMenu(false);else requestClose();});
 let toastT;
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);}
+let toastFn=null;
+function toast(m,btn,fn){const t=$('toast');t.innerHTML=esc(m)+(btn?`<button id="tBtn">${esc(btn)}</button>`:'');t.classList.toggle('act',!!btn);toastFn=fn||null;
+  t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>{t.classList.remove('show','act');toastFn=null;},btn?6000:3000);}
+$('toast').addEventListener('click',e=>{if(e.target.id==='tBtn'&&toastFn){toastFn();toastFn=null;$('toast').classList.remove('show','act');}});
 
 // ===== Life Admin: vložený režim, verze, souhrn pro přehled =====
 const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
@@ -502,7 +548,7 @@ function publish(){
 }
 // Doklady se mohly změnit v jiné aplikaci → překreslit při návratu
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
-window.addEventListener('storage',e=>{if(e.key&&(e.key.startsWith('doklady.')||e.key.startsWith('predplatne.')||e.key===KEY))render();});
+window.addEventListener('storage',e=>{if(e.key&&(e.key.startsWith('doklady.')||e.key.startsWith('predplatne.')))render();});
 let lastDay=isoD(today());setInterval(()=>{const d=isoD(today());if(d!==lastDay){lastDay=d;render();}},60000);
 
 render();

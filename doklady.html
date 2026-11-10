@@ -209,9 +209,20 @@ const recurText=it=>it.recurDays?recurLabelD(it.recurDays):recurLabel(it.recurMo
 
 const KEY='doklady.items.v1',KEY_BK='doklady.lastBackup';
 const mem={};
-const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
-let items=[];try{items=JSON.parse(store.get(KEY)||'[]')}catch(e){items=[]}
-items=items.map(i=>({docNumber:'',recurMonths:0,recurDays:0,...i}));
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v;saveWarn()}}};
+let saveWarnT=0;function saveWarn(){if(Date.now()-saveWarnT<10000)return;saveWarnT=Date.now();setTimeout(()=>{try{toast('⚠️ Uložení se nepovedlo – úložiště prohlížeče je plné nebo zakázané. Změny zmizí po zavření, udělej zálohu.')}catch(e){}},500);}
+// Načtení: vadná data se neztratí – odloží se stranou (jsou i ve společné záloze)
+function loadItems(){
+  const raw=store.get(KEY);let arr=null;
+  try{arr=JSON.parse(raw||'[]');}catch(e){}
+  if(!Array.isArray(arr)){if(raw)store.set(KEY+'.poskozeno',raw);return[];}
+  const ok=x=>x&&typeof x==='object'&&/^\d{4}-\d{2}-\d{2}$/.test(x.expiryDate);
+  const bad=arr.filter(x=>!ok(x));if(bad.length)store.set('doklady.vadne',JSON.stringify(bad));
+  return arr.filter(ok).map(i=>{const r={docNumber:'',recurMonths:0,recurDays:0,note:'',owner:'',...i};
+    r.id=String(r.id||Date.now().toString(36)+Math.random().toString(36).slice(2,7));r.name=String(r.name||'Doklad');
+    r.warningDays=Number(r.warningDays)>=0?Math.round(Number(r.warningDays)):30;return r;});
+}
+let items=loadItems();
 const save=()=>store.set(KEY,JSON.stringify(items));
 
 const $=id=>document.getElementById(id);
@@ -307,7 +318,7 @@ function render(){
   publishSummary(rows,c);
 }
 // ===== Souhrn pro Life Admin (hlavní aplikace ho čte a ukazuje na společném přehledu) =====
-const APP_VERSION='2026.11.07';   // ← při každé úpravě změnit
+const APP_VERSION='2026.11.10';   // ← při každé úpravě změnit
 const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 $('menuVer').textContent='Hlídač dokladů · verze '+APP_VERSION;
 if(EMBED){document.body.classList.add('embedded');document.querySelector('.top>div').appendChild($('summary'));}  // souhrn na řádek s menu
@@ -389,7 +400,11 @@ function openForm(it,renew){
 const FORM_IDS=['fType','fName','fOwner','fDate','fRecur','fRecurN','fRecurU','fWarnN','fWarnU','fNum','fNote'];
 let formSnap='',closeArmed=false,closeArmT;
 const snapForm=()=>FORM_IDS.map(i=>$(i).value).join('\u0001');
-function closeForm(){$('overlay').classList.remove('open');resetDel();closeArmed=false;clearTimeout(closeArmT);}
+function closeForm(){$('overlay').classList.remove('open');resetDel();closeArmed=false;clearTimeout(closeArmT);if(pendingReload){pendingReload=false;setTimeout(reloadData,0);}}
+// jiné okno / záložka (nebo Údržba) změnila doklady → načíst znovu, při otevřeném formuláři až po zavření
+let pendingReload=false;
+function reloadData(){items=loadItems();render();}
+window.addEventListener('storage',e=>{if(e.key!==KEY)return;if($('overlay').classList.contains('open'))pendingReload=true;else reloadData();});
 function requestClose(){
   if(!$('overlay').classList.contains('open'))return;
   if(snapForm()===formSnap||closeArmed){closeForm();return;}
@@ -445,7 +460,7 @@ $('btnSave').onclick=()=>{
 
 function icsEsc(s){return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');}
 const ymd=d=>isoD(d).replace(/-/g,'');
-function fold(l){const out=[];while(l.length>36){out.push(l.slice(0,36));l=' '+l.slice(36);}out.push(l);return out.join('\r\n');}
+function fold(l){const out=[];while(l.length>36){let c=36;const cc=l.charCodeAt(c-1);if(cc>=0xD800&&cc<=0xDBFF)c--;out.push(l.slice(0,c));l=' '+l.slice(c);}out.push(l);return out.join('\r\n');}
 function vevent(uid,date,summary,desc){
   const stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
   return['BEGIN:VEVENT','UID:'+uid,'DTSTAMP:'+stamp,'DTSTART:'+ymd(date)+'T090000','DURATION:PT30M',

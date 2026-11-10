@@ -85,6 +85,8 @@ h2.sec{font-size:20px;margin:22px 0 8px}
 .foot.warn{color:var(--orange)}
 .confirmbox{background:var(--orange-bg);border:1px solid var(--orange);border-radius:12px;padding:12px 14px;margin-top:10px}
 .confirmbox .bk{margin-top:10px}
+.undobox{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:10px 14px;margin-top:10px;font-size:15px}
+.undobox .bk{margin-top:6px}
 .sheetwrap{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:15;display:flex;align-items:flex-end;justify-content:center}
 .sheetwrap[hidden]{display:none}
 .sheet{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:85vh;overflow:auto}
@@ -128,7 +130,7 @@ h2.sec{font-size:20px;margin:22px 0 8px}
 // =====================================================================
 //  REGISTR APLIKACÍ – novou aplikaci přidáš sem (viz MODULY.md)
 // =====================================================================
-const VERSION='2026.11.10';   // verze hlavní aplikace – při každé úpravě změnit
+const VERSION='2026.11.10.2';   // verze hlavní aplikace – při každé úpravě změnit
 const APPS=[
   {id:'doklady',   name:'Doklady',   full:'Hlídač dokladů',      icon:'🗂️', path:'doklady.html',    prefix:'doklady.',    backupKey:'doklady.lastBackup'},
   {id:'predplatne',name:'Platby',    full:'Předplatné a platby', icon:'💳', path:'predplatne.html', prefix:'predplatne.', backupKey:'predplatne.lastBackup'},
@@ -158,13 +160,14 @@ function rel(n){
   return `za ${n} ${plural(n,'den','dny','dní')}`;
 }
 const mem={};
-const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v;try{toast('⚠️ Uložení se nepovedlo – úložiště prohlížeče je plné nebo zakázané.')}catch(x){}}}};
 const appOf=id=>APPS.find(a=>a.id===id);
 function summaryOf(id){try{const s=JSON.parse(store.get('lifeadmin.summary.'+id)||'null');return s&&s.v===1?s:null;}catch(e){return null;}}
 // Které aplikace jsou vidět a v jakém pořadí (každý si vybere, co používá)
 const KEY_SET='lifeadmin.settings.v1';
 let LS={hidden:[],order:[]};
-try{const s=JSON.parse(store.get(KEY_SET)||'null');if(s){LS.hidden=Array.isArray(s.hidden)?s.hidden:[];LS.order=Array.isArray(s.order)?s.order:[];}}catch(e){}
+function loadLS(){LS={hidden:[],order:[]};try{const s=JSON.parse(store.get(KEY_SET)||'null');if(s){LS.hidden=Array.isArray(s.hidden)?s.hidden:[];LS.order=Array.isArray(s.order)?s.order:[];}}catch(e){}}
+loadLS();
 const saveLS=()=>store.set(KEY_SET,JSON.stringify(LS));
 function orderedApps(){const idx=id=>{const i=LS.order.indexOf(id);return i<0?1000+APPS.findIndex(a=>a.id===id):i;};return[...APPS].sort((a,b)=>idx(a.id)-idx(b.id));}
 const visibleApps=()=>orderedApps().filter(a=>!LS.hidden.includes(a.id));
@@ -290,10 +293,10 @@ function renderHome(){
     const desc=s&&s.desc?`<div class="muted" style="font-size:15px">${esc(s.desc)}</div>`:(!hl?`<div class="muted" style="font-size:15px">${s?'Zatím prázdné – přidej první položku.':'Načítám…'}</div>`:'');
     return `<button class="acard" data-open="${esc(a.id)}"><div class="ah"><span class="ai" aria-hidden="true">${a.icon}</span>${esc(a.full)}<span class="go">Otevřít →</span></div>${hl}${desc}</button>`;}).join('');
   h+=`</div><h2 class="sec">💾 Záloha všech aplikací</h2><div class="panel" style="padding:12px 14px">
-    <div style="font-size:15px">Jeden soubor se všemi daty – doklady i platby. Hodí se před výměnou telefonu nebo jako pojistka.</div>
+    <div style="font-size:15px">Jeden soubor s daty všech aplikací i s nastavením, které aplikace vidíš. Hodí se před výměnou telefonu nebo jako pojistka.</div>
     <div class="bk"><button class="primary" id="btnExportAll">⬇️ Uložit zálohu všeho</button><button id="btnImportAll">⬆️ Načíst zálohu všeho</button>
     <button id="btnInstall" ${installEvt?'':'hidden'}>📲 Nainstalovat aplikaci</button></div>
-    <div id="confirmBox"></div>
+    <div id="confirmBox"></div>${undoHtml()}
     <div class="foot" id="bkFoot"></div></div>
     <details class="vers"><summary>ℹ️ Verze aplikací</summary><div>Life Admin <b>${VERSION}</b>${APPS.map(a=>{const s=summaryOf(a.id);return ` · ${esc(a.name)} <b>${s&&s.ver?esc(s.ver):'?'}</b>`;}).join('')}</div>
       <div style="margin-top:4px">Po nahrání nové verze na GitHub se tu čísla změní při příštím otevření aplikace s internetem.</div></details>`;
@@ -313,6 +316,8 @@ $('home').addEventListener('click',e=>{
   if(e.target.closest('#btnInstall'))doInstall();
   if(e.target.closest('#btnDoImport'))doImport();
   if(e.target.closest('#btnCancelImport')){pendingImport=null;renderHome();}
+  if(e.target.closest('#btnUndoImport')){if(undoArmed)doUndoImport();else{undoArmed=true;renderHome();}}
+  if(e.target.closest('#btnDropUndo')){if(undoArmed){undoArmed=false;}else{try{localStorage.removeItem(KEY_UNDO)}catch(x){}toast('Pojistná kopie smazána');}renderHome();}
 });
 $('home').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-open]')){e.preventDefault();go(e.target.dataset.open);}});
 
@@ -339,6 +344,7 @@ function exportAll(){
   for(const a of APPS)if(a.backupKey)store.set(a.backupKey,d);   // ať aplikace nehlásí „nemáš zálohu“
   for(const k of storageKeys())if(k&&ownKey(k))data[k]=store.get(k);
   if(!Object.keys(data).length){toast('Zatím není co zálohovat.');return;}
+  if(store.get(KEY_SET))data[KEY_SET]=store.get(KEY_SET);   // které aplikace jsou vidět a v jakém pořadí
   download(`life-admin-zaloha-${d}.json`,JSON.stringify({app:'life-admin',version:1,exportedAt:new Date().toISOString(),apps:APPS.map(a=>a.id),data},null,2),'application/json');
   store.set('lifeadmin.lastBackup',d);
   refreshFrames();renderHome();
@@ -352,8 +358,11 @@ $('fileImport').addEventListener('change',e=>{
     e.target.value='';
     let j;try{j=JSON.parse(r.result);}catch(err){toast('Tenhle soubor nevypadá jako záloha.');return;}
     if(j&&j.app==='life-admin'&&j.data&&typeof j.data==='object'){
-      const keys=Object.keys(j.data).filter(k=>ownKey(k)&&typeof j.data[k]==='string');
-      if(!keys.length){toast('V záloze nejsou data žádné ze známých aplikací.');return;}
+      const keys=Object.keys(j.data).filter(k=>(ownKey(k)||k===KEY_SET)&&typeof j.data[k]==='string');
+      if(!keys.some(ownKey)){toast('V záloze nejsou data žádné ze známých aplikací.');return;}
+      // kontrola: datové klíče (…v1) musí jít přečíst
+      const broken=keys.filter(k=>/\.v\d+$/.test(k)).filter(k=>{try{JSON.parse(j.data[k]);return false;}catch(x){return true;}});
+      if(broken.length){toast('Záloha je poškozená – nic jsem nenačetl.');return;}
       pendingImport={keys,data:j.data,date:j.exportedAt};renderHome();return;
     }
     const single=j&&(j.app==='hlidac-dokladu'?'Doklady':j.app==='predplatne'?'Platby':null);
@@ -371,13 +380,42 @@ function showImportConfirm(){
   $('confirmBox').innerHTML=`<div class="confirmbox"><b>Načíst zálohu z ${when}?</b><div style="font-size:15px;margin-top:4px">Obsahuje: ${parts.join(', ')}.<br>Současná data těchto aplikací se <b>nahradí</b> daty ze zálohy.</div>
     <div class="bk"><button class="primary" id="btnDoImport">Ano, načíst</button><button id="btnCancelImport">Zrušit</button></div></div>`;
 }
+// Před obnovou se současná data uloží stranou → obnova jde vrátit
+const KEY_UNDO='lifeadmin.undoImport';
+function replaceAppData(appIds,data,withSettings){
+  const affected=APPS.filter(a=>appIds.includes(a.id));
+  for(const k of storageKeys())if(k&&affected.some(a=>k.startsWith(a.prefix)))try{localStorage.removeItem(k)}catch(e){}
+  for(const[k,v]of Object.entries(data))if(affected.some(a=>k.startsWith(a.prefix)))store.set(k,v);
+  if(withSettings){if(typeof data[KEY_SET]==='string')store.set(KEY_SET,data[KEY_SET]);else try{localStorage.removeItem(KEY_SET)}catch(e){}}
+  loadLS();buildTabs();if(view!=='home'&&!isVisible(view))go('home');
+  refreshFrames(true);
+}
 function doImport(){
   const p=pendingImport;if(!p)return;
-  for(const a of APPS){if(!p.keys.some(k=>k.startsWith(a.prefix)))continue;
-    for(const k of storageKeys())if(k&&k.startsWith(a.prefix)&&!(k in p.data))try{localStorage.removeItem(k)}catch(e){}}
-  for(const k of p.keys)store.set(k,p.data[k]);
-  pendingImport=null;
-  refreshFrames(true);renderHome();toast('Záloha načtena ✓');
+  const appIds=APPS.filter(a=>p.keys.some(k=>k.startsWith(a.prefix))).map(a=>a.id),withSettings=p.keys.includes(KEY_SET);
+  const snap={date:new Date().toISOString(),apps:appIds,settings:withSettings,data:{}};
+  for(const k of storageKeys())if(k&&APPS.some(a=>appIds.includes(a.id)&&k.startsWith(a.prefix)))snap.data[k]=store.get(k);
+  if(withSettings&&store.get(KEY_SET))snap.data[KEY_SET]=store.get(KEY_SET);
+  try{localStorage.setItem(KEY_UNDO,JSON.stringify(snap));}
+  catch(e){toast('Nepodařilo se uložit pojistnou kopii současných dat – obnovu jsem pro jistotu neprovedl. Nejdřív si ulož zálohu všeho.');return;}
+  const data={};for(const k of p.keys)data[k]=p.data[k];
+  replaceAppData(appIds,data,withSettings);
+  pendingImport=null;undoArmed=false;renderHome();toast('Záloha načtena ✓ – kdyby něco, jde to vrátit.');
+}
+function undoInfo(){try{const u=JSON.parse(store.get(KEY_UNDO)||'null');return u&&Array.isArray(u.apps)&&u.data?u:null;}catch(e){return null;}}
+let undoArmed=false;
+function undoHtml(){
+  const u=undoInfo();if(!u)return'';
+  const d=new Date(u.date),when=isNaN(d)?'':`${fmt(d)} v ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+  return `<div class="undobox">🛟 Pojistná kopie dat z doby před obnovou zálohy${when?` (${when})`:''}.
+    ${undoArmed?'<br><b>Opravdu vrátit?</b> Změny, které jsi udělal od obnovy, se ztratí.':''}
+    <div class="bk"><button class="${undoArmed?'primary':''}" id="btnUndoImport">${undoArmed?'Ano, vrátit':'↩️ Vrátit stav před obnovou'}</button><button id="btnDropUndo">${undoArmed?'Zrušit':'Kopii nepotřebuji'}</button></div></div>`;
+}
+function doUndoImport(){
+  const u=undoInfo();if(!u)return;
+  replaceAppData(u.apps,u.data,!!u.settings);
+  try{localStorage.removeItem(KEY_UNDO)}catch(e){}
+  undoArmed=false;renderHome();toast('Vráceno do stavu před obnovou ✓');
 }
 // Překreslit / znovu načíst vložené aplikace (po záloze nebo obnově)
 function refreshFrames(reload){

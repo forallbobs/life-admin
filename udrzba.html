@@ -151,7 +151,7 @@ label.check input{width:22px;height:22px;min-height:0;margin:0}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_ID='udrzba',APP_VERSION='2026.11.09';
+const APP_ID='udrzba',APP_VERSION='2026.11.10';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const plural=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
@@ -170,7 +170,8 @@ function every(n,a,b,c){return n===1?`každý ${a}`:`${n>=2&&n<=4?'každé':'ka�
 const cycleText=c=>c.days?(c.days%7===0?every(c.days/7,'týden','týdny','týdnů'):every(c.days,'den','dny','dní')):(c.months%12===0?every(c.months/12,'rok','roky','let'):every(c.months,'měsíc','měsíce','měsíců'));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const mem={};
-const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v;saveWarn()}}};
+let saveWarnT=0;function saveWarn(){if(Date.now()-saveWarnT<10000)return;saveWarnT=Date.now();setTimeout(()=>{try{toast('⚠️ Uložení se nepovedlo – úložiště prohlížeče je plné nebo zakázané. Změny zmizí po zavření, udělej zálohu.')}catch(e){}},500);}
 
 // ===== Data =====
 const KEY='udrzba.items.v1',KEY_IMP='udrzba.importSeen';
@@ -250,11 +251,24 @@ function openModal(title,body,onSave,onDelete){
   $('mTitle').textContent=title;$('mBody').innerHTML=body;mSave=onSave;mDelete=onDelete||null;
   $('mLeft').innerHTML=onDelete?'<button id="mDel">🗑️ Smazat</button>':'';
   $('mSave').style.display=onSave?'':'none';$('mCancel').textContent=onSave?'Zrušit':'Zavřít';
-  $('overlay').classList.add('open');
+  $('overlay').classList.add('open');mArmed=false;setTimeout(()=>{mSnap=snapM();},0);
 }
-function closeModal(){$('overlay').classList.remove('open');clearTimeout(delT);}
-$('mCancel').onclick=closeModal;
-$('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal();
+function closeModal(){$('overlay').classList.remove('open');clearTimeout(delT);mArmed=false;if(pendingReload){pendingReload=false;setTimeout(reloadData,0);}}
+function reloadData(){try{items=(JSON.parse(store.get(KEY)||'[]')||[]).map(normItem).filter(Boolean);}catch(e){}render();}
+// ===== Neuložené změny ve formuláři + změny z jiného okna =====
+let mSnap='',mArmed=false,mArmT,pendingReload=false;
+const snapM=()=>[...$('mBody').querySelectorAll('input,select,textarea')].map(x=>x.type==='checkbox'||x.type==='radio'?x.checked:x.value).join('\u0001');
+function requestClose(){
+  if(!$('overlay').classList.contains('open'))return;
+  if(!mSave||snapM()===mSnap||mArmed){closeModal();return;}
+  mArmed=true;clearTimeout(mArmT);mArmT=setTimeout(()=>mArmed=false,4000);
+  toast('Máš neuložené změny. Zavři znovu pro zahození, nebo dej Uložit.');
+}
+// jiné okno / záložka změnila data → načíst znovu (při otevřeném formuláři až po jeho zavření)
+window.addEventListener('storage',e=>{if(e.key!==KEY)return;if($('overlay').classList.contains('open'))pendingReload=true;else reloadData();});
+
+$('mCancel').onclick=()=>requestClose();
+$('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')requestClose();
   if(e.target.id==='mDel'){const b=e.target;if(b.classList.contains('confirm')){mDelete();closeModal();save();render();toast('Smazáno');}
     else{b.classList.add('confirm');b.textContent='Opravdu smazat?';delT=setTimeout(()=>{b.classList.remove('confirm');b.textContent='🗑️ Smazat';},4000);}}});
 $('mSave').onclick=()=>{if(mSave&&mSave()!==false){closeModal();save();render();}};
@@ -353,7 +367,7 @@ function setMenu(open){$('menu').hidden=!open;$('btnMenu').setAttribute('aria-ex
 $('btnMenu').addEventListener('click',e=>{e.stopPropagation();setMenu($('menu').hidden);});
 $('btnAdd').onclick=()=>itemForm();
 $('btnFab').onclick=()=>itemForm();
-document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden)setMenu(false);else closeModal();});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden)setMenu(false);else requestClose();});
 let toastT,toastFn=null;
 function toast(m,btn,fn){const t=$('toast');t.innerHTML=esc(m)+(btn?`<button id="tBtn">${esc(btn)}</button>`:'');t.classList.toggle('act',!!btn);toastFn=fn||null;
   t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>{t.classList.remove('show','act');toastFn=null;},btn?6000:3000);}

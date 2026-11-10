@@ -39,7 +39,7 @@ Aktualizace = na GitHubu **Add file → Upload files**, přetáhnout změněné 
 
 3. **Data:** do `localStorage` jen pod klíči začínajícími `<id>.`
    (např. `auto.items.v1`, `auto.settings.v1`, `auto.lastBackup`).
-   Společná záloha je pak najde sama. Aplikace bez dat (kalkulačky) nic neukládají.
+   Společná záloha je pak najde sama. Kalkulačky si ukládají jen nastavení (např. `meny.settings.v1`).
 
 4. **Souhrn pro přehled:** po každém vykreslení zapsat do `lifeadmin.summary.<id>`:
 
@@ -96,7 +96,7 @@ Na mobilu se do spodní lišty vejde Přehled + 3 aplikace, ostatní jsou pod �
    `name` = krátký popisek do navigace (na mobilu max. ~9 znaků).
    Nová aplikace je viditelná automaticky; uživatel ji může skrýt.
 2. **`sw.js`** – do `ASSETS` přidat `'./auto.html'` a zvýšit verzi
-   (teď `'lifeadmin-v7'` → příště `'lifeadmin-v8'`).
+   (teď `'lifeadmin-v8'` → příště `'lifeadmin-v9'`).
 3. **Nahrát** nový soubor + upravené `index.html` a `sw.js`.
 
 Data stávajících aplikací se tím nijak nezmění.
@@ -110,6 +110,15 @@ Soubor `life-admin-zaloha-RRRR-MM-DD.json`:
   "data": { "doklady.items.v1": "…", "predplatne.items.v1": "…", "predplatne.settings.v1": "…" } }
 ```
 
-Obsahuje všechny klíče všech registrovaných aplikací (podle `prefix`).
-Při načtení se data dotčených aplikací **nahradí** daty ze zálohy.
+Obsahuje všechny klíče všech registrovaných aplikací (podle `prefix`) a nastavení
+viditelnosti `lifeadmin.settings.v1`. Při načtení se data dotčených aplikací **nahradí**
+daty ze zálohy; současný stav se předtím uloží do `lifeadmin.undoImport`, takže obnovu
+jde na Přehledu vrátit („↩️ Vrátit stav před obnovou“).
+
+## Pravidla pro bezpečná data (každá aplikace s daty)
+
+- Zápis do `localStorage` přes `store.set`; když selže, ukázat varování (`saveWarn`).
+- Poslouchat `storage` událost na vlastní klíč a data **znovu načíst** (jiné okno / záložka);
+  při otevřeném formuláři až po jeho zavření (`pendingReload`).
+- Formulář se při zavření s neuloženými změnami zeptá (`requestClose`).
 Doklady a Platby mají navíc dál vlastní zálohu v menu ☰.
