@@ -85,6 +85,14 @@ h2.sec{font-size:20px;margin:22px 0 8px}
 .foot.warn{color:var(--orange)}
 .confirmbox{background:var(--orange-bg);border:1px solid var(--orange);border-radius:12px;padding:12px 14px;margin-top:10px}
 .confirmbox .bk{margin-top:10px}
+.dapp{margin-top:8px;font-size:15px}
+.dapp>b{display:block}
+.dapp ul{margin:2px 0 0;padding-left:20px}
+.dapp li{margin:1px 0}
+.dapp .del{color:var(--red);font-weight:600}
+.dapp .same{color:var(--muted)}
+.dkeep{display:flex;gap:10px;align-items:flex-start;margin-top:10px;padding:8px 10px;background:var(--card);border-radius:10px;cursor:pointer;font-size:15px}
+.dkeep input{width:22px;height:22px;margin:1px 0 0;flex:none}
 .undobox{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:10px 14px;margin-top:10px;font-size:15px}
 .undobox .bk{margin-top:6px}
 .sheetwrap{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:15;display:flex;align-items:flex-end;justify-content:center}
@@ -130,7 +138,7 @@ h2.sec{font-size:20px;margin:22px 0 8px}
 // =====================================================================
 //  REGISTR APLIKACÍ – novou aplikaci přidáš sem (viz MODULY.md)
 // =====================================================================
-const VERSION='2026.11.10.2';   // verze hlavní aplikace – při každé úpravě změnit
+const VERSION='2026.11.11';   // verze hlavní aplikace – při každé úpravě změnit
 const APPS=[
   {id:'doklady',   name:'Doklady',   full:'Hlídač dokladů',      icon:'🗂️', path:'doklady.html',    prefix:'doklady.',    backupKey:'doklady.lastBackup'},
   {id:'predplatne',name:'Platby',    full:'Předplatné a platby', icon:'💳', path:'predplatne.html', prefix:'predplatne.', backupKey:'predplatne.lastBackup'},
@@ -244,6 +252,7 @@ function drawEditApps(){
     `<div class="sfoot"><button data-closesheet>Zrušit</button><button class="primary" data-saveapps>Uložit</button></div>`;
 }
 $('navEdit').addEventListener('click',openEditApps);
+document.addEventListener('change',e=>{if(e.target.id==='chkKeep'&&pendingImport){pendingImport.keep=e.target.checked;showImportConfirm();}});
 $('sheetBody').addEventListener('change',e=>{const c=e.target.closest('[data-vis]');if(c)editList[Number(c.dataset.vis)].on=c.checked;});
 $('sheetBody').addEventListener('click',e=>{
   const g=e.target.closest('[data-go]');if(g){closeSheet();go(g.dataset.go);return;}
@@ -363,7 +372,7 @@ $('fileImport').addEventListener('change',e=>{
       // kontrola: datové klíče (…v1) musí jít přečíst
       const broken=keys.filter(k=>/\.v\d+$/.test(k)).filter(k=>{try{JSON.parse(j.data[k]);return false;}catch(x){return true;}});
       if(broken.length){toast('Záloha je poškozená – nic jsem nenačetl.');return;}
-      pendingImport={keys,data:j.data,date:j.exportedAt};renderHome();return;
+      pendingImport={keys,data:j.data,date:j.exportedAt,keep:true};pendingImport.diff=diffBackup(pendingImport);renderHome();return;
     }
     const single=j&&(j.app==='hlidac-dokladu'?'Doklady':j.app==='predplatne'?'Platby':null);
     if(single){toast(`Tohle je záloha jen jedné aplikace – otevři záložku ${single} a načti ji tam přes ☰ → Načíst zálohu.`);return;}
@@ -371,13 +380,73 @@ $('fileImport').addEventListener('change',e=>{
   };
   r.readAsText(f);
 });
+// ===== Co se obnovou změní: porovnání položek podle id =====
+const FIELD_L={name:'název',title:'název',expiryDate:'platnost',docNumber:'číslo',owner:'komu patří',type:'typ',warningDays:'upozornění',
+  recurMonths:'obnova',recurDays:'obnova',price:'cena',currency:'měna',cycle:'interval',firstPaymentDate:'datum platby',status:'stav',
+  hist:'historie cen',history:'historie',note:'poznámka',category:'kategorie',shared:'sdílení',n:'interval',unit:'interval',
+  contract:'smlouva',commitmentEndDate:'konec závazku',notice:'výpověď',autoRenews:'obnovování',anniversaryDate:'výročí',isEstimate:'odhad',
+  lastDate:'naposledy',lastDone:'naposledy',lastKm:'km',booked:'termín',bookedTime:'čas',doctor:'lékař',person:'osoba',info:'info',lead:'předstih',
+  buy:'co koupit',guide:'návod',warnDays:'upozornění',icon:'ikona',steps:'kroky',table:'tabulka',text:'text',pinned:'oblíbené',
+  plate:'SPZ',tires:'pneumatiky',washer:'ostřikovače',km:'km',date:'datum'};
+const LIST_L={fuel:'tankování',odo:'zápisy km',tasks:'úkoly',history:'záznamy v historii',hist:'záznamy cen'};
+const IGNORE_F=new Set(['id','updated','createdAt']);
+const itemLabel=x=>String(x.name||x.title||x.label||'položka')+(x.person?` (${x.person})`:'');
+function parseArr(v){try{const a=JSON.parse(v||'null');return Array.isArray(a)&&a.every(x=>x&&typeof x==='object'&&x.id!=null)?a:null;}catch(e){return null;}}
+function fieldChanges(o,n){
+  const out=[],fields=new Set([...Object.keys(o),...Object.keys(n)]);
+  for(const f of fields){if(IGNORE_F.has(f))continue;
+    const a=JSON.stringify(o[f]??null),b=JSON.stringify(n[f]??null);if(a===b)continue;
+    if(Array.isArray(o[f])||Array.isArray(n[f])){
+      const la=(o[f]||[]).length,lb=(n[f]||[]).length,L=LIST_L[f]||FIELD_L[f]||'seznam';
+      if(lb<la)out.push({t:`ubude ${L}: ${la-lb}`,loss:true});else if(lb>la)out.push({t:`${L} +${lb-la}`});else out.push({t:L});
+    }else out.push({t:FIELD_L[f]||'další údaje'});
+  }
+  const seen=new Set();return out.filter(c=>!seen.has(c.t)&&seen.add(c.t));
+}
+function diffBackup(p){
+  const res=[];
+  for(const a of APPS){
+    const bKeys=p.keys.filter(k=>k.startsWith(a.prefix));if(!bKeys.length)continue;
+    const d={app:a,added:[],removed:[],changed:[],settings:false};
+    const cKeys=storageKeys().filter(k=>k&&k.startsWith(a.prefix));
+    for(const k of new Set([...bKeys,...cKeys])){
+      const cur=store.get(k),bak=k in p.data?p.data[k]:null;
+      const ca=parseArr(cur),ba=parseArr(bak);
+      if(ca||ba){
+        const cm=new Map((ca||[]).map(x=>[String(x.id),x])),bm=new Map((ba||[]).map(x=>[String(x.id),x]));
+        for(const[id,x]of bm)if(!cm.has(id))d.added.push(itemLabel(x));
+        for(const[id,x]of cm)if(!bm.has(id))d.removed.push({id,key:k,label:itemLabel(x)});
+        for(const[id,x]of bm){const o=cm.get(id);if(o&&JSON.stringify(o)!==JSON.stringify(x)){const ch=fieldChanges(o,x);if(ch.length)d.changed.push({label:itemLabel(x),ch});}}
+      }else if(/settings\.v\d+$/.test(k)&&(cur??null)!==(bak??null))d.settings=true;
+    }
+    res.push(d);
+  }
+  return res;
+}
 function showImportConfirm(){
-  const p=pendingImport,parts=[];
-  for(const a of APPS){const ks=p.keys.filter(k=>k.startsWith(a.prefix));if(!ks.length)continue;
-    let n='';try{const arr=JSON.parse(p.data[a.prefix+'items.v1']||'null');if(Array.isArray(arr))n=` (${arr.length} ${plural(arr.length,'položka','položky','položek')})`;}catch(e){}
-    parts.push(esc(a.full)+n);}
+  const p=pendingImport,diff=p.diff||[];
   const when=p.date&&!isNaN(new Date(p.date))?fmt(new Date(p.date)):'neznámého data';
-  $('confirmBox').innerHTML=`<div class="confirmbox"><b>Načíst zálohu z ${when}?</b><div style="font-size:15px;margin-top:4px">Obsahuje: ${parts.join(', ')}.<br>Současná data těchto aplikací se <b>nahradí</b> daty ze zálohy.</div>
+  const removedN=diff.reduce((s,d)=>s+d.removed.length,0),lossN=diff.reduce((s,d)=>s+d.changed.filter(c=>c.ch.some(x=>x.loss)).length,0);
+  const MAXL=6,lst=(arr,f)=>arr.slice(0,MAXL).map(f).join('')+(arr.length>MAXL?`<li class="same">… a další ${arr.length-MAXL}</li>`:'');
+  // aplikace se ztrátou nahoru
+  const sorted=[...diff].sort((x,y)=>(y.removed.length+y.changed.length+y.added.length>0)-(x.removed.length+x.changed.length+x.added.length>0)||y.removed.length-x.removed.length);
+  const apps=sorted.map(d=>{
+    const nothing=!d.added.length&&!d.removed.length&&!d.changed.length&&!d.settings;
+    if(nothing)return`<div class="dapp"><b>${d.app.icon} ${esc(d.app.name)} <span class="same">– beze změny</span></b></div>`;
+    let li='';
+    if(d.removed.length)li+=p.keep?lst(d.removed,r=>`<li>📌 zůstane, i když v záloze není: ${esc(r.label)}</li>`)
+                                  :lst(d.removed,r=>`<li class="del">🗑️ zmizí: ${esc(r.label)} <span style="font-weight:400">– je jen v tomto zařízení</span></li>`);
+    li+=lst(d.added,l=>`<li>➕ nové: ${esc(l)}</li>`);
+    li+=lst(d.changed,c=>`<li${c.ch.some(x=>x.loss)?' class="del"':''}>✏️ ${esc(c.label)} – ${c.ch.map(x=>esc(x.t)).join(', ')}</li>`);
+    if(d.settings)li+='<li>⚙️ změněné nastavení</li>';
+    return`<div class="dapp"><b>${d.app.icon} ${esc(d.app.name)}</b><ul>${li}</ul></div>`;
+  }).join('');
+  const setChange=p.keys.includes(KEY_SET)&&p.data[KEY_SET]!==store.get(KEY_SET);
+  $('confirmBox').innerHTML=`<div class="confirmbox"><b>Načíst zálohu z ${when}? Tohle se změní:</b>
+    ${removedN&&!p.keep?`<div class="dapp del">⚠️ ${plural(removedN,'Smaže','Smažou','Smaže')} se ${removedN} ${plural(removedN,'položka, která je','položky, které jsou','položek, které jsou')} jen v tomto zařízení.</div>`:''}
+    ${lossN?`<div class="dapp del">⚠️ U ${lossN} ${plural(lossN,'položky','položek','položek')} ubudou záznamy – verze ze zálohy přepíše tu zdejší.</div>`:''}
+    ${apps}${setChange?'<div class="dapp"><b>👁️ Které aplikace vidíš a pořadí</b><ul><li>podle zálohy</li></ul></div>':''}
+    ${removedN?`<label class="dkeep"><input type="checkbox" id="chkKeep"${p.keep?' checked':''}><span><b>Ponechat položky, které jsou jen tady</b><br><span style="color:var(--muted)">Nic z tohoto zařízení se nesmaže – jen se přidá a přepíše, co je v záloze. Vypni, pokud jsi je v druhém zařízení smazal schválně.</span></span></label>`:''}
     <div class="bk"><button class="primary" id="btnDoImport">Ano, načíst</button><button id="btnCancelImport">Zrušit</button></div></div>`;
 }
 // Před obnovou se současná data uloží stranou → obnova jde vrátit
@@ -399,6 +468,12 @@ function doImport(){
   try{localStorage.setItem(KEY_UNDO,JSON.stringify(snap));}
   catch(e){toast('Nepodařilo se uložit pojistnou kopii současných dat – obnovu jsem pro jistotu neprovedl. Nejdřív si ulož zálohu všeho.');return;}
   const data={};for(const k of p.keys)data[k]=p.data[k];
+  if(p.keep){   // položky, které jsou jen tady, přidat do dat ze zálohy
+    for(const d of p.diff||[])for(const r of d.removed){
+      const cur=parseArr(store.get(r.key))||[],x=cur.find(i=>String(i.id)===r.id);if(!x)continue;
+      const arr=parseArr(data[r.key])||[];arr.push(x);data[r.key]=JSON.stringify(arr);
+    }
+  }
   replaceAppData(appIds,data,withSettings);
   pendingImport=null;undoArmed=false;renderHome();toast('Záloha načtena ✓ – kdyby něco, jde to vrátit.');
 }

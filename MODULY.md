@@ -96,7 +96,7 @@ Na mobilu se do spodní lišty vejde Přehled + 3 aplikace, ostatní jsou pod �
    `name` = krátký popisek do navigace (na mobilu max. ~9 znaků).
    Nová aplikace je viditelná automaticky; uživatel ji může skrýt.
 2. **`sw.js`** – do `ASSETS` přidat `'./auto.html'` a zvýšit verzi
-   (teď `'lifeadmin-v8'` → příště `'lifeadmin-v9'`).
+   (teď `'lifeadmin-v9'` → příště `'lifeadmin-v10'`).
 3. **Nahrát** nový soubor + upravené `index.html` a `sw.js`.
 
 Data stávajících aplikací se tím nijak nezmění.
@@ -114,6 +114,9 @@ Obsahuje všechny klíče všech registrovaných aplikací (podle `prefix`) a na
 viditelnosti `lifeadmin.settings.v1`. Při načtení se data dotčených aplikací **nahradí**
 daty ze zálohy; současný stav se předtím uloží do `lifeadmin.undoImport`, takže obnovu
 jde na Přehledu vrátit („↩️ Vrátit stav před obnovou“).
+Před načtením se ukáže, co se změní (položky se porovnávají podle `id` – proto má každá
+položka v poli `…items.v1` mít `id` a `name`/`title`). Volba „Ponechat položky, které jsou
+jen tady“ (výchozí zapnutá) položky z tohoto zařízení nesmaže, jen je přidá k datům ze zálohy.
 
 ## Pravidla pro bezpečná data (každá aplikace s daty)
 
