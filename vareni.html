@@ -6,9 +6,9 @@
 <title>Vaření</title>
 <style>
 :root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#a16207;--accent-bg:#fdf4dc;
---green:#2e7d32;--green-bg:#e9f5ea;--orange:#b45309}
+--green:#2e7d32;--green-bg:#e9f5ea;--orange:#b45309;--on-accent:#fff}
 @media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#facc15;--accent-bg:#3a3214;
---green:#81c995;--green-bg:#1b3021;--orange:#fbbf6a}}
+--green:#81c995;--green-bg:#1b3021;--orange:#fbbf6a;--on-accent:#1d1d1b}}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
 .wrap{max-width:1180px;margin:0 auto;padding:16px 16px 90px}
@@ -76,14 +76,89 @@ th,td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line)}
 th{color:var(--muted);font-weight:600}
 .tw{overflow-x:auto}
 .ver{font-size:13px;color:var(--muted);margin-top:24px;opacity:.8}
+/* ===== Záložky a Moje jídla ===== */
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.vtabs{display:flex;gap:6px;margin:4px 0 14px;border-bottom:1px solid var(--line)}
+.vtabs button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;font-size:17px;padding:8px 14px;color:var(--muted)}
+.vtabs button.on{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+.mtools{display:flex;gap:8px;flex-wrap:wrap}
+.mtools input{flex:1;min-width:180px}
+.mtools input,.mtools select{padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);min-height:44px;font:inherit;color:inherit}
+.tagchips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.tagchips button,.ftags button{border-radius:999px;padding:5px 12px;min-height:36px;font-size:14px}
+.tagchips button.on,.ftags button.on{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:600}
+.mact{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.mact button{flex:1;min-width:140px}
+.mcards{display:grid;gap:8px}
+@media(min-width:800px){.mcards{grid-template-columns:1fr 1fr}}
+@media(min-width:1150px){.mcards{grid-template-columns:1fr 1fr 1fr}}
+.mcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;cursor:pointer}
+.mcard:hover{border-color:var(--muted)}
+.mcard .mi{font-size:28px;line-height:1;flex:none}
+.mcard .mt{flex:1;min-width:0}
+.mcard .mt b{display:block;overflow:hidden;text-overflow:ellipsis}
+.mcard .ms{font-size:14px;color:var(--muted)}
+.mcard .ms .never{color:var(--accent);font-weight:600}
+.mcard .cookbtn{flex:none;padding:6px 10px;font-size:15px}
+.mtg{display:inline-block;font-size:12px;background:var(--bg);border-radius:999px;padding:1px 8px;margin:3px 4px 0 0;color:var(--muted)}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+.empty b{display:block;color:var(--text);font-size:19px;margin-bottom:4px}
+/* okno */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:25}
+.overlay.open{display:flex}
+.modal{background:var(--card);width:100%;max-width:600px;border-radius:16px 16px 0 0;padding:20px;max-height:92vh;overflow:auto}
+@media(min-width:600px){.overlay{align-items:center}.modal{border-radius:16px}}
+.modal h2{margin:0 0 4px;font-size:22px}
+.mfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:16px}
+.mfoot>div{display:flex;flex-wrap:wrap;gap:8px}
+.modal label{display:block;font-size:15px;color:var(--muted);margin:12px 0 4px}
+.modal label.check{display:flex;align-items:center;gap:10px;color:var(--text);font-size:16px;cursor:pointer}
+.modal label.check input{width:22px;height:22px;min-height:0;margin:0;accent-color:var(--accent)}
+.modal input:not([type=checkbox]),.modal select,.modal textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:44px;font:inherit;color:inherit}
+.modal textarea{resize:vertical}
+.frow{display:flex;gap:8px}.frow>*{flex:1;min-width:0}
+.hint{font-size:14px;color:var(--muted);margin-top:4px}
+.err{color:#c62828;font-size:14px;margin-top:4px}
+.dmeta{color:var(--muted);font-size:15px;margin-bottom:8px}
+.dbtns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+.dbtns button{flex:1;min-width:130px}
+.dsec{margin-top:16px}
+.dsec h3{font-size:16px;margin:0 0 6px}
+.serv{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--muted);margin-bottom:6px}
+.serv button{width:40px;min-height:36px;padding:0;font-size:20px}
+.serv b{font-size:20px;color:var(--text);min-width:28px;text-align:center}
+.ing{margin:0;padding-left:20px}
+.ing li{margin:3px 0}
+.ing .q{font-weight:700}
+.cookbox{background:var(--accent-bg);border-radius:12px;padding:6px 12px 12px;margin-top:8px}
+.hist{margin:0;padding:0;list-style:none}
+.hist li{display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding:5px 0;font-size:15px}
+.hist li:last-child{border-bottom:0}
+.hist .hx{flex:1}.hist .hn{color:var(--muted)}
+.hist button{min-height:32px;padding:2px 10px;font-size:14px}
+button.confirm{border-color:#c62828;color:#c62828}
+.pick{text-align:center;padding:10px 0}
+.pick .pi{font-size:56px;line-height:1.2}
+.pick b{display:block;font-size:24px}
+.shopr{border-bottom:1px solid var(--line);padding:6px 0}
+.shopr:last-child{border-bottom:0}
+.shopr .sh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.shopr .sh button{min-height:32px;padding:2px 10px;font-size:14px}
+.shopr ul{margin:2px 0 0;padding-left:20px;font-size:15px}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:92%}
+.toast.show{opacity:1}
+.toast.act{pointer-events:auto}
+.toast button{margin-left:10px;min-height:32px;padding:2px 10px;background:none;color:inherit;border-color:currentColor}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
     <h1>🍳 Vaření</h1>
-    <p class="sub">Kolik čeho uvařit a jak dlouho.</p>
+    <p class="sub">Moje jídla s recepty a kalkulačka rýže.</p>
   </header>
+  <div class="vtabs" role="tablist"><button role="tab" data-tab="rice">🍚 Rýže</button><button role="tab" data-tab="meals">📖 Moje jídla</button></div>
+  <section id="secRice">
   <h2>🍚 Rýže</h2>
   <div class="cols">
     <div class="card">
@@ -100,17 +175,30 @@ th{color:var(--muted);font-weight:600}
     <div class="card" id="result"></div>
   </div>
   <div class="card" style="margin-top:14px" id="howto"></div>
+  </section>
+  <section id="secMeals" hidden>
+    <div class="mtools"><input type="search" id="q" placeholder="Hledat jídlo nebo surovinu…" aria-label="Hledat">
+      <select id="sort" aria-label="Řazení"><option value="stale">Nejdéle nevařené</option><option value="az">Abecedně</option><option value="often">Nejčastěji vařené</option></select></div>
+    <div class="tagchips" id="tagChips"></div>
+    <div class="mact"><button id="btnPick">🎲 Co dnes vařit?</button><button id="btnShop">🛒 Nákup <span id="shopN"></span></button><button class="primary" id="btnAdd">+ Přidat jídlo</button></div>
+    <div class="mcards" id="mealList"></div>
+  </section>
   <div class="ver" id="ver"></div>
 </div>
+<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <h2 id="mTitle"></h2><div id="mBody"></div>
+  <div class="mfoot"><div id="mLeft"></div><div><button id="mCancel">Zrušit</button><button class="primary" id="mSave">Uložit</button></div></div>
+</div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="tbar" id="tbar" hidden role="status" aria-live="polite"><div class="tt"><div class="tl" id="tLabel"></div><div class="tc" id="tCount"></div></div><button id="tStop">Zrušit</button></div>
 
 <script>
-const APP_ID='vareni',APP_VERSION='2026.11.10';
+const APP_ID='vareni',APP_VERSION='2026.11.14';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const parseNum=v=>{const s=String(v??'').replace(/\s/g,'').replace(',','.');return s===''?NaN:Number(s);};
 const nf=(v,d=0)=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:d}).format(v);
-const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){saveWarn()}}};
 
 // Typy jídla – liší se dávkou na osobu (a rizoto i postupem)
 const TYPES=[
@@ -306,12 +394,317 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&tInt)tick
 const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 if(EMBED)document.body.classList.add('embedded');
 $('ver').textContent='Vaření · verze '+APP_VERSION;
-try{
-  localStorage.setItem('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:0,
-    desc:'Kolik rýže a vody pro kolik lidí – příloha i rizoto, s minutkou.',headline:[],alerts:[]}));
-  if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
-}catch(e){}
+function publish(){
+  try{
+    const n=meals.length,stale=[...meals].filter(m=>m.cooked.length).sort((a,b)=>lastCooked(a).localeCompare(lastCooked(b)))[0];
+    localStorage.setItem('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:n,
+      desc:n?'Tvoje jídla s recepty a kalkulačka rýže.':'Kolik rýže a vody pro kolik lidí – a tvoje recepty.',
+      headline:n?[{label:'Jídel',value:String(n)},...(stale?[{label:'Nejdéle nevařené',value:stale.name}]:[])]:[],alerts:[]}));
+    if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
+  }catch(e){}
+}
 
+
+// =====================================================================
+// ===== 📖 Moje jídla – recepty, „vařeno“, tip na dnes, nákup =====
+// =====================================================================
+const MKEY='vareni.items.v1',SHOPKEY='vareni.shop.v1',TABKEY='vareni.tab';
+const BASE_TAGS=['Hlavní jídlo','Polévka','Rychlé','Bez masa','Sladké','Pro návštěvu','Na víkend'];
+const isoD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const parseD=s=>{const[y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d);};
+const isISO=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s))&&!isNaN(parseD(s));
+const today=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate());};
+const daysBetween=(a,b)=>Math.round((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())-Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/864e5);
+const fmtD=iso=>{const d=parseD(iso);return`${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`;};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function ago(iso){
+  const n=daysBetween(parseD(iso),today());
+  if(n<0)return fmtD(iso);if(n===0)return'dnes';if(n===1)return'včera';
+  if(n<14)return`před ${n} dny`;
+  if(n<60){const w=Math.round(n/7);return`před ${w} týdny`;}
+  if(n<365){const m=Math.round(n/30.4);return m<=1?'před měsícem':`před ${m} měsíci`;}
+  const y=Math.floor(n/365);return y===1?'před rokem':`před ${y} lety`;
+}
+let saveWarnT=0;
+function saveWarn(){if(Date.now()-saveWarnT<10000)return;saveWarnT=Date.now();setTimeout(()=>toast('⚠️ Uložení se nepovedlo – úložiště prohlížeče je plné nebo zakázané. Změny zmizí po zavření, udělej zálohu.'),500);}
+const mstore={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){saveWarn()}}};
+
+function normMeal(x){
+  if(!x||typeof x!=='object'||x.id==null)return null;
+  const icon=Array.from(String(x.icon||'🍽️').trim()).slice(0,2).join('')||'🍽️';
+  return{id:String(x.id),name:String(x.name||'Jídlo').trim()||'Jídlo',icon,
+    tags:Array.isArray(x.tags)?[...new Set(x.tags.map(t=>String(t).trim()).filter(Boolean))]:[],
+    time:Number(x.time)>0?Math.round(Number(x.time)):null,
+    servings:Number(x.servings)>0?Math.round(Number(x.servings)):4,
+    ingredients:String(x.ingredients||''),steps:String(x.steps||''),note:String(x.note||''),source:String(x.source||''),
+    rice:!!x.rice,
+    cooked:(Array.isArray(x.cooked)?x.cooked:[]).filter(c=>c&&isISO(c.date)).map(c=>({date:c.date,note:String(c.note||'')})).sort((a,b)=>a.date.localeCompare(b.date)),
+    createdAt:x.createdAt||new Date().toISOString()};
+}
+function loadMeals(){
+  const raw=mstore.get(MKEY);let arr=null;
+  try{arr=JSON.parse(raw||'[]');}catch(e){}
+  if(!Array.isArray(arr)){if(raw)mstore.set(MKEY+'.poskozeno',raw);return[];}
+  return arr.map(normMeal).filter(Boolean);
+}
+let meals=loadMeals();
+let shop=[];try{const s=JSON.parse(mstore.get(SHOPKEY)||'[]');if(Array.isArray(s))shop=s.filter(x=>x&&x.id&&Array.isArray(x.lines));}catch(e){}
+const saveMeals=()=>{mstore.set(MKEY,JSON.stringify(meals));publish();};
+const saveShop=()=>mstore.set(SHOPKEY,JSON.stringify(shop));
+const mealById=id=>meals.find(m=>m.id===id);
+const lastCooked=m=>m.cooked.length?m.cooked[m.cooked.length-1].date:null;
+let MS={q:'',tag:'',sort:'stale'};
+try{const s=JSON.parse(mstore.get('vareni.list.v1')||'null');if(s&&typeof s==='object')MS={...MS,sort:['stale','az','often'].includes(s.sort)?s.sort:'stale'};}catch(e){}
+
+// ----- přepočet surovin podle porcí -----
+const UF={'½':.5,'¼':.25,'¾':.75,'⅓':1/3,'⅔':2/3};
+const num=s=>Number(String(s).replace(',','.'));
+function parseQty(line){
+  const t=line.replace(/^\s*[-•*]\s*/,'');let m;
+  if((m=t.match(/^(\d+(?:[.,]\d+)?)\s*[-–]\s*(\d+(?:[.,]\d+)?)(?=\s|$)/)))return{a:num(m[1]),b:num(m[2]),rest:t.slice(m[0].length)};
+  if((m=t.match(/^(\d+)\s*\/\s*(\d+)(?=\s|$)/))&&Number(m[2])>0)return{a:Number(m[1])/Number(m[2]),rest:t.slice(m[0].length)};
+  if((m=t.match(/^(\d+(?:[.,]\d+)?)?\s*([½¼¾⅓⅔])?(?=\s|[a-zA-ZÀ-ž]|$)/))&&(m[1]||m[2]))return{a:(m[1]?num(m[1]):0)+(m[2]?UF[m[2]]:0),rest:t.slice(m[0].length)};
+  return{a:null,rest:t};
+}
+function fmtQ(v,rest){
+  if(/^\s*(g|ml|gramů|gr)\b/i.test(rest)){if(v>=200)return nf(Math.round(v/10)*10);if(v>=50)return nf(Math.round(v/5)*5);}
+  if(v>=10)return nf(Math.round(v));
+  const q=Math.round(v*4)/4;if(Math.abs(q-v)<0.06&&q>0)return frac(q);
+  return nf(Math.round(v*10)/10,1);
+}
+function scaledLines(m,serv){
+  const f=serv/m.servings;
+  return m.ingredients.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+    const p=parseQty(l);
+    if(p.a==null||f===1)return{q:p.a!=null?l.slice(0,l.length-p.rest.length).replace(/^\s*[-•*]\s*/,'').trim():'',rest:p.a!=null?p.rest.trim():p.rest.trim()};
+    const q=p.b!=null?`${fmtQ(p.a*f,p.rest)}–${fmtQ(p.b*f,p.rest)}`:fmtQ(p.a*f,p.rest);
+    return{q,rest:p.rest.trim()};
+  });
+}
+const lineText=x=>(x.q?x.q+' ':'')+x.rest;
+const stepList=m=>m.steps.split('\n').map(s=>s.trim().replace(/^(\d+[.)]|[-•*])\s*/,'')).filter(Boolean);
+
+// ----- záložky -----
+let tab=mstore.get(TABKEY)==='meals'?'meals':'rice';
+function setTab(t){tab=t;mstore.set(TABKEY,t);
+  document.querySelectorAll('.vtabs [data-tab]').forEach(b=>{b.classList.toggle('on',b.dataset.tab===t);b.setAttribute('aria-selected',b.dataset.tab===t);});
+  $('secRice').hidden=t!=='rice';$('secMeals').hidden=t!=='meals';if(t==='meals')renderMeals();}
+
+// ----- seznam jídel -----
+function allTags(){const s=new Set(BASE_TAGS);meals.forEach(m=>m.tags.forEach(t=>s.add(t)));return[...s];}
+function renderMeals(){
+  const used=new Set();meals.forEach(m=>m.tags.forEach(t=>used.add(t)));
+  if(MS.tag&&!used.has(MS.tag))MS.tag='';
+  $('tagChips').innerHTML=used.size?[`<button data-ftag=""${MS.tag===''?' class="on"':''}>Vše</button>`,...[...used].sort((a,b)=>a.localeCompare(b,'cs')).map(t=>`<button data-ftag="${esc(t)}"${MS.tag===t?' class="on"':''}>${esc(t)}</button>`)].join(''):'';
+  $('sort').value=MS.sort;
+  $('shopN').textContent=shop.length?`(${shop.length})`:'';
+  const q=MS.q.trim().toLowerCase();
+  let list=meals.filter(m=>(!MS.tag||m.tags.includes(MS.tag))&&(!q||(m.name+' '+m.ingredients+' '+m.tags.join(' ')).toLowerCase().includes(q)));
+  const stale=m=>{const l=lastCooked(m);return l?daysBetween(parseD(l),today()):1e6;};
+  if(MS.sort==='az')list.sort((a,b)=>a.name.localeCompare(b.name,'cs'));
+  else if(MS.sort==='often')list.sort((a,b)=>b.cooked.length-a.cooked.length||a.name.localeCompare(b.name,'cs'));
+  else list.sort((a,b)=>stale(b)-stale(a)||a.name.localeCompare(b.name,'cs'));
+  if(!meals.length){$('mealList').innerHTML=`<div class="empty"><b>Zatím tu nemáš žádné jídlo</b>Přidej si jídla, která vaříš – i s receptem. Pak tu uvidíš, kdy jsi co vařil naposledy.</div>`;return;}
+  if(!list.length){$('mealList').innerHTML=`<div class="empty">Nic neodpovídá hledání.</div>`;return;}
+  $('mealList').innerHTML=list.map(m=>{
+    const l=lastCooked(m),t=today(),done=l===isoD(t);
+    const meta=[l?`naposledy ${ago(l)}`:'<span class="never">ještě nevařeno</span>',m.cooked.length?`${m.cooked.length}×`:'',m.time?`⏱️ ${m.time} min`:''].filter(Boolean).join(' · ');
+    return`<div class="mcard" data-open="${m.id}" role="button" tabindex="0"><div class="mi">${esc(m.icon)}</div><div class="mt"><b>${esc(m.name)}</b><div class="ms">${meta}</div>${m.tags.length?`<div>${m.tags.map(t=>`<span class="mtg">${esc(t)}</span>`).join('')}</div>`:''}</div>
+      <button class="cookbtn" data-cook="${m.id}" title="Zapsat, že jsem to dnes vařil"${done?' disabled':''}>${done?'✅ Dnes':'✅ Vařeno'}</button></div>`;
+  }).join('');
+}
+
+// ----- okno -----
+let mSave=null,mSnap='',mArmed=false,mArmT,pendingReload=false;
+const snapM=()=>[...$('mBody').querySelectorAll('input,select,textarea')].map(x=>x.type==='checkbox'?x.checked:x.value).join('\u0001');
+function openModal(title,body,onSave,opts={}){
+  $('mTitle').textContent=title;$('mBody').innerHTML=body;mSave=onSave||null;
+  $('mSave').hidden=!onSave;$('mSave').textContent=opts.saveLabel||'Uložit';$('mCancel').textContent=onSave?'Zrušit':'Zavřít';
+  $('mLeft').innerHTML=opts.left||'';
+  $('overlay').classList.add('open');mArmed=false;mSnap=snapM();
+  if(opts.focus)setTimeout(()=>{const f=$(opts.focus);if(f)f.focus();},60);
+}
+function closeModal(){$('overlay').classList.remove('open');mSave=null;mArmed=false;detailId=null;if(pendingReload){pendingReload=false;setTimeout(reloadMeals,0);}}
+function requestClose(){
+  if(!$('overlay').classList.contains('open'))return;
+  if(!mSave||snapM()===mSnap||mArmed){closeModal();return;}
+  mArmed=true;clearTimeout(mArmT);mArmT=setTimeout(()=>mArmed=false,4000);
+  toast('Máš neuložené změny. Zavři znovu pro zahození, nebo dej Uložit.');
+}
+function reloadMeals(){meals=loadMeals();renderMeals();}
+$('mCancel').onclick=()=>requestClose();
+$('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')requestClose();});
+$('mSave').onclick=()=>{if(mSave&&mSave()!==false)closeModal();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')requestClose();
+  if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('mcard')){e.preventDefault();openDetail(e.target.dataset.open);}});
+window.addEventListener('storage',e=>{
+  if(e.key===MKEY){if($('overlay').classList.contains('open'))pendingReload=true;else reloadMeals();}
+  if(e.key===SHOPKEY){try{const s=JSON.parse(e.newValue||'[]');if(Array.isArray(s))shop=s;}catch(x){}if(tab==='meals')renderMeals();}
+});
+
+// ----- toast (s tlačítkem Zpět) -----
+let toastT,toastFn=null;
+function toast(m,btn,fn){const t=$('toast');t.innerHTML=esc(m)+(btn?`<button id="tBtn">${esc(btn)}</button>`:'');t.classList.toggle('act',!!btn);toastFn=fn||null;
+  t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>{t.classList.remove('show','act');toastFn=null;},btn?6000:3000);}
+$('toast').addEventListener('click',e=>{if(e.target.id==='tBtn'&&toastFn){toastFn();toastFn=null;$('toast').classList.remove('show','act');}});
+
+// ----- detail jídla -----
+let detailId=null,detailServ=4,cookOpen=false;
+function openDetail(id){const m=mealById(id);if(!m)return;detailId=id;detailServ=m.servings;cookOpen=false;openModal(m.icon+' '+m.name,detailHtml(m),null);}
+function redrawDetail(){const m=mealById(detailId);if(!m){closeModal();return;}$('mTitle').textContent=m.icon+' '+m.name;$('mBody').innerHTML=detailHtml(m);}
+function detailHtml(m){
+  const l=lastCooked(m);
+  const meta=[l?`Naposledy ${ago(l)} (${fmtD(l)})`:'Ještě nevařeno',m.cooked.length?`vařeno ${m.cooked.length}×`:'',m.time?`⏱️ ${m.time} min`:''].filter(Boolean).join(' · ');
+  const ing=scaledLines(m,detailServ),steps=stepList(m);
+  const src=/^https?:\/\//i.test(m.source.trim())?`<a href="${esc(m.source.trim())}" target="_blank" rel="noopener">${esc(m.source.trim().replace(/^https?:\/\/(www\.)?/,'').slice(0,60))}</a>`:esc(m.source);
+  return`<div class="dmeta">${meta}${m.tags.length?`<div>${m.tags.map(t=>`<span class="mtg">${esc(t)}</span>`).join('')}</div>`:''}</div>
+  <div class="dbtns"><button class="primary" data-dcook>✅ Vařeno…</button><button data-dedit>✏️ Upravit</button></div>
+  ${cookOpen?`<div class="cookbox"><div class="frow"><div><label for="cDate">Kdy</label><input type="date" id="cDate" value="${isoD(today())}" max="${isoD(today())}"></div></div>
+    <label for="cNote">Poznámka (nepovinné)</label><input type="text" id="cNote" maxlength="200" placeholder="např. příště méně soli">
+    <div class="dbtns"><button class="primary" data-dcooksave>Zapsat</button><button data-dcookcancel>Zrušit</button></div></div>`:''}
+  ${ing.length?`<div class="dsec"><h3>Suroviny</h3>
+    <div class="serv">Pro <button data-serv="-1" aria-label="Méně porcí">−</button><b>${detailServ}</b><button data-serv="1" aria-label="Více porcí">+</button> ${plural(detailServ,'osobu','osoby','osob')}${detailServ!==m.servings?` <span>(recept je pro ${m.servings})</span>`:''}</div>
+    <ul class="ing">${ing.map(x=>`<li>${x.q?`<span class="q">${esc(x.q)}</span> `:''}${esc(x.rest)}</li>`).join('')}</ul>
+    <div class="dbtns"><button data-dshop>🛒 Do nákupu</button>${m.rice?`<button data-drice>🍚 Spočítat rýži pro ${detailServ}</button>`:''}</div></div>`
+   :(m.rice?`<div class="dbtns"><button data-drice>🍚 Spočítat rýži pro ${detailServ}</button></div>`:'')}
+  ${steps.length?`<div class="dsec"><h3>Postup</h3><ol class="steps">${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>`:''}
+  ${m.note.trim()?`<div class="dsec"><h3>Poznámky</h3><div style="white-space:pre-wrap">${esc(m.note)}</div></div>`:''}
+  ${m.source.trim()?`<div class="dsec"><h3>Zdroj</h3>${src}</div>`:''}
+  ${!ing.length&&!steps.length?`<p class="hint">Recept zatím nemá suroviny ani postup – doplníš je přes ✏️ Upravit.</p>`:''}
+  ${m.cooked.length?`<div class="dsec"><h3>Kdy jsem vařil</h3><ul class="hist">${[...m.cooked].map((c,i)=>({c,i})).reverse().slice(0,30).map(({c,i})=>`<li><div class="hx">${fmtD(c.date)}${c.note?` <span class="hn">– ${esc(c.note)}</span>`:''}</div><button data-hdel="${i}" title="Smazat záznam">🗑️</button></li>`).join('')}</ul></div>`:''}`;
+}
+function addCooked(m,date,note){
+  if(m.cooked.some(c=>c.date===date&&!note)){toast('Ten den už je zapsaný');return false;}
+  const entry={date,note:note||''};m.cooked.push(entry);m.cooked.sort((a,b)=>a.date.localeCompare(b.date));saveMeals();renderMeals();
+  toast(`✅ ${m.name} – ${date===isoD(today())?'dnes':fmtD(date)}`,'↩️ Zpět',()=>{m.cooked=m.cooked.filter(c=>c!==entry);saveMeals();renderMeals();if(detailId===m.id)redrawDetail();toast('Vráceno');});
+  return true;
+}
+$('mBody').addEventListener('click',e=>{
+  const m=detailId&&mealById(detailId);
+  if(e.target.closest('[data-dcook]')){cookOpen=true;redrawDetail();setTimeout(()=>$('cNote')&&$('cNote').focus(),50);return;}
+  if(e.target.closest('[data-dcookcancel]')){cookOpen=false;redrawDetail();return;}
+  if(e.target.closest('[data-dcooksave]')&&m){const d=$('cDate').value;if(!isISO(d)||d>isoD(today())){toast('Zadej datum (nejpozději dnes)');return;}
+    if(addCooked(m,d,$('cNote').value.trim())){cookOpen=false;redrawDetail();}return;}
+  if(e.target.closest('[data-dedit]')&&m){editForm(m);return;}
+  const sv=e.target.closest('[data-serv]');
+  if(sv){detailServ=Math.min(50,Math.max(1,detailServ+Number(sv.dataset.serv)));redrawDetail();return;}
+  if(e.target.closest('[data-dshop]')&&m){addToShop(m,detailServ);return;}
+  if(e.target.closest('[data-drice]')&&m){
+    S.mode='persons';S.persons=detailServ;if(S.type==='risotto')S.type='side';save();
+    closeModal();setTab('rice');render();window.scrollTo({top:0,behavior:'smooth'});toast(`🍚 Rýže pro ${detailServ} ${plural(detailServ,'osobu','osoby','osob')}`);return;}
+  const hd=e.target.closest('[data-hdel]');
+  if(hd&&m){
+    if(!hd.classList.contains('confirm')){hd.classList.add('confirm');hd.textContent='Opravdu?';setTimeout(()=>{if(hd.isConnected){hd.classList.remove('confirm');hd.textContent='🗑️';}},4000);return;}
+    const c=m.cooked[Number(hd.dataset.hdel)];if(!c)return;
+    m.cooked=m.cooked.filter(x=>x!==c);saveMeals();renderMeals();redrawDetail();
+    toast(`Smazáno: ${fmtD(c.date)}`,'↩️ Zpět',()=>{m.cooked.push(c);m.cooked.sort((a,b)=>a.date.localeCompare(b.date));saveMeals();renderMeals();if(detailId===m.id)redrawDetail();});return;}
+  const tg=e.target.closest('[data-tg]');
+  if(tg){tg.classList.toggle('on');syncTags();return;}
+  const pk=e.target.closest('[data-pick]');
+  if(pk){if(pk.dataset.pick==='again')pickMeal();else openDetail(pk.dataset.pick);return;}
+  const sr=e.target.closest('[data-sdel]');
+  if(sr){shop=shop.filter(x=>x.id!==sr.dataset.sdel);saveShop();renderMeals();openShop();return;}
+});
+
+// ----- přidat / upravit -----
+let delArmed=false;
+function syncTags(){const sel=[...$('mBody').querySelectorAll('.ftags [data-tg].on')].map(b=>b.dataset.tg);$('fTags').value=sel.join('|');}
+function editForm(m){
+  const isNew=!m;m=m||{name:'',icon:'🍽️',tags:[],time:null,servings:4,ingredients:'',steps:'',note:'',source:'',rice:false};
+  delArmed=false;detailId=isNew?null:m.id;
+  const tags=[...new Set([...allTags(),...m.tags])];
+  openModal(isNew?'Nové jídlo':'Upravit jídlo',`
+    <div class="frow"><div style="flex:0 0 80px"><label for="fIcon">Ikona</label><input type="text" id="fIcon" value="${esc(m.icon)}" maxlength="8" style="text-align:center;font-size:22px"></div>
+      <div><label for="fName">Název jídla</label><input type="text" id="fName" value="${esc(m.name)}" maxlength="80" placeholder="např. Boloňské špagety"></div></div>
+    <div class="err" id="eName"></div>
+    <div class="frow"><div><label for="fServ">Recept je pro (osob)</label><input type="text" inputmode="numeric" id="fServ" value="${m.servings}"></div>
+      <div><label for="fTime">Doba přípravy (min)</label><input type="text" inputmode="numeric" id="fTime" value="${m.time??''}" placeholder="nepovinné"></div></div>
+    <label>Štítky</label><div class="ftags tagchips" style="margin:0">${tags.map(t=>`<button type="button" data-tg="${esc(t)}"${m.tags.includes(t)?' class="on"':''}>${esc(t)}</button>`).join('')}</div>
+    <input type="hidden" id="fTags" value="${esc(m.tags.join('|'))}">
+    <input type="text" id="fTagNew" placeholder="Vlastní štítek (víc oddělit čárkou)" style="margin-top:8px">
+    <label for="fIng">Suroviny – každá na nový řádek</label>
+    <textarea id="fIng" rows="7" placeholder="400 g špaget&#10;500 g mletého masa&#10;1 cibule&#10;2 stroužky česneku&#10;sůl, pepř">${esc(m.ingredients)}</textarea>
+    <div class="hint">Množství pište na začátek řádku (400 g…, 1½ lžičky…, 2–3 stroužky…) – pak se přepočítá na jiný počet osob.</div>
+    <label for="fSteps">Postup – každý krok na nový řádek</label>
+    <textarea id="fSteps" rows="7" placeholder="Na oleji osmahni cibuli…&#10;Přidej maso a opeč…">${esc(m.steps)}</textarea>
+    <label for="fNote">Poznámky</label><textarea id="fNote" rows="2" placeholder="např. nejlepší druhý den">${esc(m.note)}</textarea>
+    <label for="fSrc">Zdroj (odkaz nebo kniha, nepovinné)</label><input type="text" id="fSrc" value="${esc(m.source)}" placeholder="https://…">
+    <label class="check" style="margin-top:14px"><input type="checkbox" id="fRice"${m.rice?' checked':''}> Příloha je rýže <span style="color:var(--muted);font-size:14px">(tlačítko na kalkulačku)</span></label>`,
+  ()=>{
+    const name=$('fName').value.trim();if(!name){$('eName').textContent='Napiš název jídla.';$('fName').focus();return false;}
+    const tagsSel=$('fTags').value.split('|').filter(Boolean),extra=$('fTagNew').value.split(',').map(t=>t.trim()).filter(Boolean);
+    const data={name,icon:$('fIcon').value,tags:[...tagsSel,...extra],servings:parseNum($('fServ').value),time:parseNum($('fTime').value),
+      ingredients:$('fIng').value.trim(),steps:$('fSteps').value.trim(),note:$('fNote').value.trim(),source:$('fSrc').value.trim(),rice:$('fRice').checked};
+    if(isNew){const n=normMeal({id:uid(),...data,cooked:[],createdAt:new Date().toISOString()});meals.push(n);saveMeals();renderMeals();
+      setTimeout(()=>{openDetail(n.id);toast('Uloženo');},0);}
+    else{const n=normMeal({...m,...data});Object.assign(m,n);saveMeals();renderMeals();const id=m.id;setTimeout(()=>{openDetail(id);toast('Uloženo');},0);}
+  },{focus:isNew?'fName':null,left:isNew?'':'<button id="btnDel">🗑️ Smazat jídlo</button>'});
+}
+$('mLeft').addEventListener('click',e=>{
+  if(e.target.id!=='btnDel')return;const m=detailId&&mealById(detailId);if(!m)return;
+  if(!delArmed){delArmed=true;e.target.classList.add('confirm');e.target.textContent='Opravdu smazat?';return;}
+  const idx=meals.indexOf(m);meals=meals.filter(x=>x!==m);saveMeals();closeModal();renderMeals();
+  toast(`Smazáno: ${m.name}`,'↩️ Zpět',()=>{meals.splice(Math.min(idx,meals.length),0,m);saveMeals();renderMeals();});
+});
+
+// ----- 🎲 Co dnes vařit? -----
+let lastPick=null;
+function pickMeal(){
+  let pool=meals.filter(m=>!MS.tag||m.tags.includes(MS.tag));
+  if(!pool.length){toast(meals.length?'Pro vybraný štítek tu nic není':'Nejdřív si přidej nějaká jídla');return;}
+  const stale=m=>{const l=lastCooked(m);return l?daysBetween(parseD(l),today()):1e6;};
+  pool.sort((a,b)=>stale(b)-stale(a));
+  let top=pool.slice(0,Math.max(3,Math.ceil(pool.length/2)));
+  if(top.length>1)top=top.filter(m=>m.id!==lastPick);
+  const m=top[Math.floor(Math.random()*top.length)];lastPick=m.id;
+  const l=lastCooked(m);
+  openModal('🎲 Tip na dnes',`<div class="pick"><div class="pi">${esc(m.icon)}</div><b>${esc(m.name)}</b>
+    <div class="dmeta">${l?`naposledy ${ago(l)}`:'ještě jsi ho nevařil'}${m.time?` · ⏱️ ${m.time} min`:''}</div></div>
+    <div class="dbtns"><button class="primary" data-pick="${m.id}">Otevřít recept</button>${pool.length>1?'<button data-pick="again">🎲 Jiný tip</button>':''}</div>
+    <p class="hint" style="text-align:center">Vybírám z jídel, která jsi nevařil nejdéle${MS.tag?` (štítek „${esc(MS.tag)}“)`:''}.</p>`,null);
+}
+
+// ----- 🛒 nákup -----
+function addToShop(m,serv){
+  const lines=scaledLines(m,serv).map(lineText);if(!lines.length){toast('Recept nemá suroviny');return;}
+  shop=shop.filter(x=>x.id!==m.id);shop.push({id:m.id,name:m.name,serv,lines});saveShop();renderMeals();
+  toast(`🛒 ${m.name} (${serv} os.) je v nákupu`,'Otevřít',()=>openShop());
+}
+function shopText(){return shop.map(x=>`${x.name} (${x.serv} ${plural(x.serv,'osoba','osoby','osob')}):\n${x.lines.map(l=>'- '+l).join('\n')}`).join('\n\n');}
+function openShop(){
+  if(!shop.length){openModal('🛒 Nákup',`<p class="hint">Nákup je prázdný. V receptu klepni na „🛒 Do nákupu“ – suroviny se přidají přepočítané na zvolený počet osob.</p>`,null);return;}
+  openModal('🛒 Nákup',`${shop.map(x=>`<div class="shopr"><div class="sh"><b>${esc(x.name)} <span class="hn" style="font-weight:400;color:var(--muted)">· ${x.serv} os.</span></b><button data-sdel="${esc(x.id)}" title="Odebrat z nákupu">✕</button></div>
+      <ul>${x.lines.map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`).join('')}
+    <div class="dbtns" style="margin-top:12px"><button class="primary" id="btnCopy">📋 Zkopírovat</button>${navigator.share?'<button id="btnShare">📤 Sdílet</button>':''}<button id="btnClearShop">Vyprázdnit</button></div>
+    <textarea id="shopTxt" rows="4" readonly style="margin-top:8px;font-size:14px" aria-label="Nákup jako text">${esc(shopText())}</textarea>
+    <div class="hint">Kdyby kopírování nešlo, označ text v poli výše a zkopíruj ho ručně.</div>`,null);
+}
+document.addEventListener('click',async e=>{
+  if(e.target.id==='btnCopy'){const t=shopText();
+    try{await navigator.clipboard.writeText(t);toast('📋 Zkopírováno – vlož do poznámek nebo zprávy');}
+    catch(x){const ta=$('shopTxt');ta.focus();ta.select();try{document.execCommand('copy');toast('📋 Zkopírováno');}catch(y){toast('Označ text v poli a zkopíruj ho ručně');}}}
+  if(e.target.id==='btnShare'){try{await navigator.share({title:'Nákup',text:shopText()});}catch(x){}}
+  if(e.target.id==='btnClearShop'){const old=shop;shop=[];saveShop();renderMeals();closeModal();toast('Nákup vyprázdněn','↩️ Zpět',()=>{shop=old;saveShop();renderMeals();});}
+});
+
+// ----- ovládání seznamu -----
+document.querySelectorAll('.vtabs [data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+$('q').addEventListener('input',e=>{MS.q=e.target.value;renderMeals();});
+$('sort').addEventListener('change',e=>{MS.sort=e.target.value;mstore.set('vareni.list.v1',JSON.stringify({sort:MS.sort}));renderMeals();});
+$('tagChips').addEventListener('click',e=>{const b=e.target.closest('[data-ftag]');if(!b)return;MS.tag=b.dataset.ftag;renderMeals();});
+$('btnAdd').onclick=()=>editForm(null);
+$('btnPick').onclick=pickMeal;
+$('btnShop').onclick=openShop;
+$('mealList').addEventListener('click',e=>{
+  const c=e.target.closest('[data-cook]');
+  if(c){e.stopPropagation();const m=mealById(c.dataset.cook);if(m)addCooked(m,isoD(today()),'');return;}
+  const o=e.target.closest('[data-open]');if(o)openDetail(o.dataset.open);
+});
+// přes půlnoc / po návratu do aplikace přepočítat „před X dny“
+let dayNow=isoD(today());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&isoD(today())!==dayNow){dayNow=isoD(today());renderMeals();}});
+
+publish();setTab(tab);
 render();
 </script>
 </body>

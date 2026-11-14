@@ -19,7 +19,7 @@ auto.html         ← Auto (servis, pneu, tankování)
 udrzba.html       ← Údržba domácnosti
 prevence.html     ← Prevence (prohlídky, očkování)
 navody.html       ← Návody (postupy, tabulky, poznámky; Údržba z nich čte)
-vareni.html       ← Vaření (kalkulačka rýže: příloha / rizoto, minutka)
+vareni.html       ← Vaření (moje jídla s recepty, „vařeno“, tip na dnes, nákup; kalkulačka rýže)
 manifest.json     ← název a ikona pro instalaci
 sw.js             ← offline režim
 icon-192.png, icon-512.png
@@ -96,7 +96,7 @@ Na mobilu se do spodní lišty vejde Přehled + 3 aplikace, ostatní jsou pod �
    `name` = krátký popisek do navigace (na mobilu max. ~9 znaků).
    Nová aplikace je viditelná automaticky; uživatel ji může skrýt.
 2. **`sw.js`** – do `ASSETS` přidat `'./auto.html'` a zvýšit verzi
-   (teď `'lifeadmin-v9'` → příště `'lifeadmin-v10'`).
+   (teď `'lifeadmin-v10'` → příště `'lifeadmin-v11'`).
 3. **Nahrát** nový soubor + upravené `index.html` a `sw.js`.
 
 Data stávajících aplikací se tím nijak nezmění.
