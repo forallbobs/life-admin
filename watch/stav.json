@@ -1,0 +1,31 @@
+{
+ "v": 1,
+ "checkedAt": "2026-11-14T14:13:08.503Z",
+ "items": {
+  "kaktus": {
+   "ok": true,
+   "url": "https://www.mujkaktus.cz/chces-pridat",
+   "date": "2026-11-10",
+   "from": "17:00",
+   "to": "19:00",
+   "text": "10. 11. 2026 17:00 - 19:00",
+   "key": "2026-11-10 17:00",
+   "changedAt": "2026-11-14T14:13:08.503Z"
+  },
+  "amd": {
+   "ok": true,
+   "url": "https://www.amd.com/en/support/downloads/drivers.html/graphics/radeon-rx/radeon-rx-6000-series/amd-radeon-rx-6600-xt.html",
+   "latest": {
+    "version": "26.11.1",
+    "kind": "Optional – volitelný",
+    "url": "https://drivers.amd.com/drivers/amd-software-adrenalin-edition-26.11.1-win11-a.exe"
+   },
+   "whql": {
+    "version": "26.10.1",
+    "url": "https://drivers.amd.com/drivers/whql-amd-software-adrenalin-edition-26.10.1-win11-a.exe"
+   },
+   "key": "26.11.1",
+   "changedAt": "2026-11-14T14:13:08.503Z"
+  }
+ }
+}
