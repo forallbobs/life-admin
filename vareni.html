@@ -145,6 +145,13 @@ button.confirm{border-color:#c62828;color:#c62828}
 .shopr .sh{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .shopr .sh button{min-height:32px;padding:2px 10px;font-size:14px}
 .shopr ul{margin:2px 0 0;padding-left:20px;font-size:15px}
+.mshare{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+.mshare button{font-size:15px}
+.sel{list-style:none;margin:6px 0 0;padding:0}
+.sel li{border-bottom:1px solid var(--line)}
+.sel li:last-child{border-bottom:0}
+.sel label.check{margin:0;padding:8px 0}
+.sel .st{font-size:13px;color:var(--muted);margin-left:auto;white-space:nowrap}
 .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:92%}
 .toast.show{opacity:1}
 .toast.act{pointer-events:auto}
@@ -182,6 +189,8 @@ button.confirm{border-color:#c62828;color:#c62828}
     <div class="tagchips" id="tagChips"></div>
     <div class="mact"><button id="btnPick">🎲 Co dnes vařit?</button><button id="btnShop">🛒 Nákup <span id="shopN"></span></button><button class="primary" id="btnAdd">+ Přidat jídlo</button></div>
     <div class="mcards" id="mealList"></div>
+    <div class="mshare"><button id="btnExport">📤 Sdílet recepty</button><button id="btnImport">📥 Načíst recepty od někoho</button></div>
+    <input type="file" id="fileRec" accept=".json,application/json" hidden>
   </section>
   <div class="ver" id="ver"></div>
 </div>
@@ -193,7 +202,7 @@ button.confirm{border-color:#c62828;color:#c62828}
 <div class="tbar" id="tbar" hidden role="status" aria-live="polite"><div class="tt"><div class="tl" id="tLabel"></div><div class="tc" id="tCount"></div></div><button id="tStop">Zrušit</button></div>
 
 <script>
-const APP_ID='vareni',APP_VERSION='2026.11.14';
+const APP_ID='vareni',APP_VERSION='2026.11.14.2';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const parseNum=v=>{const s=String(v??'').replace(/\s/g,'').replace(',','.');return s===''?NaN:Number(s);};
@@ -515,26 +524,26 @@ function renderMeals(){
 }
 
 // ----- okno -----
-let mSave=null,mSnap='',mArmed=false,mArmT,pendingReload=false;
+let mNoDirty=false,mSave=null,mSnap='',mArmed=false,mArmT,pendingReload=false;
 const snapM=()=>[...$('mBody').querySelectorAll('input,select,textarea')].map(x=>x.type==='checkbox'?x.checked:x.value).join('\u0001');
 function openModal(title,body,onSave,opts={}){
   $('mTitle').textContent=title;$('mBody').innerHTML=body;mSave=onSave||null;
-  $('mSave').hidden=!onSave;$('mSave').textContent=opts.saveLabel||'Uložit';$('mCancel').textContent=onSave?'Zrušit':'Zavřít';
-  $('mLeft').innerHTML=opts.left||'';
+  $('mSave').hidden=!onSave;$('mSave').disabled=false;$('mSave').textContent=opts.saveLabel||'Uložit';$('mCancel').textContent=onSave?'Zrušit':'Zavřít';
+  $('mLeft').innerHTML=opts.left||'';mNoDirty=!!opts.noDirty;
   $('overlay').classList.add('open');mArmed=false;mSnap=snapM();
   if(opts.focus)setTimeout(()=>{const f=$(opts.focus);if(f)f.focus();},60);
 }
 function closeModal(){$('overlay').classList.remove('open');mSave=null;mArmed=false;detailId=null;if(pendingReload){pendingReload=false;setTimeout(reloadMeals,0);}}
 function requestClose(){
   if(!$('overlay').classList.contains('open'))return;
-  if(!mSave||snapM()===mSnap||mArmed){closeModal();return;}
+  if(!mSave||mNoDirty||snapM()===mSnap||mArmed){closeModal();return;}
   mArmed=true;clearTimeout(mArmT);mArmT=setTimeout(()=>mArmed=false,4000);
   toast('Máš neuložené změny. Zavři znovu pro zahození, nebo dej Uložit.');
 }
 function reloadMeals(){meals=loadMeals();renderMeals();}
 $('mCancel').onclick=()=>requestClose();
 $('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')requestClose();});
-$('mSave').onclick=()=>{if(mSave&&mSave()!==false)closeModal();};
+$('mSave').onclick=async()=>{if(!mSave)return;const r=await mSave();if(r!==false)closeModal();};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')requestClose();
   if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('mcard')){e.preventDefault();openDetail(e.target.dataset.open);}});
 window.addEventListener('storage',e=>{
@@ -558,7 +567,7 @@ function detailHtml(m){
   const ing=scaledLines(m,detailServ),steps=stepList(m);
   const src=/^https?:\/\//i.test(m.source.trim())?`<a href="${esc(m.source.trim())}" target="_blank" rel="noopener">${esc(m.source.trim().replace(/^https?:\/\/(www\.)?/,'').slice(0,60))}</a>`:esc(m.source);
   return`<div class="dmeta">${meta}${m.tags.length?`<div>${m.tags.map(t=>`<span class="mtg">${esc(t)}</span>`).join('')}</div>`:''}</div>
-  <div class="dbtns"><button class="primary" data-dcook>✅ Vařeno…</button><button data-dedit>✏️ Upravit</button></div>
+  <div class="dbtns"><button class="primary" data-dcook>✅ Vařeno…</button><button data-dedit>✏️ Upravit</button><button data-dtext title="Poslat recept jako text">📤 Poslat</button></div>
   ${cookOpen?`<div class="cookbox"><div class="frow"><div><label for="cDate">Kdy</label><input type="date" id="cDate" value="${isoD(today())}" max="${isoD(today())}"></div></div>
     <label for="cNote">Poznámka (nepovinné)</label><input type="text" id="cNote" maxlength="200" placeholder="např. příště méně soli">
     <div class="dbtns"><button class="primary" data-dcooksave>Zapsat</button><button data-dcookcancel>Zrušit</button></div></div>`:''}
@@ -586,6 +595,8 @@ $('mBody').addEventListener('click',e=>{
   if(e.target.closest('[data-dcooksave]')&&m){const d=$('cDate').value;if(!isISO(d)||d>isoD(today())){toast('Zadej datum (nejpozději dnes)');return;}
     if(addCooked(m,d,$('cNote').value.trim())){cookOpen=false;redrawDetail();}return;}
   if(e.target.closest('[data-dedit]')&&m){editForm(m);return;}
+  if(e.target.closest('[data-dtext]')&&m){shareText(m.name,recipeText(m,detailServ));return;}
+  if(e.target.closest('[data-selall]')){const on=!$('mBody').querySelector('.sel input:not(:checked):not(:disabled)');$('mBody').querySelectorAll('.sel input:not(:disabled)').forEach(c=>c.checked=!on);updSelN();return;}
   const sv=e.target.closest('[data-serv]');
   if(sv){detailServ=Math.min(50,Math.max(1,detailServ+Number(sv.dataset.serv)));redrawDetail();return;}
   if(e.target.closest('[data-dshop]')&&m){addToShop(m,detailServ);return;}
@@ -703,6 +714,74 @@ $('mealList').addEventListener('click',e=>{
 // přes půlnoc / po návratu do aplikace přepočítat „před X dny“
 let dayNow=isoD(today());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&isoD(today())!==dayNow){dayNow=isoD(today());renderMeals();}});
+
+// ===== 📤 Sdílení receptů (bez historie vaření) =====
+const SHARE_FIELDS=['name','icon','tags','time','servings','ingredients','steps','note','source','rice'];
+function recipeText(m,serv){
+  const ing=scaledLines(m,serv||m.servings).map(lineText),st=stepList(m);
+  return [`${m.icon} ${m.name}`+(m.time?` (⏱️ ${m.time} min)`:''),
+    ing.length?`\nSuroviny pro ${serv||m.servings} ${plural(serv||m.servings,'osobu','osoby','osob')}:\n${ing.map(l=>'- '+l).join('\n')}`:'',
+    st.length?`\nPostup:\n${st.map((x,i)=>`${i+1}. ${x}`).join('\n')}`:'',
+    m.note.trim()?`\nPoznámky:\n${m.note.trim()}`:'',m.source.trim()?`\nZdroj: ${m.source.trim()}`:''].filter(Boolean).join('\n');
+}
+async function shareText(title,text){
+  if(navigator.share){try{await navigator.share({title,text});return;}catch(e){if(e&&e.name==='AbortError')return;}}
+  try{await navigator.clipboard.writeText(text);toast('📋 Recept zkopírován – vlož ho do zprávy');}
+  catch(e){openModal('📤 '+title,`<p class="hint">Označ text a zkopíruj ho:</p><textarea rows="12" readonly style="font-size:14px">${esc(text)}</textarea>`,null);}
+}
+const updSelN=()=>{const n=$('mBody').querySelectorAll('.sel input:checked').length;$('mSave').textContent=$('mSave').dataset.lbl.replace('#',n);$('mSave').disabled=!n;};
+function selList(rows){
+  return`<div style="display:flex;justify-content:space-between;align-items:center"><span class="hint">Vyber recepty</span><button data-selall style="min-height:34px;padding:2px 10px;font-size:14px">Vybrat vše / nic</button></div>
+    <ul class="sel">${rows.map(r=>`<li><label class="check"><input type="checkbox" value="${r.i}"${r.on?' checked':''}${r.dis?' disabled':''}> <span>${esc(r.icon)} ${esc(r.name)}</span>${r.st?`<span class="st">${r.st}</span>`:''}</label></li>`).join('')}</ul>`;
+}
+function exportRecipes(){
+  if(!meals.length){toast('Zatím nemáš žádné recepty');return;}
+  const list=[...meals].sort((a,b)=>a.name.localeCompare(b.name,'cs'));
+  openModal('📤 Sdílet recepty',`<p class="hint" style="margin-top:0">Vznikne soubor jen s recepty – bez tvé historie vaření a bez ostatních dat. Druhý člověk ho načte ve Vaření přes „📥 Načíst recepty od někoho“.</p>
+    ${selList(list.map((m,i)=>({i,icon:m.icon,name:m.name,on:true})))}`,
+  async()=>{
+    const pick=[...$('mBody').querySelectorAll('.sel input:checked')].map(c=>list[Number(c.value)]);if(!pick.length)return false;
+    const payload={app:'life-admin',type:'recepty',version:1,exportedAt:new Date().toISOString(),
+      items:pick.map(m=>Object.fromEntries(SHARE_FIELDS.map(f=>[f,m[f]])))};
+    const name=`recepty-${isoD(today())}.json`,blob=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'});
+    try{const file=new File([blob],name,{type:'application/json'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Recepty',text:`${pick.length} ${plural(pick.length,'recept','recepty','receptů')} z Life Adminu`});toast('📤 Odesláno');return;}}catch(e){if(e&&e.name==='AbortError')return;}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);toast(`💾 Uloženo: ${name} – pošli ho třeba e-mailem`);
+  },{saveLabel:'Sdílet (#)',noDirty:true});
+  $('mSave').dataset.lbl='Sdílet (#)';updSelN();
+}
+const normName=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+let pendingRec=[];
+function importRecipesFile(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    let j=null;try{j=JSON.parse(r.result);}catch(e){}
+    let items=null;
+    if(j&&j.type==='recepty'&&Array.isArray(j.items))items=j.items;
+    else if(j&&j.app==='life-admin'&&j.data&&typeof j.data['vareni.items.v1']==='string'){try{items=JSON.parse(j.data['vareni.items.v1']);}catch(e){}}
+    if(!Array.isArray(items)){toast('Tohle není soubor s recepty.');return;}
+    pendingRec=items.map(x=>normMeal({...x,id:'tmp'})).filter(Boolean);
+    if(!pendingRec.length){toast('V souboru nejsou žádné recepty.');return;}
+    const have=new Set(meals.map(m=>normName(m.name)));
+    const rows=pendingRec.map((m,i)=>{const dup=have.has(normName(m.name));return{i,icon:m.icon,name:m.name,on:!dup,st:dup?'už máš – přeskočím':'➕ nový'};});
+    const newN=rows.filter(r=>r.on).length;
+    openModal('📥 Načíst recepty',`<p class="hint" style="margin-top:0">Recepty se jen <b>přidají</b> – nic tvého se nezmění ani nesmaže. ${newN<rows.length?'Recepty se stejným názvem, jaký už máš, jsou odškrtnuté – zaškrtni je, pokud je chceš i tak (přidají se jako kopie).':''}</p>${selList(rows)}`,
+    ()=>{
+      const pick=[...$('mBody').querySelectorAll('.sel input:checked')].map(c=>pendingRec[Number(c.value)]);if(!pick.length)return false;
+      const names=new Set(meals.map(m=>normName(m.name)));
+      for(const m of pick){let nm=m.name;if(names.has(normName(nm))){let k=2;while(names.has(normName(`${m.name} (${k})`)))k++;nm=`${m.name} (${k})`;}
+        names.add(normName(nm));meals.push({...m,id:uid(),name:nm,cooked:[],createdAt:new Date().toISOString()});}
+      saveMeals();renderMeals();toast(`📥 Přidáno ${pick.length} ${plural(pick.length,'recept','recepty','receptů')}`);
+    },{saveLabel:'Přidat (#)',noDirty:true});
+    $('mSave').dataset.lbl='Přidat (#)';updSelN();
+  };
+  r.readAsText(file);
+}
+$('btnExport').onclick=exportRecipes;
+$('btnImport').onclick=()=>{$('fileRec').value='';$('fileRec').click();};
+$('fileRec').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)importRecipesFile(f);});
+$('mBody').addEventListener('change',e=>{if(e.target.closest('.sel'))updSelN();});
 
 publish();setTab(tab);
 render();

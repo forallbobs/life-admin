@@ -19,7 +19,10 @@ auto.html         ← Auto (servis, pneu, tankování)
 udrzba.html       ← Údržba domácnosti
 prevence.html     ← Prevence (prohlídky, očkování)
 navody.html       ← Návody (postupy, tabulky, poznámky; Údržba z nich čte)
-vareni.html       ← Vaření (moje jídla s recepty, „vařeno“, tip na dnes, nákup; kalkulačka rýže)
+vareni.html       ← Vaření (moje jídla s recepty, „vařeno“, tip na dnes, nákup, sdílení receptů; kalkulačka rýže)
+hlidac.html       ← Hlídač stránek (čte watch/stav.json, který zapisuje GitHub Action)
+watch/hlidac.mjs  ← skript Hlídače (stáhne stránky, vytáhne údaj, zapíše watch/stav.json)
+.github/workflows/hlidac.yml ← plán spouštění Hlídače na GitHubu
 manifest.json     ← název a ikona pro instalaci
 sw.js             ← offline režim
 icon-192.png, icon-512.png
@@ -96,7 +99,7 @@ Na mobilu se do spodní lišty vejde Přehled + 3 aplikace, ostatní jsou pod �
    `name` = krátký popisek do navigace (na mobilu max. ~9 znaků).
    Nová aplikace je viditelná automaticky; uživatel ji může skrýt.
 2. **`sw.js`** – do `ASSETS` přidat `'./auto.html'` a zvýšit verzi
-   (teď `'lifeadmin-v10'` → příště `'lifeadmin-v11'`).
+   (teď `'lifeadmin-v11'` → příště `'lifeadmin-v12'`).
 3. **Nahrát** nový soubor + upravené `index.html` a `sw.js`.
 
 Data stávajících aplikací se tím nijak nezmění.
@@ -125,3 +128,12 @@ jen tady“ (výchozí zapnutá) položky z tohoto zařízení nesmaže, jen je 
   při otevřeném formuláři až po jeho zavření (`pendingReload`).
 - Formulář se při zavření s neuloženými změnami zeptá (`requestClose`).
 Doklady a Platby mají navíc dál vlastní zálohu v menu ☰.
+
+## Hlídač stránek (GitHub Action)
+
+- `.github/workflows/hlidac.yml` spouští `watch/hlidac.mjs` každou půlhodinu 6–21 h.
+- Skript zapíše `watch/stav.json` jen při změně (nebo aspoň jednou za 6 h) a commitne ho.
+- `hlidac.html` čte stav z `raw.githubusercontent.com/<účet>/<repo>/main/watch/stav.json`.
+- Další stránku přidáš do `WATCHES` ve skriptu (adresa + funkce, která z HTML vytáhne údaj a `key`)
+  a do `hlidac.html` její kartu.
+- Telegram (nepovinné): v repu Settings → Secrets and variables → Actions → `TG_TOKEN`, `TG_CHAT`.
