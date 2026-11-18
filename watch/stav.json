@@ -1,6 +1,6 @@
 {
  "v": 1,
- "checkedAt": "2026-11-18T13:49:30.688Z",
+ "checkedAt": "2026-11-18T21:49:36.601Z",
  "items": {
   "kaktus": {
    "ok": true,
@@ -16,16 +16,16 @@
    "ok": true,
    "url": "https://www.amd.com/en/support/downloads/drivers.html/graphics/radeon-rx/radeon-rx-6000-series/amd-radeon-rx-6600-xt.html",
    "latest": {
-    "version": "26.11.1",
-    "kind": "Optional – volitelný",
-    "url": "https://drivers.amd.com/drivers/amd-software-adrenalin-edition-26.11.1-win11-a.exe"
+    "version": "26.11.2",
+    "kind": "WHQL – doporučený",
+    "url": "https://drivers.amd.com/drivers/whql-amd-software-adrenalin-edition-26.11.2-win11-a.exe"
    },
    "whql": {
-    "version": "26.10.1",
-    "url": "https://drivers.amd.com/drivers/whql-amd-software-adrenalin-edition-26.10.1-win11-a.exe"
+    "version": "26.11.2",
+    "url": "https://drivers.amd.com/drivers/whql-amd-software-adrenalin-edition-26.11.2-win11-a.exe"
    },
-   "key": "26.11.1",
-   "changedAt": "2026-11-14T14:13:08.503Z"
+   "key": "26.11.2",
+   "changedAt": "2026-11-18T21:49:36.601Z"
   }
  }
 }
