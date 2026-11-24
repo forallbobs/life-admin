@@ -13,6 +13,7 @@ přiložit a říct „přidej do Life Admin aplikaci na …“.
 index.html        ← hlavní aplikace (navigace, „Co hoří“, společná záloha, verze)
 doklady.html      ← Hlídač dokladů
 predplatne.html   ← Předplatné a platby
+vyroci.html       ← Výročí a svátky (narozeniny, svátky, výročí a nápady na dárky)
 bilkoviny.html    ← Cena bílkovin
 meny.html         ← Měny a směnárna
 auto.html         ← Auto (servis, pneu, tankování)
@@ -99,7 +100,7 @@ Na mobilu se do spodní lišty vejde Přehled + 3 aplikace, ostatní jsou pod �
    `name` = krátký popisek do navigace (na mobilu max. ~9 znaků).
    Nová aplikace je viditelná automaticky; uživatel ji může skrýt.
 2. **`sw.js`** – do `ASSETS` přidat `'./auto.html'` a zvýšit verzi
-   (teď `'lifeadmin-v11'` → příště `'lifeadmin-v12'`).
+   (teď `'lifeadmin-v12'` → příště `'lifeadmin-v13'`).
 3. **Nahrát** nový soubor + upravené `index.html` a `sw.js`.
 
 Data stávajících aplikací se tím nijak nezmění.

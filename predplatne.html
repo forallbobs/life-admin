@@ -10,10 +10,10 @@
 <meta name="theme-color" content="#f5f5f2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)">
 <style>
-:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#0f766e;
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#0f766e;--on-accent:#fff;
 --red:#c62828;--red-bg:#fdecec;--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32;--green-bg:#e9f5ea;
 --blue:#1d4ed8;--blue-bg:#e8eefc;--gray:#6b6b66;--gray-bg:#ececea}
-@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#0f766e;
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#2dd4bf;--on-accent:#0d2422;
 --red:#f28b82;--red-bg:#3b1d1d;--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995;--green-bg:#1b3021;
 --blue:#93b4f8;--blue-bg:#1c2640;--gray:#a3a29c;--gray-bg:#2e2e2b}}
 *{box-sizing:border-box}
@@ -26,7 +26,7 @@ a{color:var(--accent)}
 button,select,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
 button:hover{border-color:var(--muted)}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
 button.small{padding:6px 10px;min-height:38px;font-size:15px}
 button.confirm{background:var(--red);border-color:var(--red);color:#fff}
 .bar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
@@ -176,7 +176,7 @@ body.embedded .top .tabs{margin:0;border-bottom:0}
   .top .sub,#btnAdd{display:none}
   .stat{padding:10px 12px}
   .stat .big{font-size:24px}
-  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
+  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:var(--on-accent);border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
   .toast{bottom:96px}
 }
 </style>
@@ -218,6 +218,8 @@ body.embedded .top .tabs{margin:0;border-bottom:0}
     <div id="alertsBox"></div>
     <div id="upcomingBox"></div>
   </div>
+  <h2 class="sec" id="listTitle" hidden>📋 Všechny platby</h2>
+  <input class="search" id="search" type="search" placeholder="🔍 Hledat (Netflix, inkaso, máma…)" aria-label="Hledat" hidden>
   <div id="listBox"></div>
   </div>
   <div id="statsView" hidden></div>
@@ -502,11 +504,12 @@ function noticeSub(date,notice){
   return notice.unit==='m'?addMonths(date,-notice.n):addDays(date,-(notice.unit==='w'?7:1)*notice.n);
 }
 // Poslední den pro výpověď: (konec závazku, jinak nejbližší výročí) − výpovědní lhůta
+// Prošlou lhůtu ještě 14 dní ukazujeme jako „prošla“, aby varování nezmizelo hned druhý den.
 function cancelInfo(it){
   const c=it.contract;if(!c||c.autoRenews===false)return null;
-  const t=today();
-  if(c.commitmentEndDate){const b=parseD(c.commitmentEndDate);const dl=noticeSub(b,c.notice);if(dl>=t)return{deadline:dl,base:b,kind:'commitment'};}
-  if(c.anniversaryDate){const a=parseD(c.anniversaryDate);for(let k=0;k<300;k++){const b=addMonths(a,12*k);const dl=noticeSub(b,c.notice);if(dl>=t)return{deadline:dl,base:b,kind:'anniversary'};}}
+  const t=today(),grace=addDays(t,-14);
+  if(c.commitmentEndDate){const b=parseD(c.commitmentEndDate);const dl=noticeSub(b,c.notice);if(dl>=grace&&b>=t)return{deadline:dl,base:b,kind:'commitment',missed:dl<t};}
+  if(c.anniversaryDate){const a=parseD(c.anniversaryDate);for(let k=0;k<300;k++){const b=addMonths(a,12*k);const dl=noticeSub(b,c.notice);if(dl>=grace&&b>=t)return{deadline:dl,base:b,kind:'anniversary',missed:dl<t};}}
   return null;
 }
 function buildAlerts(){
@@ -515,7 +518,7 @@ function buildAlerts(){
     if(it.status==='cancelled')continue;
     if(it.trialEndDate){const d=diffDays(t,parseD(it.trialEndDate));if(d>=0&&d<=7)out.push({it,kind:'trial',icon:'🎁',date:parseD(it.trialEndDate),days:d,red:d<=2,title:`Končí zkušební verze: ${it.name}`,sub:`pak ${money(it.price,it.currency)} ${cycleText(it.cycle)}`});}
     const ci=cancelInfo(it);
-    if(ci){const d=diffDays(t,ci.deadline);if(d<=30)out.push({it,kind:'cancel',icon:'✂️',date:ci.deadline,days:d,red:d<=7,title:`Poslední den pro výpověď: ${it.name}`,sub:`${ci.kind==='commitment'?'konec závazku':'výročí smlouvy'} ${fmt(ci.base)}`});}
+    if(ci){const d=diffDays(t,ci.deadline);if(d<=30)out.push({it,kind:'cancel',icon:'✂️',date:ci.deadline,days:d,red:d<=7,title:`${ci.missed?'Prošla výpovědní lhůta':'Poslední den pro výpověď'}: ${it.name}`,sub:`${ci.kind==='commitment'?'konec závazku':'výročí smlouvy'} ${fmt(ci.base)}`});}
     const ce=it.contract&&it.contract.commitmentEndDate;
     if(ce&&!(ci&&ci.kind==='commitment')){const d=diffDays(t,parseD(ce));if(d>=0&&d<=60)out.push({it,kind:'commit',icon:'📄',date:parseD(ce),days:d,red:false,title:`Končí závazek: ${it.name}`,sub:'dobrá chvíle porovnat nabídky'});}
     if(it.status==='active'&&isLarge(it)){for(const p of paymentsBetween(it,t,addDays(t,14)))out.push({it,kind:'large',icon:'💸',date:p,days:diffDays(t,p),red:false,title:`Velká platba: ${it.name}`,sub:(it.isEstimate?'≈ ':'')+money(it.price,it.currency)});}
@@ -612,6 +615,7 @@ function render(){
   if(owners.length<2)fOwner='';
   $('owners').innerHTML=owners.map(o=>`<option value="${esc(o)}">`).join('');
   $('pays').innerHTML=[...new Set(items.map(i=>i.paymentMethod.trim()).filter(Boolean))].map(o=>`<option value="${esc(o)}">`).join('');
+  $('listTitle').hidden=!items.length;$('search').hidden=!items.length;
   if(!items.length){
     $('listBox').innerHTML=`<div class="empty" style="margin-top:16px"><div class="big">💳</div><h2>Začni první platbou</h2><p class="sub">Přidej předplatná, účty a smlouvy – spočítám, kolik tě to stojí, a pohlídám zkušební verze i výpovědní lhůty.</p><button class="primary" onclick="openForm()">+ Přidat první platbu</button><p class="sub" style="margin-top:16px">nebo začni rychle:</p><div class="qchips">${QUICK.map((x,i)=>`<button data-quick="${i}">${typeOf(x.t).icon} ${esc(x.n)}</button>`).join('')}</div></div>`;
   }else{
@@ -636,15 +640,12 @@ function render(){
       return match(it);
     }).sort(sorter);
     const canc=items.filter(i=>i.status==='cancelled'&&match(i)).sort((a,b)=>(b.cancelledDate||'').localeCompare(a.cancelledDate||''));
-    $('listBox').innerHTML=`<h2 class="sec">📋 Všechny platby</h2>
-      <input class="search" id="search" type="search" placeholder="🔍 Hledat (Netflix, inkaso, máma…)" aria-label="Hledat" value="${esc(qRaw)}">
-      <div class="chips">${chip('all','Vše')}${chip('active','Aktivní')}${cnt.trial?chip('trial','🎁 Zkušební'):''}${cnt.considering?chip('considering','🤔 Zvažuju zrušit'):''}${cnt.paused?chip('paused','⏸️ Pozastavené'):''}
+    $('listBox').innerHTML=`<div class="chips">${chip('all','Vše')}${chip('active','Aktivní')}${cnt.trial?chip('trial','🎁 Zkušební'):''}${cnt.considering?chip('considering','🤔 Zvažuju zrušit'):''}${cnt.paused?chip('paused','⏸️ Pozastavené'):''}
         <select id="sortSel" aria-label="Řadit"><option value="next"${sortBy==='next'?' selected':''}>Řadit: příští platba</option><option value="cost"${sortBy==='cost'?' selected':''}>Řadit: nejdražší</option><option value="name"${sortBy==='name'?' selected':''}>Řadit: název</option></select>
         ${owners.length>1?`<select id="ownerSel" aria-label="Filtrovat podle osoby"><option value="">Všichni</option>${owners.map(o=>`<option${o===fOwner?' selected':''}>${esc(o)}</option>`).join('')}</select>`:''}
       </div>
       <div class="list">${vis.length?vis.map(it=>card(it,redIds)).join(''):`<div class="empty"><p class="sub">Hledání ani filtru nic neodpovídá.</p></div>`}</div>
       ${canc.length?`<details class="cancelled"${cancOpen?' open':''} id="cancDet"><summary>Zrušené (${canc.length})</summary><div class="list">${canc.map(it=>card(it,redIds)).join('')}</div></details>`:''}`;
-    if(searchFocus){const s=$('search');s.focus();s.setSelectionRange(s.value.length,s.value.length);}
   }
 
   // Patička se zálohou
@@ -655,7 +656,7 @@ function render(){
   publishSummary(T,alerts);
 }
 // ===== Souhrn pro Life Admin (hlavní aplikace ho čte a ukazuje na společném přehledu) =====
-const APP_VERSION='2026.11.10';   // ← při každé úpravě změnit
+const APP_VERSION='2026.11.24';   // ← při každé úpravě změnit
 const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 $('menuVer').textContent='Předplatné a platby · verze '+APP_VERSION;
 if(EMBED){document.body.classList.add('embedded');document.querySelector('.top>div').appendChild($('tabs'));}  // Přehled/Statistiky na řádek s menu
@@ -720,7 +721,7 @@ function card(it,redIds){
   }
   const meta=[T.label,it.owner,CATS[it.category]!==T.label?CATS[it.category]:'',it.paymentMethod].filter(Boolean).map(esc).join(' · ');
   const id=esc(it.id);
-  return `<div class="item ${cls}" data-act="edit" data-id="${id}">
+  return `<div class="item ${cls}" data-act="edit" data-id="${id}" role="button" tabindex="0">
     <div class="icon" aria-hidden="true">${T.icon}</div>
     <div class="main">
       <div class="name">${esc(it.name)}</div>
@@ -738,8 +739,8 @@ function card(it,redIds){
     <button class="editic" data-act="edit" data-id="${id}" aria-label="Upravit" title="Upravit">✏️</button></div>`;
 }
 
-let qRaw='',searchFocus=false,cancOpen=false;
-document.addEventListener('input',e=>{if(e.target.id==='search'){qRaw=e.target.value;q=norm(qRaw.trim());searchFocus=true;render();searchFocus=false;}});
+let cancOpen=false;
+$('search').addEventListener('input',e=>{q=norm(e.target.value.trim());render();});
 document.addEventListener('toggle',e=>{if(e.target.id==='cancDet')cancOpen=e.target.open;},true);
 document.addEventListener('change',e=>{
   if(e.target.id==='ownerSel'){fOwner=e.target.value;render();}
@@ -778,7 +779,7 @@ function hbars(rows,total,M){
       <div class="hl"><b>${esc(r.label)}</b><span>${money(r.value,M,0)} / měs. · ${Math.round(pct)} %</span></div>
       <div class="track"><div class="fill" style="width:${(max>0?r.value/max*100:0).toFixed(1)}%"></div></div></div>`;}).join('');
 }
-const srow=(it,left,right)=>`<div class="srow" data-act="edit" data-id="${esc(it.id)}" style="cursor:pointer"><span>${typeOf(it.type).icon} ${left}</span><span class="r">${right}</span></div>`;
+const srow=(it,left,right)=>`<div class="srow" data-act="edit" data-id="${esc(it.id)}" role="button" tabindex="0" style="cursor:pointer"><span>${typeOf(it.type).icon} ${left}</span><span class="r">${right}</span></div>`;
 function renderStats(T){
   const M=settings.mainCurrency;
   const mv=it=>conv(share(it),it.currency);
@@ -1023,7 +1024,10 @@ $('fFirst').addEventListener('input',()=>$('errFirst').textContent='');
 $('fTrialEnd').addEventListener('input',()=>$('errTrial').textContent='');
 $('btnCancel').onclick=closeForm;
 $('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')requestClose();});
-document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden){setMenu(false);return;}requestClose();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(!$('menu').hidden){setMenu(false);return;}requestClose();return;}
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.item[data-act],.srow[data-act]')){e.preventDefault();e.target.click();}
+});
 // Menu (☰) a plovoucí tlačítko + na mobilu
 function setMenu(open){$('menu').hidden=!open;$('btnMenu').setAttribute('aria-expanded',String(open));}
 $('btnMenu').addEventListener('click',e=>{e.stopPropagation();setMenu($('menu').hidden);});

@@ -17,8 +17,8 @@ h1{font-size:26px;margin:4px 0 2px}
 body.embedded .top{display:none}
 body.embedded .wrap{padding-top:12px}
 a{color:var(--accent)}
-button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;min-height:44px}
-button:hover{border-color:var(--muted)}
+button,.btn{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;min-height:44px;display:inline-flex;align-items:center;text-decoration:none}
+button:hover,.btn:hover{border-color:var(--muted)}
 button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 @media (prefers-color-scheme:dark){button.primary{color:#10201e}}
 .w{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
@@ -46,10 +46,11 @@ button.primary{background:var(--accent);border-color:var(--accent);color:#fff;fo
   <div class="ver" id="ver"></div>
 </div>
 <script>
-const APP_ID='hlidac',APP_VERSION='2026.11.14';
+const APP_ID='hlidac',APP_VERSION='2026.11.24';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+const mem={};
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
 const KEY_DATA='hlidac.stav.v1',KEY_SEEN='hlidac.seen.v1';
 const pad=n=>String(n).padStart(2,'0');
 const isoD=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -113,7 +114,7 @@ function render(){
   out.push(`<div class="w ${ks&&ks.active&&!ks.isSeen?ks.level:ks&&ks.active?'green':''}"><h2>🌵 Kaktus – dobíječka ${ks&&ks.active&&!ks.isSeen?'<span class="newb">NOVÉ</span>':''}</h2>
     ${k&&k.date?`<div class="big">${fmtD(k.date)}${ks.time?' · '+esc(ks.time):''}</div><div class="st ${ks.level}">${esc(ks.text)}</div>`:'<div class="st muted">Zatím bez údaje.</div>'}
     ${k&&k.ok===false?`<div class="err">⚠️ Poslední kontrola selhala: ${esc(k.error||'')}${k.errorAt?` (${ago(k.errorAt)})`:''}. Ukazuji poslední známý údaj.</div>`:''}
-    <div class="acts">${ks&&ks.active&&!ks.isSeen?'<button class="primary" data-seen="kaktus">✓ Viděno</button>':''}<a href="${esc((k&&k.url)||'https://www.mujkaktus.cz/chces-pridat')}" target="_blank" rel="noopener"><button>Otevřít stránku ↗</button></a></div>
+    <div class="acts">${ks&&ks.active&&!ks.isSeen?'<button class="primary" data-seen="kaktus">✓ Viděno</button>':''}<a class="btn" href="${esc((k&&k.url)||'https://www.mujkaktus.cz/chces-pridat')}" target="_blank" rel="noopener">Otevřít stránku ↗</a></div>
     ${k&&k.changedAt?`<div class="meta">Údaj na stránce se změnil ${ago(k.changedAt)}.</div>`:''}</div>`);
   // AMD
   const a=it.amd,aNew=a&&a.key&&seen.amd&&a.key!==seen.amd&&vnewer(a.key,seen.amd);
@@ -121,9 +122,9 @@ function render(){
     ${a&&a.latest?`<div class="big">${esc(a.latest.version)}</div><div class="st ${aNew?'orange':'muted'}">${aNew?`Nová verze (předtím ${esc(seen.amd)}) – `:'Nejnovější: '}${esc(a.latest.kind)}</div>
       ${a.whql&&a.whql.version!==a.latest.version?`<div class="meta">Doporučený (WHQL): ${esc(a.whql.version)}</div>`:''}`:'<div class="st muted">Zatím bez údaje.</div>'}
     ${a&&a.ok===false?`<div class="err">⚠️ Poslední kontrola selhala: ${esc(a.error||'')}${a.errorAt?` (${ago(a.errorAt)})`:''}. Ukazuji poslední známý údaj.</div>`:''}
-    <div class="acts">${aNew?'<button class="primary" data-seen="amd">✓ Viděno</button>':''}<a href="${esc((a&&a.url)||'#')}" target="_blank" rel="noopener"><button>Stránka AMD ↗</button></a>${a&&a.latest&&a.latest.url?`<a href="${esc(a.latest.url)}" target="_blank" rel="noopener"><button>⬇️ Stáhnout ${esc(a.latest.version)}</button></a>`:''}</div>
+    <div class="acts">${aNew?'<button class="primary" data-seen="amd">✓ Viděno</button>':''}<a class="btn" href="${esc((a&&a.url)||'#')}" target="_blank" rel="noopener">Stránka AMD ↗</a>${a&&a.latest&&a.latest.url?`<a class="btn" href="${esc(a.latest.url)}" target="_blank" rel="noopener">⬇️ Stáhnout ${esc(a.latest.version)}</a>`:''}</div>
     ${a&&a.changedAt?`<div class="meta">Verze se na stránce změnila ${ago(a.changedAt)}.</div>`:''}</div>`);
-  const stale=data&&data.checkedAt&&(Date.now()-new Date(data.checkedAt))>13*36e5;
+  const stale=data&&data.checkedAt&&(Date.now()-new Date(data.checkedAt))>18*36e5;
   if(stale)out.push(`<div class="err">⚠️ Automat na GitHubu ${ago(data.checkedAt)} nic nezapsal – možná neběží. Zkontroluj na GitHubu záložku Actions.</div>`);
   if(loadErr&&loadErr!=='nosetup')out.push(`<div class="meta" style="color:var(--muted);font-size:14px">${esc(loadErr)}</div>`);
   $('list').innerHTML=out.join('');
@@ -137,7 +138,7 @@ function render(){
 function publish(alerts,ks,a){
   try{
     const hl=[];if(ks&&ks.active)hl.push({label:'Dobíječka',value:ks.text.replace(/^Bude /,'')});if(a&&a.latest)hl.push({label:'AMD ovladač',value:a.latest.version});
-    localStorage.setItem('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:2,
+    store.set('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:2,
       desc:'Dobíječka Kaktus a nové ovladače AMD.',headline:hl,alerts}));
     if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
   }catch(e){}
@@ -150,7 +151,10 @@ document.addEventListener('click',e=>{
   saveSeen();render();
 });
 $('btnRefresh').onclick=load;
-window.addEventListener('storage',e=>{if(e.key===KEY_SEEN){try{seen=JSON.parse(e.newValue||'{}')||{};}catch(x){}render();}});
+window.addEventListener('storage',e=>{
+  if(e.key===KEY_SEEN){try{seen=JSON.parse(e.newValue||'{}')||{};}catch(x){}render();}
+  if(e.key===KEY_DATA){try{data=JSON.parse(e.newValue||'null');}catch(x){}render();}
+});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)load();});
 setInterval(()=>{if(!document.hidden)render();},60000);
 setInterval(()=>{if(!document.hidden)load();},15*60000);

@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Auto</title>
 <style>
-:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#7c3aed;--accent-bg:#f1eafe;
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#7c3aed;--accent-bg:#f1eafe;--on-accent:#fff;
 --red:#c62828;--red-bg:#fdecec;--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32;--green-bg:#e9f5ea;--gray-bg:#ececea}
-@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#a78bfa;--accent-bg:#2a2040;
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#a78bfa;--accent-bg:#2a2040;--on-accent:#1a1033;
 --red:#f28b82;--red-bg:#3b1d1d;--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995;--green-bg:#1b3021;--gray-bg:#2e2e2b}}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
@@ -19,7 +19,7 @@ h2.sec .r{margin-left:auto}
 button,select,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
 button:hover{border-color:var(--muted)}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
 button.small{padding:6px 10px;min-height:38px;font-size:15px}
 button.confirm{background:var(--red);border-color:var(--red);color:#fff}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:4px 0 12px}
@@ -108,7 +108,7 @@ label.check input{width:22px;height:22px;min-height:0;margin:0}
   .wrap{padding-top:8px;padding-bottom:110px}
   .top h1{font-size:22px}
   .top .sub,#btnFuel{display:none}
-  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
+  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:var(--on-accent);border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
   .toast{bottom:96px}
 }
 .ver{font-size:13px;color:var(--muted);margin-top:24px;opacity:.8}
@@ -148,7 +148,7 @@ label.check input{width:22px;height:22px;min-height:0;margin:0}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_ID='auto',APP_VERSION='2026.11.10';
+const APP_ID='auto',APP_VERSION='2026.11.24';
 // ===== Pomocné =====
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -274,20 +274,29 @@ function fuelStats(c){
   const f=[...c.fuel].sort((a,b)=>a.km-b.km||a.date.localeCompare(b.date));
   const r={cons:null,perKm:null,year:null,lastPrice:null,count:f.length};
   if(f.length){const l=f[f.length-1];if(l.liters>0&&l.price>0)r.lastPrice=l.price/l.liters;}
-  // spotřeba z plných nádrží: litry natankované od minulé plné / ujeté km
-  const segs=[];let prev=null,acc=0;
-  for(const x of f){if(prev){acc+=x.liters;if(x.full){const dk=x.km-prev.km;if(dk>0)segs.push({l:acc,km:dk});prev=x;acc=0;}}else if(x.full)prev=x;}
+  // spotřeba z plných nádrží: litry natankované od minulé plné / ujeté km (vynechat zjevně přeskočený úsek > 2000 km na 1 tankování)
+  const segs=[];let prev=null,acc=0,cnt=0;
+  for(const x of f){if(prev){acc+=x.liters;cnt++;if(x.full){const dk=x.km-prev.km;if(dk>0&&(cnt>1||dk<=2000))segs.push({l:acc,km:dk});prev=x;acc=0;cnt=0;}}else if(x.full)prev=x;}
   const last=segs.slice(-5);
   if(last.length){const L=last.reduce((s,x)=>s+x.l,0),K=last.reduce((s,x)=>s+x.km,0);r.cons=L/K*100;}
-  if(f.length>=2){const dk=f[f.length-1].km-f[0].km,P=f.slice(1).reduce((s,x)=>s+x.price,0);if(dk>0&&P>0)r.perKm=P/dk;}
+  // cena paliva na 1 km: počítat jen úseky, kde je zapsaná cena (nepovinné pole price=0 nesmí zkreslovat jmenovatel)
+  if(f.length>=2){
+    let pSum=0,kSum=0;
+    for(let i=1;i<f.length;i++){const dk=f[i].km-f[i-1].km;if(dk>0&&f[i].price>0&&dk<=2000){pSum+=f[i].price;kSum+=dk;}}
+    if(kSum>0&&pSum>0)r.perKm=pSum/kSum;
+  }
   const from=isoD(addDays(today(),-365)),y=f.filter(x=>x.date>=from);
   if(y.length){const P=y.reduce((s,x)=>s+x.price,0),first=y.map(x=>x.date).sort()[0],months=Math.max(1,diffDays(parseD(first),today())/30.44);r.year={total:P,month:P/Math.min(12,months)};}
   return r;
 }
-// Doklady a platby k autu z ostatních aplikací (podle názvu auta nebo SPZ)
+// Doklady a platby k autu z ostatních aplikací (podle celého názvu/slov auta nebo SPZ, ne podřetězce uvnitř jiných slov)
+const reEsc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const hasPhrase=(hay,needle)=>needle.length>=2&&new RegExp(`(^|[^a-z0-9])${reEsc(needle)}([^a-z0-9]|$)`).test(hay);
 function linked(c){
-  const n=norm(c.name),p=norm(c.plate),out=[];
-  const match=s=>{const x=norm(s);return x&&(x.includes(n)||(n.length>=3&&n.includes(x)&&x.length>=3)||(p&&x.includes(p)));};
+  const n=norm(c.name),p=norm(c.plate).replace(/\s+/g,''),out=[];
+  const match=s=>{const x=norm(s);if(!x)return false;
+    if(p&&p.length>=4&&x.replace(/\s+/g,'').includes(p))return true;
+    return hasPhrase(x,n);};
   try{for(const d of JSON.parse(store.get('doklady.items.v1')||'[]'))if(d&&isISO(d.expiryDate)&&(match(d.name)||match(d.note)))
     out.push({src:'doklady',name:d.name,type:d.type,date:d.expiryDate});}catch(e){}
   try{for(const d of JSON.parse(store.get('predplatne.items.v1')||'[]'))if(d&&d.status!=='cancelled'&&(match(d.name)||match(d.note)))
@@ -329,7 +338,7 @@ function render(){
   const order={red:0,orange:1,unknown:2,ok:3};
   const tasks=c.tasks.map(t=>({t,s:taskStatus(c,t)})).sort((a,b)=>order[a.s.level]-order[b.s.level]||((a.s.due||8e15)-(b.s.due||8e15)));
   h+=`<h2 class="sec">🔧 Servis <button class="small r" data-do="task">+ Úkol</button></h2>`;
-  h+=tasks.length?`<div class="tasks">${tasks.map(({t,s})=>`<div class="task ${s.level}" data-edit="${esc(t.id)}">
+  h+=tasks.length?`<div class="tasks">${tasks.map(({t,s})=>`<div class="task ${s.level}" data-edit="${esc(t.id)}" role="button" tabindex="0">
       <div class="th"><div class="tn">${esc(t.name)}</div><span aria-hidden="true">✏️</span></div>
       <div class="tm">každých ${[t.km?km(t.km):'',t.months?`${t.months} ${plural(t.months,'měsíc','měsíce','měsíců')}`:''].filter(Boolean).join(' nebo ')}${t.lastDate||t.lastKm!=null?` · naposledy ${[t.lastDate?fmt(parseD(t.lastDate)):'',t.lastKm!=null?km(t.lastKm):''].filter(Boolean).join(', ')}`:''}</div>
       ${s.level!=='unknown'?`<div class="track"><div class="fill ${s.level==='red'?'red':s.level==='orange'?'orange':''}" style="width:${(s.pct*100).toFixed(0)}%"></div></div>`:''}
@@ -350,7 +359,7 @@ function render(){
   // tankování
   const fl=[...c.fuel].sort((a,b)=>b.date.localeCompare(a.date)||b.km-a.km);
   h+=`<h2 class="sec">⛽ Tankování <button class="small r" data-do="fuel">+ Tankování</button></h2><div class="panel">`;
-  h+=fl.length?(fuelAll?fl:fl.slice(0,5)).map(f=>`<div class="prow click" data-fuel="${esc(f.id)}"><div class="tx"><div class="t1">${fmt(parseD(f.date))} · ${nf(f.liters,2)} l${f.full?'':' <span class="t2">(nedotankováno)</span>'}</div><div class="t2">${km(f.km)}${f.price&&f.liters?` · ${kc(f.price/f.liters,2)}/l`:''}</div></div><div class="r">${f.price?kc(f.price,f.price%1?2:0):''}</div></div>`).join('')+
+  h+=fl.length?(fuelAll?fl:fl.slice(0,5)).map(f=>`<div class="prow click" data-fuel="${esc(f.id)}" role="button" tabindex="0"><div class="tx"><div class="t1">${fmt(parseD(f.date))} · ${nf(f.liters,2)} l${f.full?'':' <span class="t2">(nedotankováno)</span>'}</div><div class="t2">${km(f.km)}${f.price&&f.liters?` · ${kc(f.price/f.liters,2)}/l`:''}</div></div><div class="r">${f.price?kc(f.price,f.price%1?2:0):''}</div></div>`).join('')+
     (fl.length>5?`<button class="more" data-do="fuelall">${fuelAll?'Zobrazit méně':`Zobrazit všech ${fl.length}`}</button>`:'')
     :`<div class="prow"><div class="tx t2">Zatím žádné tankování. Zapisuj km a litry – spočítám spotřebu a kolik tě auto stojí.</div></div>`;
   h+=`</div>`;
@@ -516,7 +525,10 @@ function setMenu(open){$('menu').hidden=!open;$('btnMenu').setAttribute('aria-ex
 $('btnMenu').addEventListener('click',e=>{e.stopPropagation();setMenu($('menu').hidden);});
 $('btnFuel').onclick=()=>act('fuel');
 $('btnFab').onclick=()=>car()?addSheet():carForm();
-document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden)setMenu(false);else requestClose();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(!$('menu').hidden)setMenu(false);else requestClose();return;}
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.task[data-edit],.prow[data-fuel]')){e.preventDefault();e.target.click();}
+});
 let toastT;
 let toastFn=null;
 function toast(m,btn,fn){const t=$('toast');t.innerHTML=esc(m)+(btn?`<button id="tBtn">${esc(btn)}</button>`:'');t.classList.toggle('act',!!btn);toastFn=fn||null;

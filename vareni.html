@@ -202,12 +202,13 @@ button.confirm{border-color:#c62828;color:#c62828}
 <div class="tbar" id="tbar" hidden role="status" aria-live="polite"><div class="tt"><div class="tl" id="tLabel"></div><div class="tc" id="tCount"></div></div><button id="tStop">Zrušit</button></div>
 
 <script>
-const APP_ID='vareni',APP_VERSION='2026.11.14.2';
+const APP_ID='vareni',APP_VERSION='2026.11.24';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const parseNum=v=>{const s=String(v??'').replace(/\s/g,'').replace(',','.');return s===''?NaN:Number(s);};
 const nf=(v,d=0)=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:d}).format(v);
-const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){saveWarn()}}};
+const mem={};
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){mem[k]=v;saveWarn()}}};
 
 // Typy jídla – liší se dávkou na osobu (a rizoto i postupem)
 const TYPES=[
@@ -348,7 +349,7 @@ function renderHowto(x){
     </table></div></details>`}`;
 }
 
-function render(){renderControls();renderResult();}
+function render(){renderControls();renderResult();if(typeof renderMeals==='function'){renderMeals();publish();}}
 
 // ===== Ovládání =====
 document.addEventListener('click',e=>{
@@ -406,7 +407,7 @@ $('ver').textContent='Vaření · verze '+APP_VERSION;
 function publish(){
   try{
     const n=meals.length,stale=[...meals].filter(m=>m.cooked.length).sort((a,b)=>lastCooked(a).localeCompare(lastCooked(b)))[0];
-    localStorage.setItem('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:n,
+    store.set('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:n,
       desc:n?'Tvoje jídla s recepty a kalkulačka rýže.':'Kolik rýže a vody pro kolik lidí – a tvoje recepty.',
       headline:n?[{label:'Jídel',value:String(n)},...(stale?[{label:'Nejdéle nevařené',value:stale.name}]:[])]:[],alerts:[]}));
     if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
@@ -436,7 +437,6 @@ function ago(iso){
 }
 let saveWarnT=0;
 function saveWarn(){if(Date.now()-saveWarnT<10000)return;saveWarnT=Date.now();setTimeout(()=>toast('⚠️ Uložení se nepovedlo – úložiště prohlížeče je plné nebo zakázané. Změny zmizí po zavření, udělej zálohu.'),500);}
-const mstore={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){saveWarn()}}};
 
 function normMeal(x){
   if(!x||typeof x!=='object'||x.id==null)return null;
@@ -451,32 +451,33 @@ function normMeal(x){
     createdAt:x.createdAt||new Date().toISOString()};
 }
 function loadMeals(){
-  const raw=mstore.get(MKEY);let arr=null;
+  const raw=store.get(MKEY);let arr=null;
   try{arr=JSON.parse(raw||'[]');}catch(e){}
-  if(!Array.isArray(arr)){if(raw)mstore.set(MKEY+'.poskozeno',raw);return[];}
+  if(!Array.isArray(arr)){if(raw)store.set('lifeadmin.corrupt.vareni',raw);return[];}
   return arr.map(normMeal).filter(Boolean);
 }
 let meals=loadMeals();
-let shop=[];try{const s=JSON.parse(mstore.get(SHOPKEY)||'[]');if(Array.isArray(s))shop=s.filter(x=>x&&x.id&&Array.isArray(x.lines));}catch(e){}
-const saveMeals=()=>{mstore.set(MKEY,JSON.stringify(meals));publish();};
-const saveShop=()=>mstore.set(SHOPKEY,JSON.stringify(shop));
+let shop=[];try{const s=JSON.parse(store.get(SHOPKEY)||'[]');if(Array.isArray(s))shop=s.filter(x=>x&&x.id&&Array.isArray(x.lines));}catch(e){}
+const saveMeals=()=>{store.set(MKEY,JSON.stringify(meals));publish();};
+const saveShop=()=>store.set(SHOPKEY,JSON.stringify(shop));
 const mealById=id=>meals.find(m=>m.id===id);
 const lastCooked=m=>m.cooked.length?m.cooked[m.cooked.length-1].date:null;
 let MS={q:'',tag:'',sort:'stale'};
-try{const s=JSON.parse(mstore.get('vareni.list.v1')||'null');if(s&&typeof s==='object')MS={...MS,sort:['stale','az','often'].includes(s.sort)?s.sort:'stale'};}catch(e){}
+try{const s=JSON.parse(store.get('vareni.list.v1')||'null');if(s&&typeof s==='object')MS={...MS,sort:['stale','az','often'].includes(s.sort)?s.sort:'stale'};}catch(e){}
 
 // ----- přepočet surovin podle porcí -----
 const UF={'½':.5,'¼':.25,'¾':.75,'⅓':1/3,'⅔':2/3};
 const num=s=>Number(String(s).replace(',','.'));
 function parseQty(line){
   const t=line.replace(/^\s*[-•*]\s*/,'');let m;
-  if((m=t.match(/^(\d+(?:[.,]\d+)?)\s*[-–]\s*(\d+(?:[.,]\d+)?)(?=\s|$)/)))return{a:num(m[1]),b:num(m[2]),rest:t.slice(m[0].length)};
-  if((m=t.match(/^(\d+)\s*\/\s*(\d+)(?=\s|$)/))&&Number(m[2])>0)return{a:Number(m[1])/Number(m[2]),rest:t.slice(m[0].length)};
+  if((m=t.match(/^(\d+(?:[.,]\d+)?)\s*[-–]\s*(\d+(?:[.,]\d+)?)(?=\s|[a-zA-ZÀ-ž]|$)/)))return{a:num(m[1]),b:num(m[2]),rest:t.slice(m[0].length)};
+  if((m=t.match(/^(\d+)\s+(?:a\s+)?(\d+)\s*\/\s*(\d+)(?=\s|[a-zA-ZÀ-ž]|$)/))&&Number(m[3])>0)return{a:Number(m[1])+Number(m[2])/Number(m[3]),rest:t.slice(m[0].length)};
+  if((m=t.match(/^(\d+)\s*\/\s*(\d+)(?=\s|[a-zA-ZÀ-ž]|$)/))&&Number(m[2])>0)return{a:Number(m[1])/Number(m[2]),rest:t.slice(m[0].length)};
   if((m=t.match(/^(\d+(?:[.,]\d+)?)?\s*([½¼¾⅓⅔])?(?=\s|[a-zA-ZÀ-ž]|$)/))&&(m[1]||m[2]))return{a:(m[1]?num(m[1]):0)+(m[2]?UF[m[2]]:0),rest:t.slice(m[0].length)};
   return{a:null,rest:t};
 }
 function fmtQ(v,rest){
-  if(/^\s*(g|ml|gramů|gr)\b/i.test(rest)){if(v>=200)return nf(Math.round(v/10)*10);if(v>=50)return nf(Math.round(v/5)*5);}
+  if(/^\s*(?:g|ml|gramů|gr)(?=$|[\s.,;)])/i.test(rest)){if(v>=200)return nf(Math.round(v/10)*10);if(v>=50)return nf(Math.round(v/5)*5);}
   if(v>=10)return nf(Math.round(v));
   const q=Math.round(v*4)/4;if(Math.abs(q-v)<0.06&&q>0)return frac(q);
   return nf(Math.round(v*10)/10,1);
@@ -494,8 +495,8 @@ const lineText=x=>(x.q?x.q+' ':'')+x.rest;
 const stepList=m=>m.steps.split('\n').map(s=>s.trim().replace(/^(\d+[.)]|[-•*])\s*/,'')).filter(Boolean);
 
 // ----- záložky -----
-let tab=mstore.get(TABKEY)==='meals'?'meals':'rice';
-function setTab(t){tab=t;mstore.set(TABKEY,t);
+let tab=store.get(TABKEY)==='meals'?'meals':'rice';
+function setTab(t){tab=t;store.set(TABKEY,t);
   document.querySelectorAll('.vtabs [data-tab]').forEach(b=>{b.classList.toggle('on',b.dataset.tab===t);b.setAttribute('aria-selected',b.dataset.tab===t);});
   $('secRice').hidden=t!=='rice';$('secMeals').hidden=t!=='meals';if(t==='meals')renderMeals();}
 
@@ -701,7 +702,7 @@ document.addEventListener('click',async e=>{
 // ----- ovládání seznamu -----
 document.querySelectorAll('.vtabs [data-tab]').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
 $('q').addEventListener('input',e=>{MS.q=e.target.value;renderMeals();});
-$('sort').addEventListener('change',e=>{MS.sort=e.target.value;mstore.set('vareni.list.v1',JSON.stringify({sort:MS.sort}));renderMeals();});
+$('sort').addEventListener('change',e=>{MS.sort=e.target.value;store.set('vareni.list.v1',JSON.stringify({sort:MS.sort}));renderMeals();});
 $('tagChips').addEventListener('click',e=>{const b=e.target.closest('[data-ftag]');if(!b)return;MS.tag=b.dataset.ftag;renderMeals();});
 $('btnAdd').onclick=()=>editForm(null);
 $('btnPick').onclick=pickMeal;

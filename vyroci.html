@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Výročí, narozeniny a svátky</title>
+<style>
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#d97706;--accent-bg:#fef3c7;--on-accent:#fff;
+--red:#c62828;--red-bg:#fdecec;--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32;--green-bg:#e9f5ea;--gray-bg:#ececea}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#fbbf24;--accent-bg:#3a2c0f;--on-accent:#1c1404;
+--red:#f28b82;--red-bg:#3b1d1d;--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995;--green-bg:#1b3021;--gray-bg:#2e2e2b}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
+h1{font-size:26px;margin:4px 0 2px}
+.sub{color:var(--muted);margin:0}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+button.small{padding:6px 10px;min-height:38px;font-size:15px}
+button.confirm{background:var(--red);border-color:var(--red);color:#fff}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:4px 0 12px}
+.tactions{display:flex;gap:8px;align-items:center;flex-shrink:0;margin-top:4px}
+.menuwrap{position:relative}
+#btnMenu{font-size:22px;min-width:50px;padding:4px 12px;line-height:1}
+.menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:6px;z-index:15;min-width:250px;display:flex;flex-direction:column}
+.menu[hidden]{display:none}
+.menu button{border:0;text-align:left;background:none;border-radius:8px;white-space:nowrap}
+.menu button:hover{background:var(--bg)}
+.menuver{font-size:12px;color:var(--muted);padding:6px 12px 2px;opacity:.8}
+body.embedded .top h1,body.embedded .top .sub{display:none}
+body.embedded .wrap{padding-top:8px}
+body.embedded .top{align-items:center;margin:0 0 10px}
+body.embedded .tactions{margin-top:0}
+.todaybar{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:15px}
+.todaybar b{color:var(--text)}
+.todaybar .m{color:var(--muted)}
+.vtabs{display:flex;gap:6px;margin:0 0 12px;border-bottom:1px solid var(--line)}
+.vtabs button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:8px 14px;min-height:44px;color:var(--muted);font-weight:600}
+.vtabs button.on{color:var(--text);border-bottom-color:var(--accent)}
+.search{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);min-height:44px;margin-bottom:10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border-radius:999px;padding:6px 14px;min-height:38px;font-size:15px}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.cards{display:grid;gap:10px}
+@media(min-width:900px){.cards{grid-template-columns:1fr 1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.card:hover{box-shadow:0 2px 12px rgba(0,0,0,.14)}
+.card.red{border-left-color:var(--red)}.card.orange{border-left-color:var(--orange)}
+.card .ch{display:flex;align-items:center;gap:8px}
+.card .ic{font-size:26px;line-height:1.1}
+.card .tn{font-weight:600;font-size:18px;flex:1}
+.card .tm{color:var(--muted);font-size:15px}
+.card .st{font-size:15px}
+.card .st.red{color:var(--red);font-weight:600}.card .st.orange{color:var(--orange);font-weight:600}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:13px;font-weight:600;background:var(--accent-bg);color:var(--accent);margin-left:6px;vertical-align:middle}
+.gifts-prev{margin-top:4px;padding-top:6px;border-top:1px dashed var(--line);font-size:14px;color:var(--muted)}
+.gifts-prev b{color:var(--text);font-weight:600}
+.gifts-prev .done{text-decoration:line-through;opacity:.65}
+.months{display:grid;gap:10px}
+@media(min-width:800px){.months{grid-template-columns:1fr 1fr}}
+@media(min-width:1100px){.months{grid-template-columns:1fr 1fr 1fr}}
+.mcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.mcard.now{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.mcard h3{margin:0 0 6px;font-size:17px;display:flex;justify-content:space-between;align-items:center}
+.mcard .cnt{font-size:13px;color:var(--muted);font-weight:400}
+.mrow{display:flex;gap:8px;align-items:baseline;padding:5px 0;border-top:1px solid var(--line);font-size:15px;cursor:pointer}
+.mrow:first-of-type{border-top:0}
+.mrow:hover{color:var(--accent)}
+.mrow .md{font-weight:600;min-width:34px;color:var(--muted)}
+.mrow .mn{flex:1;min-width:0}
+.empty{text-align:center;padding:36px 16px;background:var(--card);border:1px dashed var(--line);border-radius:12px}
+.empty .big{font-size:44px}
+.qchips{display:flex;gap:6px;flex-wrap:wrap}
+.qchips button{border-radius:999px;padding:6px 12px;min-height:36px;font-size:14px}
+.fab{display:none}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.overlay.open{display:flex}
+.modal{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:20px;max-height:92vh;overflow:auto}
+@media(min-width:600px){.overlay{align-items:center}.modal{border-radius:16px}}
+.modal h2{margin:0 0 4px;font-size:22px}
+.mfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:16px}
+.mfoot>div{display:flex;flex-wrap:wrap;gap:8px}
+label{display:block;font-size:15px;color:var(--muted);margin:12px 0 4px}
+label.check{display:flex;align-items:center;gap:10px;color:var(--text);font-size:16px;cursor:pointer}
+label.check input{width:22px;height:22px;min-height:0;margin:0}
+.modal input:not([type=checkbox]),.modal select,.modal textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:44px}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+.err{color:var(--red);font-size:14px;margin-top:4px}
+.hint{font-size:14px;color:var(--muted);margin-top:4px}
+.gbox{margin-top:6px;display:flex;flex-direction:column;gap:6px}
+.grow{display:flex;gap:6px;align-items:center}
+.grow input[type=checkbox]{width:22px;height:22px;flex:none;accent-color:var(--accent)}
+.grow input[type=text]{flex:1;min-width:0;min-height:40px;padding:6px 10px}
+.grow input.done{text-decoration:line-through;opacity:.65}
+.grow button{min-height:38px;padding:4px 10px}
+.nsug{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.nsug button{min-height:34px;padding:3px 10px;font-size:14px;border-radius:999px;background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90%}
+.toast.show{opacity:1}
+@media(max-width:599px){
+  .wrap{padding-top:8px;padding-bottom:110px}
+  .top h1{font-size:22px}
+  .top .sub,#btnAdd{display:none}
+  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:var(--on-accent);border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
+  .toast{bottom:96px}
+}
+.ver{font-size:13px;color:var(--muted);margin-top:24px;opacity:.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div id="topLeft">
+      <h1>🎂 Výročí a svátky</h1>
+      <p class="sub">Narozeniny, svátky, výročí a nápady na dárky na jednom místě.</p>
+    </div>
+    <div class="tactions">
+      <button class="primary" id="btnAdd">+ Přidat událost</button>
+      <div class="menuwrap">
+        <button id="btnMenu" aria-haspopup="true" aria-expanded="false" aria-label="Menu" title="Menu">☰</button>
+        <div class="menu" id="menu" role="menu" hidden>
+          <button role="menuitem" data-do="ics">📅 Vše do kalendáře (.ics)</button>
+          <div class="menuver" id="menuVer"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="todaybar" id="todayBar"></div>
+  <div class="vtabs" id="vtabs" role="tablist">
+    <button role="tab" data-tab="list" class="on">📋 Nadcházející</button>
+    <button role="tab" data-tab="cal">🗓️ Kalendář po měsících</button>
+  </div>
+  <input class="search" id="search" type="search" placeholder="🔍 Hledat (jméno, poznámka, nápad na dárek…)" aria-label="Hledat" hidden>
+  <div id="view"></div>
+  <div class="ver" id="ver"></div>
+</div>
+<button class="fab" id="btnFab" aria-label="Přidat událost" title="Přidat událost"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 4v20M4 14h20" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></button>
+
+<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <h2 id="mTitle"></h2><div id="mBody"></div>
+  <div class="mfoot"><div id="mLeft"></div><div><button id="mCancel">Zrušit</button><button class="primary" id="mSave">Uložit</button></div></div>
+</div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const APP_ID='vyroci',APP_VERSION='2026.11.24';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const plural=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
+const pad=n=>String(n).padStart(2,'0');
+const today=()=>{const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())};
+const isoD=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const dayNum=d=>Math.round(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);
+const diffDays=(a,b)=>dayNum(b)-dayNum(a);
+const fmtDM=(m,d)=>`${d}. ${m}.`;
+const fmt=d=>`${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`;
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const mem={};
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v;saveWarn()}}};
+let saveWarnT=0;function saveWarn(){if(Date.now()-saveWarnT<10000)return;saveWarnT=Date.now();setTimeout(()=>{try{toast('⚠️ Uložení se nepovedlo – úložiště prohlížeče je plné nebo zakázané. Změny zmizí po zavření, udělej zálohu.')}catch(e){}},500);}
+
+const MONTHS=['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+const MONTHS_GEN=['ledna','února','března','dubna','května','června','července','srpna','září','října','listopadu','prosince'];
+const TYPES={
+  birthday:{icon:'🎂',label:'Narozeniny',warn:14},
+  nameday:{icon:'🌸',label:'Svátek',warn:3},
+  anniversary:{icon:'🥂',label:'Výročí',warn:14},
+  other:{icon:'📅',label:'Jiná událost',warn:7}
+};
+
+// ===== Kompletní český kalendář jmen (offline) =====
+const SVATKY=[
+  ['Nový rok','Karina','Radmila','Diana','Dalimil','Tři králové','Vilma','Čestmír','Vladan','Břetislav','Bohdana','Pravoslav','Edita','Radovan','Alice','Ctirad','Drahoslav','Vladislav','Doubravka','Ilona','Běla','Slavomír','Zdeněk','Milena','Miloš','Zora','Ingrid','Otýlie','Zdislava','Robin','Marika'],
+  ['Hynek','Nela','Blažej','Jarmila','Dobromila','Vanda','Veronika','Milada','Apolena','Mojmír','Božena','Slavěna','Věnceslav','Valentýn','Jiřina','Ljuba','Miloslava','Gizela','Patrik','Oldřich','Lenka','Petr','Svatopluk','Matěj','Liliana','Dorota','Alexandr','Lumír','Horymír'],
+  ['Bedřich','Anežka','Kamil','Stela','Kazimír','Miroslav','Tomáš','Gabriela','Františka','Viktorie','Anděla','Řehoř','Růžena','Rút, Matylda','Ida','Elena, Herbert','Vlastimil','Eduard','Josef','Světlana','Radek','Leona','Ivona','Gabriel','Marián','Emanuel','Dita','Soňa','Taťána','Arnošt','Kvido'],
+  ['Hugo','Erika','Richard','Ivana','Miroslava','Vendula','Heřman, Hermína','Ema','Dušan','Darja','Izabela','Julius','Aleš','Vincenc','Anastázie','Irena','Rudolf','Valérie','Rostislav','Marcela','Alexandra','Evženie','Vojtěch','Jiří','Marek','Oto','Jaroslav','Vlastislav','Robert','Blahoslav'],
+  ['Svátek práce','Zikmund','Alexej','Květoslav','Klaudie','Radoslav','Stanislav','Den vítězství','Ctibor','Blažena','Svatava','Pankrác','Servác','Bonifác','Žofie','Přemysl','Aneta','Nataša','Ivo','Zbyšek','Monika','Emil','Vladimír','Jana','Viola','Filip','Valdemar','Vilém','Maxmilián','Ferdinand','Kamila'],
+  ['Laura','Jarmil','Tamara','Dalibor','Dobroslav','Norbert','Iveta, Slavoj','Medard','Stanislava','Gita','Bruno','Antonie','Antonín','Roland','Vít','Zbyněk','Adolf','Milan','Leoš','Květa','Alois','Pavla','Zdeňka','Jan','Ivan','Adriana','Ladislav','Lubomír','Petr a Pavel','Šárka'],
+  ['Jaroslava','Patricie','Radomír','Prokop','Cyril a Metoděj','Jan Hus','Bohuslava','Nora','Drahoslava','Libuše, Amálie','Olga','Bořek','Markéta','Karolína','Jindřich','Luboš','Martina','Drahomíra','Čeněk','Ilja','Vítězslav','Magdaléna','Libor','Kristýna','Jakub','Anna','Věroslav','Viktor','Marta','Bořivoj','Ignác'],
+  ['Oskar','Gustav','Miluše','Dominik','Kristián','Oldřiška','Lada','Soběslav','Roman','Vavřinec','Zuzana','Klára','Alena','Alan','Hana','Jáchym','Petra','Helena','Ludvík','Bernard','Johana','Bohuslav','Sandra','Bartoloměj','Radim','Luděk','Otakar','Augustýn','Evelína','Vladěna','Pavlína'],
+  ['Linda, Samuel','Adéla','Bronislav','Jindřiška','Boris','Boleslav','Regína','Mariana','Daniela','Irma','Denisa','Marie','Lubor','Radka','Jolana','Ludmila','Naděžda','Kryštof','Zita','Oleg','Matouš','Darina','Berta','Jaromír','Zlata','Andrea','Jonáš','Václav','Michal','Jeroným'],
+  ['Igor','Olívie, Oliver','Bohumil','František','Eliška','Hanuš','Justýna','Věra','Štefan, Sára','Marina','Andrej','Marcel','Renáta','Agáta','Tereza','Havel','Hedvika','Lukáš','Michaela','Vendelín','Brigita','Sabina','Teodor','Nina','Beáta','Erik','Šarlota, Zoe','Den vzniku ČSR','Silvie','Tadeáš','Štěpánka'],
+  ['Felix','Tobiáš','Hubert','Karel','Miriam','Liběna','Saskie','Bohumír','Bohdan','Evžen','Martin','Benedikt','Tibor','Sáva','Leopold','Otmar','Mahulena','Romana','Alžběta','Nikola','Albert','Cecílie','Klement','Emílie','Kateřina','Artur','Xenie','René','Zina','Ondřej'],
+  ['Iva','Blanka','Svatoslav','Barbora','Jitka','Mikuláš','Ambrož, Benjamín','Květoslava','Vratislav','Julie','Dana','Simona','Lucie','Lýdie','Radana, Radan','Albína','Daniel','Miloslav','Ester','Dagmar','Natálie','Šimon','Vlasta','Adam a Eva','1. svátek vánoční','Štěpán','Žaneta','Bohumila','Judita','David','Silvestr']
+];
+const svatekOf=(m,d)=>(SVATKY[m-1]&&SVATKY[m-1][d-1])||'';
+function findNameDays(query){
+  const q=norm(query);if(q.length<2)return[];
+  const out=[];
+  for(let m=1;m<=12;m++)for(let d=1;d<=SVATKY[m-1].length;d++){
+    const raw=SVATKY[m-1][d-1];
+    for(const part of raw.split(/,| a /).map(s=>s.trim())){
+      if(norm(part)===q||norm(part).startsWith(q))out.push({name:part,m,d});
+    }
+  }
+  return out.slice(0,6);
+}
+
+// ===== Data =====
+const KEY='vyroci.items.v1';
+let items=[];
+function normItem(x){
+  if(!x||!x.name)return null;
+  const type=TYPES[x.type]?x.type:'birthday';
+  const month=Math.min(12,Math.max(1,Math.round(Number(x.month)||1)));
+  const maxD=new Date(2024,month,0).getDate();
+  const day=Math.min(maxD,Math.max(1,Math.round(Number(x.day)||1)));
+  const year=Number(x.year)>=1900&&Number(x.year)<=2100?Math.round(Number(x.year)):null;
+  const gifts=Array.isArray(x.gifts)?x.gifts.filter(g=>g&&(typeof g==='string'?g.trim():String(g.text||'').trim()))
+    .map(g=>typeof g==='string'?{text:g.trim(),done:false}:{text:String(g.text).trim(),done:!!g.done}):[];
+  return{id:String(x.id||uid()),name:String(x.name).trim(),type,month,day,year,
+    repeat:x.repeat!==false,warnDays:x.warnDays!=null&&x.warnDays!==''&&Number(x.warnDays)>=0?Math.round(Number(x.warnDays)):null,
+    gifts,note:String(x.note||''),createdAt:typeof x.createdAt==='string'?x.createdAt:isoD(today())};
+}
+try{items=(JSON.parse(store.get(KEY)||'[]')||[]).map(normItem).filter(Boolean);}catch(e){items=[];}
+const save=()=>store.set(KEY,JSON.stringify(items));
+
+// ===== Výpočty =====
+function dateInYear(y,m,d){
+  const maxD=new Date(y,m,0).getDate();
+  return new Date(y,m-1,Math.min(d,maxD));
+}
+function nextOccurrence(it){
+  const t=today();
+  if(!it.repeat&&it.year){
+    const d=dateInYear(it.year,it.month,it.day);
+    return{date:d,days:diffDays(t,d),nth:null};
+  }
+  let y=t.getFullYear();
+  let d=dateInYear(y,it.month,it.day);
+  if(d<t){y++;d=dateInYear(y,it.month,it.day);}
+  const nth=it.year&&y>=it.year?y-it.year:null;
+  return{date:d,days:diffDays(t,d),nth};
+}
+const warnOf=it=>it.warnDays!=null?it.warnDays:TYPES[it.type].warn;
+function rel(n){
+  if(n<0)return `před ${-n} ${plural(-n,'dnem','dny','dny')}`;
+  if(n===0)return 'DNES 🎉';if(n===1)return 'zítra';
+  return `za ${n} ${plural(n,'den','dny','dní')}`;
+}
+function nthLabel(it,nth){
+  if(nth==null||nth<=0)return '';
+  if(it.type==='birthday')return `${nth} ${plural(nth,'rok','roky','let')}`;
+  if(it.type==='anniversary')return `${nth}. výročí`;
+  return `${nth} ${plural(nth,'rok','roky','let')}`;
+}
+const isRound=(it,nth)=>it.type==='birthday'&&nth!=null&&(nth===18||(nth>=20&&nth%10===0));
+
+// ===== Vykreslení =====
+let tab='list',fType='all',q='';
+function renderTodayBar(){
+  const t=today(),tom=new Date(t.getFullYear(),t.getMonth(),t.getDate()+1);
+  const s1=svatekOf(t.getMonth()+1,t.getDate()),s2=svatekOf(tom.getMonth()+1,tom.getDate());
+  $('todayBar').innerHTML=`<span>🌸 Dnes (${t.getDate()}. ${MONTHS_GEN[t.getMonth()]}) má svátek <b>${esc(s1)}</b></span>
+    <span class="m">· zítra <b>${esc(s2)}</b></span>`;
+}
+function render(){
+  $('menuVer').textContent='Výročí a svátky · verze '+APP_VERSION;
+  renderTodayBar();
+  document.querySelectorAll('#vtabs [data-tab]').forEach(b=>{b.classList.toggle('on',b.dataset.tab===tab);b.setAttribute('aria-selected',String(b.dataset.tab===tab));});
+  $('search').hidden=!items.length||tab!=='list';
+  const rows=items.map(it=>({it,nx:nextOccurrence(it)})).sort((a,b)=>a.nx.days-b.nx.days||a.it.name.localeCompare(b.it.name,'cs'));
+  let h='';
+  if(!items.length){
+    h=`<div class="empty"><div class="big">🎂</div><h2>Měj narozeniny, svátky a výročí pod palcem</h2>
+      <p class="sub">Přidej si důležitá data rodiny a přátel. K narozeninám nebo výročí si rovnou můžeš psát nápady na dárky.</p><br>
+      <div class="qchips" style="justify-content:center">
+        <button data-new="birthday">🎂 Přidat narozeniny</button>
+        <button data-new="nameday">🌸 Přidat svátek</button>
+        <button data-new="anniversary">🥂 Přidat výročí</button>
+      </div></div>`;
+  }else if(tab==='cal'){
+    const curM=today().getMonth()+1;
+    h='<div class="months">';
+    for(let m=1;m<=12;m++){
+      const inM=items.filter(i=>i.month===m).sort((a,b)=>a.day-b.day||a.name.localeCompare(b.name,'cs'));
+      h+=`<div class="mcard${m===curM?' now':''}"><h3>${MONTHS[m-1]} <span class="cnt">${inM.length||''}</span></h3>`;
+      if(!inM.length)h+='<div class="hint" style="margin:0">–</div>';
+      else h+=inM.map(it=>{const T=TYPES[it.type],nx=nextOccurrence(it),nl=nthLabel(it,nx.nth);
+        return `<div class="mrow" data-edit="${esc(it.id)}" role="button" tabindex="0"><span class="md">${it.day}.</span><span class="mn">${T.icon} ${esc(it.name)}${nl?` <span class="tm">(${nl})</span>`:''}${it.gifts.length?' 🎁':''}</span></div>`;
+      }).join('');
+      h+='</div>';
+    }
+    h+='</div>';
+  }else{
+    const cnt={all:rows.length,birthday:0,nameday:0,anniversary:0,other:0};
+    rows.forEach(r=>cnt[r.it.type]++);
+    const chip=(k,l)=>`<button class="chip${fType===k?' on':''}" data-f="${k}">${l} (${cnt[k]})</button>`;
+    h+=`<div class="chips">${chip('all','Vše')}${cnt.birthday?chip('birthday','🎂 Narozeniny'):''}${cnt.nameday?chip('nameday','🌸 Svátky'):''}${cnt.anniversary?chip('anniversary','🥂 Výročí'):''}${cnt.other?chip('other','📅 Ostatní'):''}</div>`;
+    const vis=rows.filter(r=>{
+      if(fType!=='all'&&r.it.type!==fType)return false;
+      if(q&&!norm([r.it.name,TYPES[r.it.type].label,r.it.note,r.it.gifts.map(g=>g.text).join(' '),fmtDM(r.it.month,r.it.day)].join(' ')).includes(q))return false;
+      return true;
+    });
+    h+=vis.length?`<div class="cards">${vis.map(({it,nx})=>{
+      const T=TYPES[it.type],w=warnOf(it);
+      const lv=nx.days>=0&&nx.days<=1?'red':nx.days>=0&&nx.days<=w?'orange':'ok';
+      const nl=nthLabel(it,nx.nth),round=isRound(it,nx.nth);
+      const openGifts=it.gifts.filter(g=>!g.done),doneGifts=it.gifts.filter(g=>g.done);
+      let gHtml='';
+      if(it.gifts.length){
+        const list=[...openGifts.map(g=>`<span>${esc(g.text)}</span>`),...doneGifts.map(g=>`<span class="done">✓ ${esc(g.text)}</span>`)].slice(0,4).join(' · ');
+        gHtml=`<div class="gifts-prev">🎁 <b>Dárky:</b> ${list}${it.gifts.length>4?` (+${it.gifts.length-4})`:''}</div>`;
+      }
+      return `<div class="card ${lv}" data-edit="${esc(it.id)}" role="button" tabindex="0">
+        <div class="ch"><span class="ic" aria-hidden="true">${T.icon}</span><div class="tn">${esc(it.name)}${nl?`<span class="badge">${round?'🎉 ':''}${esc(nl)}</span>`:''}</div><span aria-hidden="true">✏️</span></div>
+        <div class="tm">${T.label} · ${it.day}. ${MONTHS_GEN[it.month-1]}${it.year?` ${it.year}`:''}</div>
+        <div class="st ${lv}">${nx.days===0?'🎉 Dnes!':`${fmt(nx.date)} (${rel(nx.days)})`}</div>
+        ${it.note?`<div class="tm" style="font-style:italic">${esc(it.note)}</div>`:''}${gHtml}</div>`;
+    }).join('')}</div>`:`<div class="empty"><p class="sub">Nic neodpovídá filtru.</p></div>`;
+  }
+  $('view').innerHTML=h;
+  publish(rows);
+}
+
+// ===== Modální formulář =====
+let mSave=null,mDelete=null,delT=null,mSnap='',mArmed=false,mArmT,pendingReload=false;
+const snapM=()=>[...$('mBody').querySelectorAll('input,select,textarea')].map(x=>x.type==='checkbox'?x.checked:x.value).join('\u0001');
+function openModal(title,body,onSave,onDelete){
+  $('mTitle').textContent=title;$('mBody').innerHTML=body;mSave=onSave;mDelete=onDelete||null;
+  $('mLeft').innerHTML=onDelete?'<button id="mDel">🗑️ Smazat</button>':'';
+  $('mSave').style.display=onSave?'':'none';$('mCancel').textContent=onSave?'Zrušit':'Zavřít';
+  $('overlay').classList.add('open');mArmed=false;setTimeout(()=>{mSnap=snapM();},0);
+}
+function closeModal(){$('overlay').classList.remove('open');clearTimeout(delT);mArmed=false;if(pendingReload){pendingReload=false;setTimeout(reloadData,0);}}
+function reloadData(){try{items=(JSON.parse(store.get(KEY)||'[]')||[]).map(normItem).filter(Boolean);}catch(e){}render();}
+function requestClose(){
+  if(!$('overlay').classList.contains('open'))return;
+  if(!mSave||snapM()===mSnap||mArmed){closeModal();return;}
+  mArmed=true;clearTimeout(mArmT);mArmT=setTimeout(()=>mArmed=false,4000);
+  toast('Máš neuložené změny. Zavři znovu pro zahození, nebo dej Uložit.');
+}
+window.addEventListener('storage',e=>{if(e.key!==KEY)return;if($('overlay').classList.contains('open'))pendingReload=true;else reloadData();});
+$('mCancel').onclick=()=>requestClose();
+$('overlay').addEventListener('click',e=>{
+  if(e.target.id==='overlay')requestClose();
+  if(e.target.id==='mDel'){const b=e.target;if(b.classList.contains('confirm')){mDelete();closeModal();save();render();toast('Smazáno');}
+    else{b.classList.add('confirm');b.textContent='Opravdu smazat?';delT=setTimeout(()=>{b.classList.remove('confirm');b.textContent='🗑️ Smazat';},4000);}}
+});
+$('mSave').onclick=()=>{if(mSave&&mSave()!==false){closeModal();save();render();}};
+const err=(id,msg)=>{const e=$(id);if(e)e.textContent=msg;return false;};
+
+function itemForm(it,defType){
+  const isNew=!it;
+  const v=it||{type:defType||'birthday',name:'',month:today().getMonth()+1,day:today().getDate(),year:'',repeat:true,warnDays:null,gifts:[],note:''};
+  let giftsWork=(v.gifts||[]).map(g=>({...g}));
+  const drawGifts=()=>{
+    const box=$('gBox');if(!box)return;
+    box.innerHTML=giftsWork.map((g,i)=>`<div class="grow"><input type="checkbox" data-gd="${i}"${g.done?' checked':''} title="Koupeno / vyřízeno">
+      <input type="text" data-gt="${i}" class="${g.done?'done':''}" value="${esc(g.text)}" placeholder="Nápad na dárek…">
+      <button type="button" data-grm="${i}" aria-label="Odebrat nápad">✕</button></div>`).join('')+
+      `<div class="grow"><input type="text" id="gNew" placeholder="Přidat nápad na dárek (např. knížka, lístky…)"><button type="button" class="small" id="gAdd">+ Přidat</button></div>`;
+  };
+  const syncGifts=()=>{
+    $('gBox').querySelectorAll('[data-gt]').forEach(inp=>{const i=Number(inp.dataset.gt);if(giftsWork[i])giftsWork[i].text=inp.value;});
+    $('gBox').querySelectorAll('[data-gd]').forEach(cb=>{const i=Number(cb.dataset.gd);if(giftsWork[i])giftsWork[i].done=cb.checked;});
+  };
+  openModal(isNew?'Nová událost':'Upravit událost',
+    `<label for="iType">Typ</label>
+     <select id="iType">${Object.entries(TYPES).map(([k,t])=>`<option value="${k}"${k===v.type?' selected':''}>${t.icon} ${t.label}</option>`).join('')}</select>
+     <label for="iName">Jméno / název</label>
+     <input id="iName" value="${esc(v.name)}" placeholder="např. Máma, Petr, Výročí svatby…">
+     <div class="nsug" id="nSug"></div><div class="err" id="eName"></div>
+     <div class="row">
+       <div><label for="iDay">Den</label><input id="iDay" type="number" min="1" max="31" value="${v.day}"></div>
+       <div><label for="iMonth">Měsíc</label><select id="iMonth">${MONTHS.map((m,i)=>`<option value="${i+1}"${i+1===v.month?' selected':''}>${i+1}. ${m}</option>`).join('')}</select></div>
+       <div><label for="iYear">Rok (nepovinné)</label><input id="iYear" type="number" min="1900" max="2100" value="${v.year||''}" placeholder="např. 1990"></div>
+     </div><div class="err" id="eDate"></div>
+     <div class="hint" id="yearHint">Když vyplníš rok, spočítám věk nebo kolikáté je to výročí.</div>
+     <label class="check" style="margin-top:10px"><input type="checkbox" id="iRepeat"${v.repeat?' checked':''}> Opakuje se každý rok</label>
+     <label for="iWarn">Připomenout … dní předem (nepovinné)</label>
+     <input id="iWarn" type="number" min="0" max="365" value="${v.warnDays!=null?v.warnDays:''}" placeholder="automaticky (narozeniny/výročí 14 dní, svátek 3 dny)">
+     <label>🎁 Nápady na dárek (nepovinné)</label>
+     <div class="gbox" id="gBox"></div>
+     <label for="iNote">Poznámka (nepovinné)</label>
+     <textarea id="iNote" rows="2" placeholder="velikost oblečení, oblíbené víno, alergie…">${esc(v.note||'')}</textarea>`,
+    ()=>{
+      const name=$('iName').value.trim();if(!name)return err('eName','Napiš jméno nebo název události.');
+      const day=Math.round(Number($('iDay').value)),month=Math.round(Number($('iMonth').value));
+      const maxD=new Date(2024,month,0).getDate();
+      if(!(day>=1&&day<=maxD))return err('eDate',`V měsíci ${MONTHS[month-1]} je nejvýš ${maxD} dní.`);
+      const yrRaw=$('iYear').value.trim(),year=yrRaw?Math.round(Number(yrRaw)):null;
+      if(yrRaw&&!(year>=1900&&year<=2100))return err('eDate','Zadej platný rok (1900–2100), nebo pole nech prázdné.');
+      syncGifts();
+      const extra=$('gNew')?$('gNew').value.trim():'';
+      if(extra)giftsWork.push({text:extra,done:false});
+      const gifts=giftsWork.map(g=>({text:g.text.trim(),done:!!g.done})).filter(g=>g.text);
+      const wRaw=$('iWarn').value.trim(),warnDays=wRaw!==''&&Number(wRaw)>=0?Math.round(Number(wRaw)):null;
+      const d={type:$('iType').value,name,month,day,year,repeat:$('iRepeat').checked,warnDays,gifts,note:$('iNote').value.trim()};
+      if(isNew)items.push(normItem({id:uid(),...d}));else Object.assign(it,normItem({...it,...d}));
+      toast('Uloženo');
+    },isNew?null:()=>{items=items.filter(x=>x.id!==it.id);});
+  drawGifts();
+  const updateNameSug=()=>{
+    const s=$('nSug');if(!s)return;
+    if($('iType').value!=='nameday'){s.innerHTML='';return;}
+    const m=findNameDays($('iName').value);
+    s.innerHTML=m.map(x=>`<button type="button" data-nd="${x.m}-${x.d}" data-nn="${esc(x.name)}">🌸 ${esc(x.name)} (${x.d}. ${x.m}.)</button>`).join('');
+  };
+  $('iName').addEventListener('input',updateNameSug);
+  $('iType').addEventListener('change',updateNameSug);
+  $('nSug').addEventListener('click',e=>{
+    const b=e.target.closest('[data-nd]');if(!b)return;
+    const[m,d]=b.dataset.nd.split('-').map(Number);
+    $('iMonth').value=m;$('iDay').value=d;if(!$('iName').value.trim())$('iName').value=b.dataset.nn;
+    $('nSug').innerHTML='';toast(`Nastaven svátek ${b.dataset.nn}: ${d}. ${m}.`);
+  });
+  $('gBox').addEventListener('click',e=>{
+    if(e.target.id==='gAdd'){syncGifts();const t=$('gNew').value.trim();if(!t)return;giftsWork.push({text:t,done:false});drawGifts();$('gNew').focus();return;}
+    const rm=e.target.closest('[data-grm]');if(rm){syncGifts();giftsWork.splice(Number(rm.dataset.grm),1);drawGifts();}
+  });
+  $('gBox').addEventListener('change',e=>{if(e.target.matches('[data-gd]')){syncGifts();drawGifts();}});
+  $('gBox').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='gNew'){e.preventDefault();$('gAdd').click();}});
+  if(isNew)setTimeout(()=>{if(window.innerWidth>600)$('iName').focus();},50);
+}
+
+// ===== Export do kalendáře (.ics) =====
+const ymd=d=>isoD(d).replace(/-/g,'');
+const icsEsc=s=>String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+function fold(l){const out=[];while(l.length>36){let c=36;const cc=l.charCodeAt(c-1);if(cc>=0xD800&&cc<=0xDBFF)c--;out.push(l.slice(0,c));l=' '+l.slice(c);}out.push(l);return out.join('\r\n');}
+function buildIcs(){
+  const stamp=new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Vyroci//CS','CALSCALE:GREGORIAN','METHOD:PUBLISH'];let n=0;
+  for(const it of items){
+    const T=TYPES[it.type],nx=nextOccurrence(it),end=new Date(nx.date.getFullYear(),nx.date.getMonth(),nx.date.getDate()+1);
+    const desc=[it.year?`Rok: ${it.year}`:'',it.gifts.length?`Nápady na dárek: ${it.gifts.map(g=>g.text).join(', ')}`:'',it.note].filter(Boolean).join('\n');
+    n++;L.push('BEGIN:VEVENT','UID:'+it.id+'@vyroci','DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+ymd(nx.date),'DTEND;VALUE=DATE:'+ymd(end),
+      ...(it.repeat?['RRULE:FREQ=YEARLY']:[]),'SUMMARY:'+icsEsc(`${T.icon} ${it.name} (${T.label.toLowerCase()})`),'DESCRIPTION:'+icsEsc(desc),
+      'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(`${T.icon} ${it.name}`),'TRIGGER:-P'+Math.max(1,warnOf(it))+'D','END:VALARM','END:VEVENT');
+  }
+  L.push('END:VCALENDAR');return{text:L.map(fold).join('\r\n')+'\r\n',count:n};
+}
+function download(name,content,mime){const url=URL.createObjectURL(new Blob([content],{type:mime+';charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+
+// ===== Ovládání =====
+$('search').addEventListener('input',e=>{q=norm(e.target.value.trim());render();});
+document.addEventListener('click',e=>{
+  if(e.target.closest('#overlay'))return;
+  const tb=e.target.closest('#vtabs [data-tab]');if(tb){tab=tb.dataset.tab;render();return;}
+  const d=e.target.closest('[data-do]');if(d){setMenu(false);if(d.dataset.do==='ics'){const r=buildIcs();if(!r.count){toast('Zatím není co exportovat.');return;}download('vyroci-a-svatky.ics',r.text,'text/calendar');toast(`Staženo ${r.count} ${plural(r.count,'událost','události','událostí')}`);}return;}
+  const nw=e.target.closest('[data-new]');if(nw){itemForm(null,nw.dataset.new);return;}
+  const f=e.target.closest('[data-f]');if(f){fType=f.dataset.f;render();return;}
+  const ed=e.target.closest('[data-edit]');if(ed){const it=items.find(x=>x.id===ed.dataset.edit);if(it)itemForm(it);return;}
+  if(!$('menu').hidden&&!e.target.closest('.menuwrap'))setMenu(false);
+});
+function setMenu(open){$('menu').hidden=!open;$('btnMenu').setAttribute('aria-expanded',String(open));}
+$('btnMenu').addEventListener('click',e=>{e.stopPropagation();setMenu($('menu').hidden);});
+$('btnAdd').onclick=()=>itemForm();
+$('btnFab').onclick=()=>itemForm();
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(!$('menu').hidden)setMenu(false);else requestClose();return;}
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[data-edit]')){e.preventDefault();e.target.click();}
+});
+let toastT;
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3200);}
+
+// ===== Life Admin =====
+const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+if(EMBED)document.body.classList.add('embedded');
+$('ver').textContent='Výročí a svátky · verze '+APP_VERSION;
+function publish(rows){
+  try{
+    const alerts=[];
+    for(const{it,nx}of rows){
+      if(nx.days<0||nx.days>warnOf(it))continue;
+      const T=TYPES[it.type],nl=nthLabel(it,nx.nth);
+      const openG=it.gifts.filter(g=>!g.done).map(g=>g.text);
+      const subParts=[T.label+(nl?` (${nl})`:''),openG.length?`🎁 ${openG.slice(0,2).join(', ')}`:''];
+      alerts.push({level:nx.days<=1?'red':'orange',title:`${T.icon} ${it.name}`,sub:subParts.filter(Boolean).join(' · '),date:isoD(nx.date)});
+    }
+    const next=rows.find(r=>r.nx.days>=0);
+    const hl=items.length?[{label:'Událostí',value:String(items.length)},...(next?[{label:'Nejbližší',value:`${next.it.name} (${fmtDM(next.it.month,next.it.day)})`}]:[])]:[];
+    store.set('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:items.length,headline:hl,alerts,
+      desc:items.length?'':'Narozeniny, svátky, výročí a nápady na dárky.'}));
+    if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
+let lastDay=isoD(today());setInterval(()=>{const d=isoD(today());if(d!==lastDay){lastDay=d;render();}},60000);
+render();
+</script>
+</body>
+</html>

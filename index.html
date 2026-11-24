@@ -10,9 +10,9 @@
 <meta name="theme-color" content="#f5f5f2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)">
 <style>
-:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#4f46e5;
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#4f46e5;--on-accent:#fff;
 --red:#c62828;--red-bg:#fdecec;--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32;--blue:#1d4ed8;--navbg:#fff}
-@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#818cf8;
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#818cf8;--on-accent:#101228;
 --red:#f28b82;--red-bg:#3b1d1d;--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995;--blue:#93b4f8;--navbg:#1c1c1a}}
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -20,7 +20,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;b
   display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
 button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
 button:hover{border-color:var(--muted)}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
 
 /* Navigace: na mobilu dole, na počítači nahoře */
 .nav{display:flex;align-items:stretch;background:var(--navbg);border-top:1px solid var(--line);order:2;padding-bottom:env(safe-area-inset-bottom)}
@@ -138,10 +138,11 @@ h2.sec{font-size:20px;margin:22px 0 8px}
 // =====================================================================
 //  REGISTR APLIKACÍ – novou aplikaci přidáš sem (viz MODULY.md)
 // =====================================================================
-const VERSION='2026.11.14.2';   // verze hlavní aplikace – při každé úpravě změnit
+const VERSION='2026.11.24';   // verze hlavní aplikace – při každé úpravě změnit
 const APPS=[
   {id:'doklady',   name:'Doklady',   full:'Hlídač dokladů',      icon:'🗂️', path:'doklady.html',    prefix:'doklady.',    backupKey:'doklady.lastBackup'},
   {id:'predplatne',name:'Platby',    full:'Předplatné a platby', icon:'💳', path:'predplatne.html', prefix:'predplatne.', backupKey:'predplatne.lastBackup'},
+  {id:'vyroci',    name:'Výročí',    full:'Výročí a svátky',     icon:'🎂', path:'vyroci.html',     prefix:'vyroci.'},
   {id:'bilkoviny', name:'Bílkoviny', full:'Cena bílkovin',       icon:'🥩', path:'bilkoviny.html',  prefix:'bilkoviny.'},
   {id:'vareni',    name:'Vaření',    full:'Vaření a recepty',    icon:'🍳', path:'vareni.html',     prefix:'vareni.'},
   {id:'hlidac',    name:'Hlídač',    full:'Hlídač stránek',      icon:'🔔', path:'hlidac.html',     prefix:'hlidac.'},
@@ -203,11 +204,22 @@ function markActive(){
   const inMore=overflow.some(a=>a.id===view);
   document.querySelectorAll('.tab').forEach(b=>{const on=b.dataset.view===view||(b.hasAttribute('data-more')&&inMore);b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false');});
 }
-// Vložené aplikace: načíst viditelné (spočítají souhrn), skryté zavřít
+// Vložené aplikace: skryté zavřít; viditelné načítat líně (jen když chybí dnešní souhrn, jinak až po kliknutí)
+let preloadQueue=[],preloadT=null;
+function schedulePreload(){
+  if(preloadT||!preloadQueue.length)return;
+  const run=()=>{preloadT=null;const a=preloadQueue.shift();if(a&&isVisible(a.id)&&!frames[a.id])ensureFrame(a);if(preloadQueue.length)schedulePreload();};
+  preloadT=window.requestIdleCallback?requestIdleCallback(run,{timeout:1500}):setTimeout(run,250);
+}
 function syncFrames(){
-  const vis=visibleApps().map(a=>a.id);
-  for(const id of Object.keys(frames))if(!vis.includes(id)){frames[id].remove();delete frames[id];}
-  for(const a of visibleApps())ensureFrame(a);
+  const vis=visibleApps(),visIds=vis.map(a=>a.id),td=isoD(today());
+  for(const id of Object.keys(frames))if(!visIds.includes(id)){frames[id].remove();delete frames[id];}
+  preloadQueue=vis.filter(a=>{
+    if(frames[a.id])return false;
+    const s=summaryOf(a.id);
+    return !s||!s.updated||s.updated.slice(0,10)!==td||a.id==='hlidac';
+  });
+  schedulePreload();
 }
 function ensureFrame(a){
   if(frames[a.id])return frames[a.id];
@@ -348,7 +360,7 @@ function download(name,content,mime){
   const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-const ownKey=k=>APPS.some(a=>k.startsWith(a.prefix));
+const ownKey=k=>APPS.some(a=>k.startsWith(a.prefix))&&!k.endsWith('.poskozeno')&&!k.endsWith('.vadne');
 function exportAll(){
   const d=isoD(today()),data={};
   for(const a of APPS)if(a.backupKey)store.set(a.backupKey,d);   // ať aplikace nehlásí „nemáš zálohu“
@@ -384,14 +396,18 @@ $('fileImport').addEventListener('change',e=>{
 // ===== Co se obnovou změní: porovnání položek podle id =====
 const FIELD_L={name:'název',title:'název',expiryDate:'platnost',docNumber:'číslo',owner:'komu patří',type:'typ',warningDays:'upozornění',
   recurMonths:'obnova',recurDays:'obnova',price:'cena',currency:'měna',cycle:'interval',firstPaymentDate:'datum platby',status:'stav',
-  hist:'historie cen',history:'historie',note:'poznámka',category:'kategorie',shared:'sdílení',n:'interval',unit:'interval',
+  priceHistory:'historie cen',hist:'historie cen',history:'historie',note:'poznámka',category:'kategorie',sharedWith:'sdílení',shared:'sdílení',
+  considering:'zvažuju zrušit',trialEndDate:'zkušební verze',howToCancel:'jak zrušit',paymentMethod:'způsob platby',rating:'hodnocení',
+  usesPerMonth:'použití za měsíc',manualPay:'ruční platba',paidThrough:'zaplaceno do',n:'interval',unit:'interval',
   contract:'smlouva',commitmentEndDate:'konec závazku',notice:'výpověď',autoRenews:'obnovování',anniversaryDate:'výročí',isEstimate:'odhad',
   lastDate:'naposledy',lastDone:'naposledy',lastKm:'km',booked:'termín',bookedTime:'čas',doctor:'lékař',person:'osoba',info:'info',lead:'předstih',
   buy:'co koupit',guide:'návod',warnDays:'upozornění',icon:'ikona',steps:'kroky',table:'tabulka',text:'text',pinned:'oblíbené',
+  ingredients:'suroviny',tags:'štítky',servings:'porce',time:'doba přípravy',source:'zdroj',rice:'rýže',cooked:'historie vaření',
+  month:'měsíc',day:'den',year:'rok',repeat:'opakování',gifts:'nápady na dárek',
   plate:'SPZ',tires:'pneumatiky',washer:'ostřikovače',km:'km',date:'datum'};
-const LIST_L={fuel:'tankování',odo:'zápisy km',tasks:'úkoly',history:'záznamy v historii',hist:'záznamy cen'};
+const LIST_L={fuel:'tankování',odo:'zápisy km',tasks:'úkoly',history:'záznamy v historii',priceHistory:'záznamy cen',hist:'záznamy cen',cooked:'záznamy vaření',gifts:'nápady na dárek'};
 const IGNORE_F=new Set(['id','updated','createdAt']);
-const itemLabel=x=>String(x.name||x.title||x.label||'položka')+(x.person?` (${x.person})`:'');
+const itemLabel=(x,k)=>String(x.name||x.title||x.label||'položka')+(x.person?` (${x.person})`:'')+(k==='vareni.shop.v1'?' (nákup)':'');
 function parseArr(v){try{const a=JSON.parse(v||'null');return Array.isArray(a)&&a.every(x=>x&&typeof x==='object'&&x.id!=null)?a:null;}catch(e){return null;}}
 function fieldChanges(o,n){
   const out=[],fields=new Set([...Object.keys(o),...Object.keys(n)]);
@@ -415,9 +431,9 @@ function diffBackup(p){
       const ca=parseArr(cur),ba=parseArr(bak);
       if(ca||ba){
         const cm=new Map((ca||[]).map(x=>[String(x.id),x])),bm=new Map((ba||[]).map(x=>[String(x.id),x]));
-        for(const[id,x]of bm)if(!cm.has(id))d.added.push(itemLabel(x));
-        for(const[id,x]of cm)if(!bm.has(id))d.removed.push({id,key:k,label:itemLabel(x)});
-        for(const[id,x]of bm){const o=cm.get(id);if(o&&JSON.stringify(o)!==JSON.stringify(x)){const ch=fieldChanges(o,x);if(ch.length)d.changed.push({label:itemLabel(x),ch});}}
+        for(const[id,x]of bm)if(!cm.has(id))d.added.push(itemLabel(x,k));
+        for(const[id,x]of cm)if(!bm.has(id))d.removed.push({id,key:k,label:itemLabel(x,k)});
+        for(const[id,x]of bm){const o=cm.get(id);if(o&&JSON.stringify(o)!==JSON.stringify(x)){const ch=fieldChanges(o,x);if(ch.length)d.changed.push({label:itemLabel(x,k),ch});}}
       }else if(/settings\.v\d+$/.test(k)&&(cur??null)!==(bak??null))d.settings=true;
     }
     res.push(d);
@@ -456,6 +472,7 @@ function replaceAppData(appIds,data,withSettings){
   const affected=APPS.filter(a=>appIds.includes(a.id));
   for(const k of storageKeys())if(k&&affected.some(a=>k.startsWith(a.prefix)))try{localStorage.removeItem(k)}catch(e){}
   for(const[k,v]of Object.entries(data))if(affected.some(a=>k.startsWith(a.prefix)))store.set(k,v);
+  for(const a of affected)try{localStorage.removeItem('lifeadmin.summary.'+a.id)}catch(e){}
   if(withSettings){if(typeof data[KEY_SET]==='string')store.set(KEY_SET,data[KEY_SET]);else try{localStorage.removeItem(KEY_SET)}catch(e){}}
   loadLS();buildTabs();if(view!=='home'&&!isVisible(view))go('home');
   refreshFrames(true);
@@ -514,7 +531,7 @@ if(navigator.storage&&navigator.storage.persist){navigator.storage.persisted().t
 
 // Nový den → přepočítat přehled
 let lastDay=isoD(today());
-function refreshIfNewDay(){const d=isoD(today());if(d!==lastDay){lastDay=d;refreshFrames();if(view==='home')renderHome();}}
+function refreshIfNewDay(){const d=isoD(today());if(d!==lastDay){lastDay=d;syncFrames();refreshFrames();if(view==='home')renderHome();}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshIfNewDay();});
 setInterval(refreshIfNewDay,60000);
 

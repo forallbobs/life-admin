@@ -5,21 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prevence</title>
 <style>
-:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#be185d;--accent-bg:#fce7f3;
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#be185d;--accent-bg:#fce7f3;--on-accent:#fff;
 --red:#c62828;--red-bg:#fdecec;--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32;--green-bg:#e9f5ea;--gray-bg:#ececea}
-@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#be185d;--accent-bg:#3a1428;
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#f472b6;--accent-bg:#3a1428;--on-accent:#2d0819;
 --red:#f28b82;--red-bg:#3b1d1d;--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995;--green-bg:#1b3021;--gray-bg:#2e2e2b}}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
 .wrap{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
 h1{font-size:26px;margin:4px 0 2px}
-h2.sec{font-size:20px;margin:22px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-h2.sec .r{margin-left:auto}
 .sub{color:var(--muted);margin:0}
+a{color:var(--accent)}
 button,select,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
 button:hover{border-color:var(--muted)}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
 button.small{padding:6px 10px;min-height:38px;font-size:15px}
 button.confirm{background:var(--red);border-color:var(--red);color:#fff}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:4px 0 12px}
@@ -30,51 +29,27 @@ button.confirm{background:var(--red);border-color:var(--red);color:#fff}
 .menu[hidden]{display:none}
 .menu button{border:0;text-align:left;background:none;border-radius:8px;white-space:nowrap}
 .menu button:hover{background:var(--bg)}
-.menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
 .menuver{font-size:12px;color:var(--muted);padding:6px 12px 2px;opacity:.8}
-.cars{display:flex;gap:6px;flex-wrap:wrap}
 .chip{border-radius:999px;padding:6px 14px;min-height:38px;font-size:15px}
 .chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
 body.embedded .top h1,body.embedded .top .sub{display:none}
 body.embedded .wrap{padding-top:8px}
 body.embedded .top{align-items:center;margin:0 0 10px}
 body.embedded .tactions{margin-top:0}
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-@media(min-width:800px){.stats{grid-template-columns:repeat(4,1fr)}}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-.stat .lbl{color:var(--muted);font-size:14px}
-.stat .big{font-size:22px;font-weight:700;line-height:1.25}
-.stat .small{font-size:13px;color:var(--muted)}
-.tirebox{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:10px 14px;margin-top:10px}
-.tirebox.red{border-left-color:var(--red)}.tirebox.orange{border-left-color:var(--orange)}
-.tirebox .tx{flex:1;min-width:200px}
 .tasks{display:grid;gap:10px}
 @media(min-width:900px){.tasks{grid-template-columns:1fr 1fr}}
 .task{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
 .task:hover{box-shadow:0 2px 12px rgba(0,0,0,.14)}
 .task.red{border-left-color:var(--red)}.task.orange{border-left-color:var(--orange)}.task.unknown{border-left-color:var(--line)}
-.task .th{display:flex;align-items:flex-start;gap:8px}
+.task .th{display:flex;align-items:center;gap:8px}
+.task .ic{font-size:26px;line-height:1.1}
 .task .tn{font-weight:600;font-size:18px;flex:1}
 .task .tm{color:var(--muted);font-size:15px}
 .task .st{font-size:15px}
 .task .st.red{color:var(--red)}.task .st.orange{color:var(--orange)}
-.track{height:8px;background:var(--gray-bg);border-radius:999px;overflow:hidden;margin:4px 0}
-.fill{height:100%;background:var(--green);border-radius:999px}
-.fill.orange{background:var(--orange)}.fill.red{background:var(--red)}
 .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 14px}
-.prow{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
-.prow:last-child{border-bottom:0}
-.prow .tx{flex:1;min-width:0}
-.prow .t1{font-weight:600;font-size:16px}
-.prow .t2{color:var(--muted)}
-.prow .r{text-align:right;white-space:nowrap}
-.prow.click{cursor:pointer}
-.red-t{color:var(--red)}.orange-t{color:var(--orange)}.green-t{color:var(--green)}
 .empty{text-align:center;padding:36px 16px;background:var(--card);border:1px dashed var(--line);border-radius:12px}
 .empty .big{font-size:44px}
-.tip{font-size:14px;color:var(--muted);margin-top:8px}
-.more{display:block;width:100%;border:0;background:none;color:var(--accent);font-weight:600;min-height:40px}
 .fab{display:none}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
 .overlay.open{display:flex}
@@ -84,44 +59,36 @@ body.embedded .tactions{margin-top:0}
 .mfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:16px}
 .mfoot>div{display:flex;flex-wrap:wrap;gap:8px}
 label{display:block;font-size:15px;color:var(--muted);margin:12px 0 4px}
-label.check{display:flex;align-items:center;gap:10px;color:var(--text);font-size:16px;cursor:pointer}
-label.check input{width:22px;height:22px;min-height:0;margin:0}
 .modal input,.modal select,.modal textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:44px}
 .row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
 .err{color:var(--red);font-size:14px;margin-top:4px}
 .hint{font-size:14px;color:var(--muted);margin-top:4px}
 .qchips{display:flex;gap:6px;flex-wrap:wrap}
 .qchips button{border-radius:999px;padding:6px 12px;min-height:36px;font-size:14px}
-.sheet button{display:block;width:100%;text-align:left;margin-top:8px;font-size:18px}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90%}
 .toast.show{opacity:1}
+.toast.act{pointer-events:auto}
+.toast button{margin-left:10px;min-height:32px;padding:2px 10px;background:none;color:inherit;border-color:currentColor}
 @media(max-width:599px){
   .wrap{padding-top:8px;padding-bottom:110px}
   .top h1{font-size:22px}
   .top .sub,#btnAdd{display:none}
-  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
+  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:var(--on-accent);border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
   .toast{bottom:96px}
 }
 .ver{font-size:13px;color:var(--muted);margin-top:24px;opacity:.8}
-
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.task .ic{font-size:26px;line-height:1.1}
-.task .th{align-items:center}
-.buy{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px}
-.buy b{display:block;margin-bottom:4px}
-.buy ul{margin:0;padding-left:20px;font-size:15px}
-.banner{background:var(--accent-bg);border:1px solid var(--accent);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.banner .tx{flex:1;min-width:200px;font-size:15px}
-.toast.act{pointer-events:auto}
-.toast button{margin-left:10px;min-height:32px;padding:2px 10px;background:none;color:inherit;border-color:currentColor}
-.imp label.check{margin:8px 0}
-
 .task.booked{border-left-color:#2563eb}
 .st.booked{color:#2563eb}
 @media (prefers-color-scheme:dark){.task.booked{border-left-color:#93b4f8}.st.booked{color:#93b4f8}}
 .person{display:inline-block;font-size:13px;padding:1px 8px;border-radius:999px;background:var(--gray-bg);color:var(--muted);margin-left:6px;vertical-align:middle;font-weight:400}
 .info{font-size:13px;color:var(--muted)}
 .disc{font-size:13px;color:var(--muted);margin-top:16px}
+details.hbox{border:1px solid var(--line);border-radius:10px;padding:4px 10px 8px;margin-top:12px}
+details.hbox summary{cursor:pointer;font-size:15px;color:var(--muted);padding:4px 0}
+.hrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--line);font-size:15px}
+.hrow:last-child{border-bottom:0}
+.hrow button{min-height:32px;padding:2px 8px;font-size:14px}
 
 </style>
 </head>
@@ -156,7 +123,7 @@ label.check input{width:22px;height:22px;min-height:0;margin:0}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_ID='prevence',APP_VERSION='2026.11.10';
+const APP_ID='prevence',APP_VERSION='2026.11.24';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const plural=(n,a,b,c)=>n===1?a:(n>=2&&n<=4?b:c);
@@ -252,7 +219,7 @@ function render(){
         ?`<button class="small" data-attended="${esc(it.id)}">✅ Ano, absolvováno</button><button class="small" data-missed="${esc(it.id)}">✕ Nebyl</button>`
         :it.booked?`<button class="small" data-attended="${esc(it.id)}">✅ Absolvováno</button><button class="small" data-gcal="${esc(it.id)}">📆 Do kalendáře</button>`
         :`<button class="small" data-book="${esc(it.id)}">📅 Objednáno</button><button class="small" data-attended="${esc(it.id)}">✅ Absolvováno</button>`;
-      return `<div class="task ${cls}" data-edit="${esc(it.id)}">
+      return `<div class="task ${cls}" data-edit="${esc(it.id)}" role="button" tabindex="0">
         <div class="th"><span class="ic" aria-hidden="true">${esc(it.icon)}</span><div class="tn">${esc(it.name)}${it.person&&people.length>1&&!fPerson?`<span class="person">${esc(it.person)}</span>`:''}</div><span aria-hidden="true">✏️</span></div>
         <div class="tm">${cycleText(it.cycle)}${it.lastDate?` · naposledy ${fmt(parseD(it.lastDate))}`:''}${it.doctor?` · ${esc(it.doctor)}`:''}</div>
         ${st}${it.info?`<div class="info">ℹ️ ${esc(it.info)}</div>`:''}${it.note?`<div class="tm" style="font-style:italic">${esc(it.note)}</div>`:''}
@@ -295,34 +262,41 @@ function itemForm(it,preset){
   const isNew=!it,p=preset?{icon:preset[0],name:preset[1],cycle:{months:preset[2].months||0,days:preset[2].days||0},info:preset[3]}:null;
   const v=it||p||{icon:'🩺',name:'',cycle:{months:12,days:0},info:''};
   const c=v.cycle,n=c.days?c.days:(c.months%12===0?c.months/12:c.months),u=c.days?'d':(c.months%12===0?'y':'m');
+  let histWork=it?it.history.slice():[];
+  const histHtml=()=>histWork.length?[...histWork].reverse().map((d,ri)=>{const idx=histWork.length-1-ri;return`<div class="hrow"><span>${fmt(parseD(d))}</span><button type="button" data-hdel="${idx}" aria-label="Smazat záznam ${fmt(parseD(d))}">🗑️</button></div>`;}).join(''):'<div class="hint">Zatím žádná historie.</div>';
   openModal(isNew?'Nová prohlídka':'Upravit',
     (isNew&&!p?`<label>Rychlý výběr</label><div class="qchips">${PRESETS.map((x,i)=>`<button type="button" data-pre="${i}">${x[0]} ${esc(x[1])}</button>`).join('')}</div>`:'')+
     `<div class="row"><div style="flex:0 0 80px"><label for="iIcon">Ikona</label><input id="iIcon" value="${esc(v.icon)}" maxlength="4"></div>
       <div><label for="iName">Prohlídka / očkování</label><input id="iName" value="${esc(v.name)}" placeholder="např. Zubař"></div></div><div class="err" id="eName"></div>
      <label for="iPerson">Pro koho (nepovinné)</label><input id="iPerson" list="people" value="${esc(it?it.person:(fPerson||''))}" placeholder="Já, Máma, Honza…"><datalist id="people">${peopleList().map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
      <label>Jak často</label><div class="row"><input id="iN" inputmode="numeric" value="${n}"><select id="iU">${[['d','dní'],['m','měsíců'],['y','let']].map(([k,l])=>`<option value="${k}"${k===u?' selected':''}>${l}</option>`).join('')}</select></div><div class="err" id="eInt"></div>
-     <div class="info" id="iInfo" style="margin-top:4px">${v.info?'ℹ️ '+esc(v.info):''}</div>
+     <label for="iInfo">Info / doporučení (nepovinné)</label><input id="iInfo" value="${esc(v.info||'')}" placeholder="např. hrazeno pojišťovnou 1× za 2 roky">
      <label for="iLast">Naposledy (datum)</label><input id="iLast" type="date" value="${esc(it?it.lastDate||'':'')}">
      <div class="hint">Nevíš přesně? Stačí přibližně – třeba podle očkovacího průkazu nebo zprávy od lékaře.</div>
      <div class="row"><div><label for="iBook">Objednáno na (nepovinné)</label><input id="iBook" type="date" value="${esc(it?it.booked||'':'')}"></div><div style="flex:0 0 120px"><label for="iTime">Čas</label><input id="iTime" type="time" value="${esc(it?it.bookedTime:'')}"></div></div>
      <label for="iDoc">Lékař / kontakt (nepovinné)</label><input id="iDoc" value="${esc(it?it.doctor:'')}" placeholder="MUDr. Novák, tel. 123 456 789">
      <label for="iLead">Připomenout objednání … dní předem</label><input id="iLead" inputmode="numeric" value="${it&&it.lead!=null?it.lead:''}" placeholder="automaticky (3–6 týdnů)">
-     <label for="iNote">Poznámka</label><textarea id="iNote" rows="2">${esc(it?it.note:'')}</textarea>`,
+     <label for="iNote">Poznámka</label><textarea id="iNote" rows="2">${esc(it?it.note:'')}</textarea>`+
+     (it&&histWork.length?`<details class="hbox"><summary>📅 Historie návštěv (${histWork.length})</summary><div id="hList">${histHtml()}</div></details>`:''),
     ()=>{
       const name=$('iName').value.trim();if(!name)return err('eName','Napiš, o jakou prohlídku jde.');
       const N=Math.round(parseNum($('iN').value)),U=$('iU').value;if(!(N>=1))return err('eInt','Zadej celé číslo, např. 2.');
       const cycle={months:U==='m'?N:U==='y'?N*12:0,days:U==='d'?N:0};
-      const ld=parseNum($('iLead').value);
-      const d={icon:$('iIcon').value.trim()||'🩺',name,person:$('iPerson').value.trim(),cycle,lastDate:$('iLast').value||null,
+      const ld=parseNum($('iLead').value),lastDate=$('iLast').value||null;
+      const hist=histWork.slice();if(lastDate&&!hist.includes(lastDate))hist.push(lastDate);
+      hist.sort();
+      const d={icon:$('iIcon').value.trim()||'🩺',name,person:$('iPerson').value.trim(),cycle,lastDate,
         booked:$('iBook').value||null,bookedTime:$('iBook').value?$('iTime').value:'',doctor:$('iDoc').value.trim(),lead:ld>=0?Math.round(ld):null,
-        info:isNew?(v.info||''):it.info,note:$('iNote').value.trim()};
-      if(isNew)items.push(normItem({id:uid(),...d,history:d.lastDate?[d.lastDate]:[]}));else Object.assign(it,d);
+        info:$('iInfo').value.trim(),note:$('iNote').value.trim(),history:hist.slice(-30)};
+      if(isNew)items.push(normItem({id:uid(),...d}));else Object.assign(it,d);
       toast('Uloženo');
     },isNew?null:()=>{items=items.filter(x=>x.id!==it.id);});
   $('mBody').querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{const x=PRESETS[Number(b.dataset.pre)];
     $('iIcon').value=x[0];$('iName').value=x[1];const m=x[2].months||0;
     if(m%12===0){$('iN').value=m/12;$('iU').value='y';}else{$('iN').value=m;$('iU').value='m';}
-    v.info=x[3];$('iInfo').textContent='ℹ️ '+x[3];});
+    $('iInfo').value=x[3];});
+  const hl=$('hList');
+  if(hl)hl.onclick=e=>{const b=e.target.closest('[data-hdel]');if(!b)return;histWork.splice(Number(b.dataset.hdel),1);hl.innerHTML=histHtml();};
 }
 function bookForm(it){
   openModal(`Objednáno: ${it.name}${who(it)}`,
@@ -334,7 +308,9 @@ function bookForm(it){
 function attended(it){
   const d=it.booked&&parseD(it.booked)<=today()?it.booked:isoD(today());
   const prev={lastDate:it.lastDate,booked:it.booked,bookedTime:it.bookedTime,history:it.history.slice()};
-  it.lastDate=d;it.booked=null;it.bookedTime='';it.history.push(d);save();render();
+  it.lastDate=d;it.booked=null;it.bookedTime='';
+  if(!it.history.includes(d)){it.history.push(d);it.history.sort();it.history=it.history.slice(-30);}
+  save();render();
   toast(`✅ ${it.name} – další ${fmt(nextDue(it))}`,'↩️ Zpět',()=>{Object.assign(it,prev);save();render();});
 }
 
@@ -389,7 +365,10 @@ function setMenu(open){$('menu').hidden=!open;$('btnMenu').setAttribute('aria-ex
 $('btnMenu').addEventListener('click',e=>{e.stopPropagation();setMenu($('menu').hidden);});
 $('btnAdd').onclick=()=>itemForm();
 $('btnFab').onclick=()=>itemForm();
-document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden)setMenu(false);else requestClose();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(!$('menu').hidden)setMenu(false);else requestClose();return;}
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.task[data-edit]')){e.preventDefault();e.target.click();}
+});
 let toastT,toastFn=null;
 function toast(m,btn,fn){const t=$('toast');t.innerHTML=esc(m)+(btn?`<button id="tBtn">${esc(btn)}</button>`:'');t.classList.toggle('act',!!btn);toastFn=fn||null;
   t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>{t.classList.remove('show','act');toastFn=null;},btn?6000:3500);}

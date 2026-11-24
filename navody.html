@@ -5,21 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Návody</title>
 <style>
-:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#4f46e5;--accent-bg:#eef0fe;
+:root{--bg:#f5f5f2;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#4f46e5;--accent-bg:#eef0fe;--on-accent:#fff;
 --red:#c62828;--red-bg:#fdecec;--orange:#b45309;--orange-bg:#fdf3e1;--green:#2e7d32;--green-bg:#e9f5ea;--gray-bg:#ececea}
-@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#6366f1;--accent-bg:#1e2040;
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#222220;--text:#eeeeea;--muted:#a3a29c;--line:#3a3a37;--accent:#818cf8;--accent-bg:#1e2040;--on-accent:#101228;
 --red:#f28b82;--red-bg:#3b1d1d;--orange:#fbbf6a;--orange-bg:#3a2b12;--green:#81c995;--green-bg:#1b3021;--gray-bg:#2e2e2b}}
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:17px;line-height:1.5}
 .wrap{max-width:1180px;margin:0 auto;padding:16px 16px 80px}
 h1{font-size:26px;margin:4px 0 2px}
-h2.sec{font-size:20px;margin:22px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-h2.sec .r{margin-left:auto}
 .sub{color:var(--muted);margin:0}
 button,select,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
 button:hover{border-color:var(--muted)}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
 button.small{padding:6px 10px;min-height:38px;font-size:15px}
 button.confirm{background:var(--red);border-color:var(--red);color:#fff}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:4px 0 12px}
@@ -30,51 +28,15 @@ button.confirm{background:var(--red);border-color:var(--red);color:#fff}
 .menu[hidden]{display:none}
 .menu button{border:0;text-align:left;background:none;border-radius:8px;white-space:nowrap}
 .menu button:hover{background:var(--bg)}
-.menu hr{border:0;border-top:1px solid var(--line);margin:4px 6px}
 .menuver{font-size:12px;color:var(--muted);padding:6px 12px 2px;opacity:.8}
-.cars{display:flex;gap:6px;flex-wrap:wrap}
 .chip{border-radius:999px;padding:6px 14px;min-height:38px;font-size:15px}
 .chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
 body.embedded .top h1,body.embedded .top .sub{display:none}
 body.embedded .wrap{padding-top:8px}
 body.embedded .top{align-items:center;margin:0 0 10px}
 body.embedded .tactions{margin-top:0}
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-@media(min-width:800px){.stats{grid-template-columns:repeat(4,1fr)}}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-.stat .lbl{color:var(--muted);font-size:14px}
-.stat .big{font-size:22px;font-weight:700;line-height:1.25}
-.stat .small{font-size:13px;color:var(--muted)}
-.tirebox{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:10px 14px;margin-top:10px}
-.tirebox.red{border-left-color:var(--red)}.tirebox.orange{border-left-color:var(--orange)}
-.tirebox .tx{flex:1;min-width:200px}
-.tasks{display:grid;gap:10px}
-@media(min-width:900px){.tasks{grid-template-columns:1fr 1fr}}
-.task{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
-.task:hover{box-shadow:0 2px 12px rgba(0,0,0,.14)}
-.task.red{border-left-color:var(--red)}.task.orange{border-left-color:var(--orange)}.task.unknown{border-left-color:var(--line)}
-.task .th{display:flex;align-items:flex-start;gap:8px}
-.task .tn{font-weight:600;font-size:18px;flex:1}
-.task .tm{color:var(--muted);font-size:15px}
-.task .st{font-size:15px}
-.task .st.red{color:var(--red)}.task .st.orange{color:var(--orange)}
-.track{height:8px;background:var(--gray-bg);border-radius:999px;overflow:hidden;margin:4px 0}
-.fill{height:100%;background:var(--green);border-radius:999px}
-.fill.orange{background:var(--orange)}.fill.red{background:var(--red)}
-.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 14px}
-.prow{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
-.prow:last-child{border-bottom:0}
-.prow .tx{flex:1;min-width:0}
-.prow .t1{font-weight:600;font-size:16px}
-.prow .t2{color:var(--muted)}
-.prow .r{text-align:right;white-space:nowrap}
-.prow.click{cursor:pointer}
-.red-t{color:var(--red)}.orange-t{color:var(--orange)}.green-t{color:var(--green)}
 .empty{text-align:center;padding:36px 16px;background:var(--card);border:1px dashed var(--line);border-radius:12px}
 .empty .big{font-size:44px}
-.tip{font-size:14px;color:var(--muted);margin-top:8px}
-.more{display:block;width:100%;border:0;background:none;color:var(--accent);font-weight:600;min-height:40px}
 .fab{display:none}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
 .overlay.open{display:flex}
@@ -84,38 +46,22 @@ body.embedded .tactions{margin-top:0}
 .mfoot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:16px}
 .mfoot>div{display:flex;flex-wrap:wrap;gap:8px}
 label{display:block;font-size:15px;color:var(--muted);margin:12px 0 4px}
-label.check{display:flex;align-items:center;gap:10px;color:var(--text);font-size:16px;cursor:pointer}
-label.check input{width:22px;height:22px;min-height:0;margin:0}
 .modal input,.modal select,.modal textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);min-height:44px}
 .row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
 .err{color:var(--red);font-size:14px;margin-top:4px}
-.hint{font-size:14px;color:var(--muted);margin-top:4px}
 .qchips{display:flex;gap:6px;flex-wrap:wrap}
 .qchips button{border-radius:999px;padding:6px 12px;min-height:36px;font-size:14px}
-.sheet button{display:block;width:100%;text-align:left;margin-top:8px;font-size:18px}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90%}
 .toast.show{opacity:1}
 @media(max-width:599px){
   .wrap{padding-top:8px;padding-bottom:110px}
   .top h1{font-size:22px}
   .top .sub,#btnAdd{display:none}
-  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
+  .fab{display:flex;position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:50%;background:var(--accent);color:var(--on-accent);border:0;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:9;padding:0}
   .toast{bottom:96px}
 }
 .ver{font-size:13px;color:var(--muted);margin-top:24px;opacity:.8}
-
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.task .ic{font-size:26px;line-height:1.1}
-.task .th{align-items:center}
-.buy{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px}
-.buy b{display:block;margin-bottom:4px}
-.buy ul{margin:0;padding-left:20px;font-size:15px}
-.banner{background:var(--accent-bg);border:1px solid var(--accent);border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.banner .tx{flex:1;min-width:200px;font-size:15px}
-.toast.act{pointer-events:auto}
-.toast button{margin-left:10px;min-height:32px;padding:2px 10px;background:none;color:inherit;border-color:currentColor}
-.imp label.check{margin:8px 0}
-
 .search{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);min-height:44px;font:inherit;color:inherit;margin-bottom:10px}
 .cards{display:grid;gap:10px}
 @media(min-width:800px){.cards{grid-template-columns:1fr 1fr}}
@@ -169,6 +115,7 @@ label.check input{width:22px;height:22px;min-height:0;margin:0}
       </div>
     </div>
   </header>
+  <input class="search" id="search" type="search" placeholder="🔍 Hledat (pračka, filtr, jistič…)" aria-label="Hledat" hidden>
   <div id="view"></div>
   <div class="ver" id="ver"></div>
 </div>
@@ -181,7 +128,7 @@ label.check input{width:22px;height:22px;min-height:0;margin:0}
 <div class="toast" id="toast"></div>
 
 <script>
-const APP_ID='navody',APP_VERSION='2026.11.10';
+const APP_ID='navody',APP_VERSION='2026.11.24';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
@@ -231,21 +178,21 @@ function guideHtml(g){
 const plain=g=>g.type==='steps'?g.steps.join(' · '):g.type==='table'?g.table.rows.map(r=>r.filter(c=>c.trim()).join(' – ')).filter(Boolean).join(' · '):g.text;
 
 // ===== Vykreslení =====
-let q='',cat='',qRaw='';
+let q='',cat='';
 function render(){
   $('menuVer').textContent='Návody · verze '+APP_VERSION;
   const cats=[...new Set(items.map(i=>i.category.trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'cs'));
   if(!cats.includes(cat))cat='';
+  $('search').hidden=!items.length;
   let h='';
   if(!items.length){
     h=`<div class="empty"><div class="big">📒</div><h2>Zapiš si, jak se co dělá</h2><p class="sub">Programy pračky, nastavení lednice, výměna filtru… Začni šablonou, nebo prázdným návodem.</p><br>
       <div class="qchips" style="justify-content:center">${TEMPLATES.slice(0,7).map((t,i)=>`<button data-tpl="${i}">${t.icon} ${esc(t.title)}</button>`).join('')}</div></div>`;
   }else{
-    h+=`<input class="search" id="search" type="search" placeholder="🔍 Hledat (pračka, filtr, jistič…)" value="${esc(qRaw)}" aria-label="Hledat">`;
     if(cats.length>1)h+=`<div class="chips"><button class="chip${!cat?' on':''}" data-cat="">Vše (${items.length})</button>${cats.map(c=>`<button class="chip${cat===c?' on':''}" data-cat="${esc(c)}">${esc(c)} (${items.filter(i=>i.category.trim()===c).length})</button>`).join('')}</div>`;
     const vis=items.filter(i=>(!cat||i.category.trim()===cat)&&(!q||norm([i.title,i.category,plain(i)].join(' ')).includes(q)))
       .sort((a,b)=>(b.pinned-a.pinned)||a.title.localeCompare(b.title,'cs'));
-    h+=vis.length?`<div class="cards">${vis.map(g=>`<div class="card" data-open="${esc(g.id)}">
+    h+=vis.length?`<div class="cards">${vis.map(g=>`<div class="card" data-open="${esc(g.id)}" role="button" tabindex="0">
         <div class="ch"><span class="ic" aria-hidden="true">${esc(g.icon)}</span><div class="tn">${esc(g.title)}</div>
           <button class="pin${g.pinned?' on':''}" data-pin="${esc(g.id)}" aria-label="${g.pinned?'Odebrat z oblíbených':'Přidat do oblíbených'}" title="Oblíbené">${g.pinned?'⭐':'☆'}</button></div>
         <div class="meta">${[g.category,TYPE_L[g.type]+(g.type==='steps'?` · ${g.steps.length} ${plural(g.steps.length,'krok','kroky','kroků')}`:g.type==='table'?` · ${g.table.rows.length} ${plural(g.table.rows.length,'řádek','řádky','řádků')}`:'')].filter(Boolean).map(esc).join(' · ')}</div>
@@ -253,11 +200,9 @@ function render(){
       :`<div class="empty"><p class="sub">Nic nenalezeno.</p></div>`;
   }
   $('view').innerHTML=h;
-  if(searchFocus){const s=$('search');if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
   publish();
 }
-let searchFocus=false;
-document.addEventListener('input',e=>{if(e.target.id==='search'){qRaw=e.target.value;q=norm(qRaw.trim());searchFocus=true;render();searchFocus=false;}});
+$('search').addEventListener('input',e=>{q=norm(e.target.value.trim());render();});
 
 // ===== Okno =====
 let mSave=null,mDelete=null,delT=null;
@@ -360,7 +305,10 @@ document.addEventListener('click',e=>{
 function setMenu(open){$('menu').hidden=!open;$('btnMenu').setAttribute('aria-expanded',String(open));}
 $('btnMenu').addEventListener('click',e=>{e.stopPropagation();setMenu($('menu').hidden);});
 $('btnAdd').onclick=chooseTemplate;$('btnFab').onclick=chooseTemplate;
-document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('menu').hidden)setMenu(false);else requestClose();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(!$('menu').hidden)setMenu(false);else requestClose();return;}
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.card[data-open]')){e.preventDefault();e.target.click();}
+});
 let toastT;
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000);}
 
@@ -378,7 +326,10 @@ function publish(){
   }catch(e){}
 }
 // Údržba může otevřít konkrétní návod: navody.html#<id>
+function openFromHash(){const id=decodeURIComponent(location.hash.slice(1));if(!id)return;const g=items.find(x=>x.id===id);if(g)view(g);}
+window.addEventListener('hashchange',openFromHash);
 render();
+openFromHash();
 </script>
 </body>
 </html>

@@ -3,10 +3,10 @@
 // Mezipaměť sdílí celá doména forallbobs.github.io, proto mažeme jen vlastní (předpona PREFIX).
 // Při přidání nové aplikace připiš její soubor do ASSETS a zvyš číslo v CACHE.
 const PREFIX = 'lifeadmin-';
-const CACHE = PREFIX + 'v11';
+const CACHE = PREFIX + 'v12';
 const ASSETS = [
   './', './index.html', './manifest.json', './icon-192.png', './icon-512.png',
-  './doklady.html', './predplatne.html', './bilkoviny.html', './meny.html', './auto.html', './udrzba.html', './prevence.html', './navody.html', './vareni.html', './hlidac.html'
+  './doklady.html', './predplatne.html', './vyroci.html', './bilkoviny.html', './meny.html', './auto.html', './udrzba.html', './prevence.html', './navody.html', './vareni.html', './hlidac.html'
 ];
 
 self.addEventListener('install', e => {
@@ -36,14 +36,15 @@ self.addEventListener('fetch', e => {
   if (req.mode === 'navigate') {
     e.respondWith((async () => {
       const cache = await caches.open(CACHE), key = keyOf(req.url);
+      const ctrl = new AbortController();
+      const tm = setTimeout(() => ctrl.abort(), 5000);
       try {
-        const net = await Promise.race([
-          fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))
-        ]);
+        const net = await fetch(req.url, { cache: 'no-cache', credentials: 'same-origin', signal: ctrl.signal });
+        clearTimeout(tm);
         if (net.ok) { cache.put(key, net.clone()); return net; }
         return (await cache.match(key)) || net;
       } catch {
+        clearTimeout(tm);
         const hit = await cache.match(key);
         if (hit) return hit;
         // neznámá stránka bez signálu: hlavní okno → přehled; vložená aplikace → chyba (ať se přehled nevnoří sám do sebe)
@@ -54,11 +55,14 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Ostatní soubory (ikony, manifest): nejdřív z mezipaměti
+  // Ostatní soubory (ikony, manifest): nejdřív z mezipaměti, na pozadí tiše aktualizovat
   e.respondWith(
-    caches.match(req).then(hit => hit || fetch(req).then(res => {
-      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
-      return res;
-    }))
+    caches.match(req).then(hit => {
+      const net = fetch(req).then(res => {
+        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
+        return res;
+      }).catch(() => hit);
+      return hit || net;
+    })
   );
 });

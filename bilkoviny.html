@@ -65,9 +65,11 @@ label input{margin-top:4px;color:var(--text)}
 </div>
 
 <script>
-const APP_ID='bilkoviny',APP_VERSION='2026.11.07';
+const APP_ID='bilkoviny',APP_VERSION='2026.11.24';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const mem={};
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return mem[k]??null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
 const parseNum=v=>{const s=String(v??'').replace(/\s/g,'').replace(',','.');return s===''?NaN:Number(s);};
 const kc=(v,dec=2)=>new Intl.NumberFormat('cs-CZ',{style:'currency',currency:'CZK',minimumFractionDigits:dec,maximumFractionDigits:dec}).format(v);
 const num=(v,dec=1)=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:dec}).format(v);
@@ -150,13 +152,15 @@ $('btnClear').onclick=()=>{prods=[blank(),blank()];renderList();};
 const EMBED=(()=>{try{return window.self!==window.top}catch(e){return true}})();
 if(EMBED)document.body.classList.add('embedded');
 $('ver').textContent='Cena bílkovin · verze '+APP_VERSION;
-try{
-  localStorage.setItem('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:0,
-    desc:'Porovnej, kde je gram bílkoviny nejlevnější.',headline:[],alerts:[]}));
-  if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
-}catch(e){}
-
-renderList();
+function publish(){
+  try{
+    store.set('lifeadmin.summary.'+APP_ID,JSON.stringify({v:1,ver:APP_VERSION,updated:new Date().toISOString(),count:0,
+      desc:'Porovnej, kde je gram bílkoviny nejlevnější.',headline:[],alerts:[]}));
+    if(EMBED)parent.postMessage({type:'lifeadmin:summary',id:APP_ID},location.origin==='null'?'*':location.origin);
+  }catch(e){}
+}
+function render(){renderList();publish();}
+render();
 </script>
 </body>
 </html>
