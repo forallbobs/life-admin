@@ -60,6 +60,22 @@ async function telegram(text) {
   catch (e) { console.log('Telegram:', e.message); }
 }
 const fmtCz = iso => { const [y, m, d] = iso.split('-').map(Number); return `${d}. ${m}. ${y}`; };
+function pragueNow() {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Prague', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(new Date()).map(p => [p.type, p.value]));
+  const h = Number(parts.hour) % 24, m = Number(parts.minute);
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, mins: h * 60 + m };
+}
+function isKaktusPast(val) {
+  const nowCz = pragueNow();
+  if (val.date < nowCz.date) return true;
+  if (val.date === nowCz.date && val.to) {
+    const [h, m] = val.to.split(':').map(Number);
+    if (nowCz.mins >= h * 60 + m) return true;
+  }
+  return false;
+}
 
 const old = (() => { try { return JSON.parse(fs.readFileSync(OUT, 'utf8')); } catch (e) { return {}; } })();
 const now = new Date().toISOString();
@@ -75,7 +91,10 @@ for (const [id, w] of Object.entries(WATCHES)) {
       changed = true;
       console.log(`${id}: ZMĚNA → ${val.key}`);
       if (prev.key) {   // první běh neposílá
-        if (id === 'kaktus') await telegram(`🌵 Kaktus dobíječka: ${fmtCz(val.date)}${val.from ? ` ${val.from}–${val.to || ''}` : ''}\n${w.url}`);
+        if (id === 'kaktus') {
+          if (isKaktusPast(val) || (prev.date === val.date && !val.from)) console.log('kaktus: dobíječka už proběhla – Telegram neposílám');
+          else await telegram(`🌵 Kaktus dobíječka: ${fmtCz(val.date)}${val.from ? ` ${val.from}–${val.to || ''}` : ''}\n${w.url}`);
+        }
         if (id === 'amd') await telegram(`🖥️ Nový ovladač AMD pro RX 6600 XT (Windows 11): ${val.latest.version} (${val.latest.kind})\n${w.url}`);
       }
     } else console.log(`${id}: beze změny (${val.key})`);
